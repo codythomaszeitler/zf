@@ -11,4 +11,16 @@ export class ProjectDeployStartResult {
     public getJobId(): JobId {
         return this.jobId;
     }
+
+    public hasComponentsToDeploy(): boolean {
+        if (this.jobId === undefined) {
+            return false;
+        }
+
+        if (!this.jobId.toString()) {
+            return false;
+        }
+
+        return true;
+    }
 }

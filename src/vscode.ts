@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
 import { ProgressToken } from "./progressToken";
+import { time } from "console";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
     
@@ -27,9 +28,10 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
                         get isCancellationRequested() {
                             return cancelToken.isCancellationRequested;
                         },
-                        report: function (params: { progress: number; }): void {
+                        report: function (params: { progress: number; title? : string}): void {
                             progress.report({
-                                increment: params.progress - currentProgress
+                                increment: params.progress - currentProgress,
+                                message : params.title || undefined
                             });
                             currentProgress = params.progress - currentProgress;
                         }

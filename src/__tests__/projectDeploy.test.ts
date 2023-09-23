@@ -103,8 +103,15 @@ describe('project deploy', () => {
             }
         );
 
+        let titleHalfwayDone = '';
         for (let i = 0; i < 10; i++) {
             await undefined; // let multiple progress checks go through
+            if (i === 5) {
+                // On the fifth iteration, check what the title of the deployment is
+                if (progressToken) {
+                    titleHalfwayDone = progressToken.title;
+                }
+            }
         }
 
         expect(progressToken?.progress).toBe(50);
@@ -122,6 +129,7 @@ describe('project deploy', () => {
         expect(testFileFailure.getSeverity()).toBe(DiagnosticSeverity.error);
 
         expect(ide.didFocusProblemsTab()).toBe(true);
+        expect(titleHalfwayDone).toBe('Project Deploy Report (50/100)');
     });
 
     it('should be able to cancel successfully if project deploy report never got called', async () => {
@@ -167,11 +175,12 @@ describe('project deploy', () => {
             ide
         });
 
-        await undefined;
-        await undefined;
+        await 5;
+        await 5;
+        await 5;
 
         const progressToken = ide.getCurrentProgressToken();
-        expect(progressToken?.progress).toBe(50);
+        const progress = progressToken?.progress;
 
         if (progressToken) {
             progressToken.isCancellationRequested = true;
@@ -180,6 +189,7 @@ describe('project deploy', () => {
         await projectDeployPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(false);
         expect(salesforceCli.wasDeploymentCancelled(salesforceCli.getDeploymentJobId())).toBe(true);
+        expect(progress).toBe(50);
     });
 
     it("should cancel without issue if deployment is already completed", async () => {
@@ -218,5 +228,18 @@ describe('project deploy', () => {
 
         await projectDeployPromise;
         expect(ide.didShowWarningMessage(salesforceCli.toThrowOnProjectDeployCancel.message)).toBe(true);
+    });
+
+    it('should terminate immediately if there are no components to deploy', async () => {
+        salesforceCli.setNoComponentsToDeploy(true);
+
+        await projectDeploy({
+            targetOrg: salesforceOrg,
+            salesforceCli: salesforceCli,
+            ide
+        });
+
+        const progressToken = ide.getCurrentProgressToken();
+        expect(progressToken?.title.includes('Project Deploy Result')).toBe(false);
     });
 });

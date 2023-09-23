@@ -14,6 +14,7 @@ export abstract class SalesforceCli {
     }
 
     abstract getOrgList(): Promise<SalesforceOrg[]>;
+    abstract getDefaultOrg(): Promise<SalesforceOrg | null>;
     abstract openOrg(alias: string): Promise<void>;
 
     abstract projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult>;
@@ -23,6 +24,10 @@ export abstract class SalesforceCli {
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
         const { stdout } = await this.executor(command);
+        if (!stdout) {
+            throw new Error(command + ' did not return any output.');
+        }
+
         return {
             stdout
         };
