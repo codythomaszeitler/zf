@@ -10,16 +10,60 @@ export class ProjectDeployReportResult {
         numberComponentsTotal: number;
         componentFailures: ComponentFailure[]
     }) {
+        this.validateNumberComponentErrors(params.numberComponentErrors);
+        this.validateNumberComponentsDeployed(params.numberComponentsDeployed);
+        this.validateNumberComponentsTotal(params.numberComponentsTotal);
+
         this.numberComponentErrors = params.numberComponentErrors;
         this.numberComponentsDeployed = params.numberComponentsDeployed;
         this.numberComponentsTotal = params.numberComponentsTotal;
         this.componentFailures = params.componentFailures;
     }
 
+    private validateNumberComponentErrors(numberComponentErrors: number) {
+        if (numberComponentErrors < 0) {
+            const errorMessage = `Cannot construct ProjectDeployReportResult with negative number of component errors [${numberComponentErrors}].`;
+            throw new Error(errorMessage);
+        }
+
+        if (isNaN(numberComponentErrors)) {
+            const errorMessage = 'Cannot construct ProjectDeployReportResult with NaN number of component errors.';
+            throw new Error(errorMessage);
+        }
+    }
+
+    private validateNumberComponentsDeployed(numberComponentsDeployed: number) {
+        if (numberComponentsDeployed < 0) {
+            const errorMessage = `Cannot construct ProjectDeployReportResult with negative number of components deployed [${numberComponentsDeployed}].`;
+            throw new Error(errorMessage);
+        }
+
+        if (isNaN(numberComponentsDeployed)) {
+            const errorMessage = 'Cannot construct ProjectDeployReportResult with NaN number of components deployed.';
+            throw new Error(errorMessage);
+        }
+    }
+
+    private validateNumberComponentsTotal(numberComponentsTotal: number) {
+        if (numberComponentsTotal < 0) {
+            const errorMessage = `Cannot construct ProjectDeployReportResult with negative number of components total [${numberComponentsTotal}].`;
+            throw new Error(errorMessage);
+        }
+
+        if (isNaN(numberComponentsTotal)) {
+            const errorMessage = 'Cannot construct ProjectDeployReportResult with NaN number of components total.';
+            throw new Error(errorMessage);
+        }
+    }
+
     public getPercentageComplete(): number {
         const numberComponentErrors = this.numberComponentErrors;
         const numberComponentsDeployed = this.numberComponentsDeployed;
         const numberComponentsTotal = this.numberComponentsTotal;
+        if (this.numberComponentsTotal === 0) {
+            return 0;
+        }
+
         return ((numberComponentErrors + numberComponentsDeployed) / numberComponentsTotal) * 100;
     }
 
