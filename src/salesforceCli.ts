@@ -4,6 +4,7 @@ import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
 import { Executor, ExecutorCommand } from "./executor";
+import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -17,6 +18,7 @@ export abstract class SalesforceCli {
 
     abstract projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult>;
     abstract projectDeployReport(params: { jobId: JobId }): Promise<ProjectDeployReportResult>;
+    abstract projectDeployResume(params: { jobId: JobId }): Promise<ProjectDeployResumeResult>;
     abstract projectDeployCancel(params: { jobId: JobId }): Promise<ProjectDeployCancelResult>;
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {

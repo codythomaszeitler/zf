@@ -1,10 +1,9 @@
-import { describe, expect, test, beforeEach } from '@jest/globals';
+import { describe, expect, beforeEach } from '@jest/globals';
 import { MockIDE } from './__mocks__/mockIntegratedDevelopmentEnvironment';
 import { MockSalesforceCli } from './__mocks__/mockSalesforceCli';
 import { SalesforceOrg } from '../salesforceOrg';
 import { projectDeploy } from '../projectDeploy';
 import { DiagnosticSeverity, Uri } from '../integratedDevelopmentEnvironment';
-
 
 describe('project deploy', () => {
 
@@ -59,6 +58,7 @@ describe('project deploy', () => {
         expect(ide.didSetAnyDiagnostics()).toBe(true);
         expect(ide.didFocusProblemsTab()).toBe(true);
         expect(ide.didSetDiagnosticsFor(mockFile)).toBe(true);
+        expect(salesforceCli.didResumeProjectDeployment()).toBe(true);
     });
 
     it('should report half status if deployment is not completed', async () => {
