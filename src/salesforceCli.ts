@@ -3,8 +3,7 @@ import { JobId } from "./jobId";
 import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
-
-export type Executor = (command: string) => Promise<{ stdout: any }>;
+import { Executor, ExecutorCommand } from "./executor";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -20,16 +19,11 @@ export abstract class SalesforceCli {
     abstract projectDeployReport(params: { jobId: JobId }): Promise<ProjectDeployReportResult>;
     abstract projectDeployCancel(params: { jobId: JobId }): Promise<ProjectDeployCancelResult>;
 
-    protected async exec(command: string): Promise<{ stdout: any }> {
-        try {
+    protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
         const { stdout } = await this.executor(command);
         return {
-            stdout: JSON.parse(stdout),
+            stdout
         };
-        } catch (e : any) {
-            const stdout = JSON.parse(e.stdout);
-            throw new Error(stdout.message);
-        }
     }
 }
 

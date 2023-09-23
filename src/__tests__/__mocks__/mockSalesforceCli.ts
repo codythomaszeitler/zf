@@ -1,3 +1,4 @@
+import { ExecutorCommand } from "../../executor";
 import { JobId } from "../../jobId";
 import { ProjectDeployCancelResult } from "../../projectDeployCancelResult";
 import { ComponentFailure, ProjectDeployReportResult } from "../../projectDeployReportResult";
@@ -16,9 +17,8 @@ export class MockSalesforceCli extends SalesforceCli {
     private deploymentStatus: string;
     private failures: ComponentFailure[];
 
-
     constructor() {
-        super(async (command: string) => { return { stdout: '', stderr: '' }; });
+        super(async (command: ExecutorCommand) => { return { stdout: ''};});
         this.orgs = [];
         this.openedOrgs = [];
         this.deploymentJobId = null;

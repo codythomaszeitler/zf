@@ -19,28 +19,31 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
     }
 
     withProgress(toMonitor: (progressToken: ProgressToken) => Promise<void>, options: { title: string; }): Promise<void> {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: options.title,
                 cancellable: true
             }, async (progress, cancelToken) => {
+                try {
+                    let currentProgress = 0;
+                    const progressToken: ProgressToken = {
+                        get isCancellationRequested() {
+                            return cancelToken.isCancellationRequested;
+                        },
+                        report: function (params: { progress: number; }): void {
+                            progress.report({
+                                increment: params.progress - currentProgress
+                            });
+                            currentProgress = params.progress - currentProgress;
+                        }
+                    };
 
-                let currentProgress = 0;
-                const progressToken: ProgressToken = {
-                    get isCancellationRequested() {
-                        return cancelToken.isCancellationRequested;
-                    },
-                    report: function (params: { progress : number; }): void {
-                        progress.report({
-                            increment : params.progress - currentProgress
-                        });
-                        currentProgress = params.progress - currentProgress;
-                    }
-                };
-
-                await toMonitor(progressToken);
-                resolve();
+                    await toMonitor(progressToken);
+                    resolve();
+                } catch (e) {
+                    reject(e);
+                }
             });
         });
     }
