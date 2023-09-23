@@ -1,12 +1,11 @@
 import { SandboxOrgListResult, SfOrgListResult, ScratchOrgListResult } from "./sfOrgListResult";
 import { JobId } from "./jobId";
-import { SalesforceCli, Executor } from "./salesforceCli";
+import { SalesforceCli } from "./salesforceCli";
+import { Executor, ExecutorCommand } from "./executor";
 import { SalesforceOrg } from "./salesforceOrg";
 import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
-import { Position } from "./position";
-import { Range } from "./range";
 
 export class SfSalesforceCli extends SalesforceCli {
 
@@ -33,7 +32,16 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     private async noCacheGetOrgList(): Promise<SalesforceOrg[]> {
-        const { stdout } = await this.exec('sf org list --json');
+        const command : ExecutorCommand = {
+            command : 'sf',
+            args : [
+                'org',
+                'list',
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
         const orgListResult = stdout as SfOrgListResult;
 
         if (!orgListResult.result) {
@@ -92,11 +100,35 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async openOrg(alias: string): Promise<void> {
-        await this.exec(`sf org open -o ${alias} --json`);
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'org',
+                'open',
+                '--target-org',
+                alias,
+                '--json'
+            ]
+        };
+        await this.exec(command);
     }
 
     async projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult> {
-        const { stdout } = await this.exec(`sf project deploy start --target-org ${params.targetOrg.getAlias()} --async --ignore-conflicts --json`);
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'project',
+                'deploy',
+                'start',
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--async',
+                '--json',
+                '--ignore-conflicts'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
         const result = new ProjectDeployStartResult({
             jobId: new JobId(stdout.result.id)
         });
@@ -104,7 +136,19 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployReportResult> {
-        const { stdout } = await this.exec(`sf project deploy report --json --job-id ${params.jobId}`);
+        const command : ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'project',
+                'deploy',
+                'report',
+                '--job-id',
+                params.jobId.toString(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
 
         const componentFailures = stdout.result.details.componentFailures.map((failure: any) => {
             const componentFailure: ComponentFailure = {
@@ -126,7 +170,18 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async projectDeployCancel(params: { jobId: JobId; }): Promise<ProjectDeployCancelResult> {
-        const { stdout } = await this.exec(`sf project deploy cancel --job-id ${params.jobId} --json `);
+        const command : ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'project',
+                'deploy',
+                'cancel',
+                '--job-id',
+                params.jobId.toString(),
+                '--json'
+            ]
+        };
+        const { stdout } = await this.exec(command);
         return JSON.parse(stdout);
     }
 }

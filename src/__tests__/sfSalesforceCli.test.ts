@@ -3,6 +3,7 @@ import {describe, expect, it} from '@jest/globals';
 import { get, getMissingResultProperty, getMissingSandboxesProperty, getMissingScratchOrgsProperty, getNoSandboxesAndNoScratches, getScratchOrgMissingAliasProperty, getScratchOrgMissingIsExpiredProperty } from './data/orgListOutput';
 import { SfSalesforceCli } from '../sfSalesforceCli';
 import { SalesforceOrg } from "../salesforceOrg";
+import { ExecutorCommand } from '../executor';
 
 describe('sf salesforce cli - get org list', () => {
     it('should convert nominal response to in memory representation', async () => {
@@ -86,11 +87,11 @@ describe('sf salesforce cli - get org list', () => {
 });
 
 function genMockExecutor(commandToStdOutput: any) {
-    return async function(command : string) {
-        const stdout = commandToStdOutput[command];
+    return async function(command : ExecutorCommand) {
+        const asString = command.command + ' ' + command.args.join(' ');
+        const stdout = commandToStdOutput[asString];
         return {
-            stdout,
-            stderr : ''
+            stdout : JSON.parse(stdout)
         };
     };
 }
