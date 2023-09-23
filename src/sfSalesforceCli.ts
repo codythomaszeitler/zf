@@ -9,6 +9,7 @@ import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
 import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 
 export class SfSalesforceCli extends SalesforceCli {
+
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
@@ -113,6 +114,40 @@ export class SfSalesforceCli extends SalesforceCli {
         await this.exec(command);
     }
 
+    async getDefaultOrg(): Promise<SalesforceOrg | null> {
+        const getAlias = (stdout: any) => {
+            if (!stdout || !stdout.result || stdout.result.length === 0) {
+                return null;
+            }
+
+            return stdout.result[0].value;
+        };
+
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'config',
+                'get',
+                'target-org',
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+
+        const alias = getAlias(stdout);
+        if (!alias) {
+            return null;
+        }
+
+        const org: SalesforceOrg = new SalesforceOrg({
+            alias,
+            isActive: true
+        });
+
+        return org;
+    }
+
     async projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult> {
         const command: ExecutorCommand = {
             command: 'sf',
@@ -133,6 +168,7 @@ export class SfSalesforceCli extends SalesforceCli {
             jobId: new JobId(stdout.result.id)
         });
         return result;
+
     }
 
     async projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployReportResult> {

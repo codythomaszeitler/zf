@@ -38,10 +38,14 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
         this.currentProgressToken = {
             isCancellationRequested: false,
-            report: function (params: { progress: number; }): void {
+            report: function (params: { progress: number; title? : string }): void {
                 this.progress = params.progress;
+                if (params.title) {
+                    this.title = params.title;
+                }
             },
-            progress: 0
+            progress: 0,
+            title : ''
         };
         await toMonitor(this.currentProgressToken);
     }
@@ -168,4 +172,5 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
 export interface MockProgressToken extends ProgressToken {
     progress: number;
+    title : string;
 }

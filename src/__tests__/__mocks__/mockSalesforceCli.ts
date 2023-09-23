@@ -1,3 +1,4 @@
+import { markAsUntransferable } from "worker_threads";
 import { ExecutorCommand } from "../../executor";
 import { JobId } from "../../jobId";
 import { ProjectDeployCancelResult } from "../../projectDeployCancelResult";
@@ -9,6 +10,7 @@ import { SalesforceOrg } from "../../salesforceOrg";
 
 export class MockSalesforceCli extends SalesforceCli {
     
+    
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
 
@@ -19,6 +21,8 @@ export class MockSalesforceCli extends SalesforceCli {
     private deploymentStatus: string;
     private failures: ComponentFailure[];
     private wasProjectDeployResumeCalled: boolean;
+    private waitForDeploymentToStart : (value :unknown) => void;
+    private noComponentsToDeploy : boolean;
 
     constructor() {
         super(async (command: ExecutorCommand) => { return { stdout: ''};});
@@ -28,6 +32,9 @@ export class MockSalesforceCli extends SalesforceCli {
         this.deploymentStatus = "";
         this.failures = [];
         this.wasProjectDeployResumeCalled = false;
+        this.stopInfiniteLoopCounter = 0;
+        this.waitForDeploymentToStart = () => {};
+        this.noComponentsToDeploy = false;
     }
 
     getDeploymentJobId(): JobId | null {
@@ -59,12 +66,27 @@ export class MockSalesforceCli extends SalesforceCli {
     }
 
     async projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult> {
+        if (this.noComponentsToDeploy) {
+            return new ProjectDeployStartResult({
+                jobId : new JobId('')
+            });
+        }
+
         this.deploymentJobId = new JobId('OAQ1234567890');
         this.deploymentStatus = 'started';
+
+        this.waitForDeploymentToStart(undefined);
+
         return new ProjectDeployStartResult({ jobId: this.deploymentJobId });
     }
 
+    private stopInfiniteLoopCounter : number;
     async projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployReportResult> {
+        this.stopInfiniteLoopCounter++;
+        if (this.stopInfiniteLoopCounter === 1000) {
+            throw new Error('Infinite loop...?');
+        }
+
         if (this.deploymentJobId) {
             if (this.deploymentStatus === 'started') {
                 const result = new ProjectDeployReportResult({
@@ -112,6 +134,11 @@ export class MockSalesforceCli extends SalesforceCli {
     async projectDeployComplete(params?: { jobId: JobId }): Promise<void> {
         if (this.deploymentStatus === "started") {
             this.deploymentStatus = "completed";
+        } else {
+            await new Promise(resolve => {
+                this.waitForDeploymentToStart = resolve;
+            });
+            this.deploymentStatus = 'completed';
         }
     };
 
@@ -130,5 +157,13 @@ export class MockSalesforceCli extends SalesforceCli {
 
     didResumeProjectDeployment() {
         return this.wasProjectDeployResumeCalled;
+    }
+
+    getDefaultOrg(): Promise<SalesforceOrg | null> {
+        throw new Error("Method not implemented.");
+    }
+
+    setNoComponentsToDeploy(noComponentsToDeploy : boolean) {
+        this.noComponentsToDeploy = noComponentsToDeploy;
     }
 }

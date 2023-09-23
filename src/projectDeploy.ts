@@ -8,7 +8,7 @@ import { ProgressToken } from "./progressToken";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 
 export async function projectDeploy(params: {
-    targetOrg: SalesforceOrg,
+    targetOrg?: SalesforceOrg,
     ide: IntegratedDevelopmentEnvironment,
     salesforceCli: SalesforceCli
 }) {
@@ -27,13 +27,26 @@ export async function projectDeploy(params: {
     };
 
     await params.ide.withProgress(async (progressToken: ProgressToken) => {
-        await doProjectDeploy({
-            salesforceCli: params.salesforceCli,
-            ide: params.ide,
-            progressToken,
-            targetOrg: params.targetOrg,
-            cancel: cancel
-        });
+        const getTargetOrg = async (): Promise<SalesforceOrg | null> => {
+            if (params.targetOrg) {
+                return params.targetOrg;
+            } else {
+                const defaultOrg = await params.salesforceCli.getDefaultOrg();
+                return defaultOrg;
+            }
+        };
+
+        const targetOrg = await getTargetOrg();
+        if (targetOrg) {
+            await doProjectDeploy({
+                salesforceCli: params.salesforceCli,
+                ide: params.ide,
+                progressToken,
+                targetOrg: targetOrg,
+                cancel: cancel
+            });
+        }
+
     }, {
         title: 'Project Deploy Start'
     });
@@ -50,6 +63,10 @@ async function doProjectDeploy(params: {
     params.ide.clearDiagnostics();
 
     const projectDeployStartResult = await params.salesforceCli.projectDeployStart({ targetOrg: params.targetOrg });
+    if (!projectDeployStartResult.hasComponentsToDeploy()) {
+        return;
+    }
+
     if (params.progressToken.isCancellationRequested) {
         await params.cancel(projectDeployStartResult.getJobId());
         return;
@@ -92,7 +109,8 @@ async function waitForDeploymentToComplete(params: {
 
         const progress = projectDeployReportResult.getPercentageComplete();
         params.progressToken.report({
-            progress
+            progress,
+            title : 'Project Deploy Report ' + projectDeployReportResult.getTotalDeployedAsString()
         });
     } while (!projectDeployReportResult.isDeploymentComplete());
 

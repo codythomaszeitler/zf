@@ -13,31 +13,26 @@ export function activate(context: vscode.ExtensionContext) {
 	async function runSfOrgOpen() {
 		try {
 			await openOrg(ide, salesforceCli);
-		} catch (e : any) {
+		} catch (e: any) {
 			if (e) {
 				ide.showWarningMessage(e.message);
 			}
 		}
 	}
-	
+
 	async function withDiagsProjectDeployStart() {
 		try {
-			const org = new SalesforceOrg({
-				alias: 'salesforcetestingarea',
-				isActive: true
-			});
 			await projectDeploy({
-				targetOrg: org,
 				ide,
 				salesforceCli
 			});
-		} catch (e : any) {
+		} catch (e: any) {
 			if (e) {
 				ide.showErrorMessage(e.message);
 			}
 		}
 	}
-	
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 }

@@ -56,6 +56,14 @@ export class ProjectDeployReportResult {
         }
     }
 
+    public getTotalDeployedAsString() {
+        const numberComponentErrors = this.numberComponentErrors;
+        const numberComponentsDeployed = this.numberComponentsDeployed;
+        const numberTotalDeployed = numberComponentErrors + numberComponentsDeployed;
+        const numberComponentsTotal = this.numberComponentsTotal;
+        return '(' + numberTotalDeployed + '/' + numberComponentsTotal + ')';
+    }
+
     public getPercentageComplete(): number {
         const numberComponentErrors = this.numberComponentErrors;
         const numberComponentsDeployed = this.numberComponentsDeployed;
