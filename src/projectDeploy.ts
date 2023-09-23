@@ -35,7 +35,7 @@ export async function projectDeploy(params: {
             cancel: cancel
         });
     }, {
-        title: 'Starting Deployment'
+        title: 'Project Deploy Start'
     });
 };
 
@@ -66,6 +66,10 @@ async function doProjectDeploy(params: {
         return;
     }
 
+    await updateSourceTracking({
+        jobId: projectDeployStartResult.getJobId(),
+        salesforceCli: params.salesforceCli
+    });
     await showFailuresInProblemsTab(params.ide, projectDeployReportResult);
 
     if (params.ide.getConfig('zsi.vscode.shouldFocusProblemsWhenDeployFails', true) && didHaveAnyFailures(projectDeployReportResult)) {
@@ -94,6 +98,15 @@ async function waitForDeploymentToComplete(params: {
 
     return projectDeployReportResult;
 };
+
+async function updateSourceTracking(params: {
+    jobId: JobId,
+    salesforceCli: SalesforceCli
+}) {
+    await params.salesforceCli.projectDeployResume({
+        jobId: params.jobId
+    });
+}
 
 async function showFailuresInProblemsTab(ide: IntegratedDevelopmentEnvironment, projectDeployReportResult: ProjectDeployReportResult | undefined) {
     const promises: Promise<void>[] = [];

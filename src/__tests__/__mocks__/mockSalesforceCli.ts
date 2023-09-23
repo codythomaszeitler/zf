@@ -2,11 +2,13 @@ import { ExecutorCommand } from "../../executor";
 import { JobId } from "../../jobId";
 import { ProjectDeployCancelResult } from "../../projectDeployCancelResult";
 import { ComponentFailure, ProjectDeployReportResult } from "../../projectDeployReportResult";
+import { ProjectDeployResumeResult } from "../../projectDeployResumeResult";
 import { ProjectDeployStartResult } from "../../projectDeployStartResult";
 import { SalesforceCli } from "../../salesforceCli";
 import { SalesforceOrg } from "../../salesforceOrg";
 
 export class MockSalesforceCli extends SalesforceCli {
+    
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
 
@@ -16,6 +18,7 @@ export class MockSalesforceCli extends SalesforceCli {
     private deploymentJobId: JobId | null;
     private deploymentStatus: string;
     private failures: ComponentFailure[];
+    private wasProjectDeployResumeCalled: boolean;
 
     constructor() {
         super(async (command: ExecutorCommand) => { return { stdout: ''};});
@@ -24,6 +27,7 @@ export class MockSalesforceCli extends SalesforceCli {
         this.deploymentJobId = null;
         this.deploymentStatus = "";
         this.failures = [];
+        this.wasProjectDeployResumeCalled = false;
     }
 
     getDeploymentJobId(): JobId | null {
@@ -117,5 +121,14 @@ export class MockSalesforceCli extends SalesforceCli {
 
     wasDeploymentCancelled(jobId: JobId | null) {
         return jobId === this.deploymentJobId && this.deploymentStatus === 'cancelled';
+    }
+
+    async projectDeployResume(params: { jobId: JobId; }): Promise<ProjectDeployResumeResult> {
+        this.wasProjectDeployResumeCalled = true;
+        return new ProjectDeployResumeResult(); 
+    }
+
+    didResumeProjectDeployment() {
+        return this.wasProjectDeployResumeCalled;
     }
 }

@@ -5,11 +5,7 @@ import { Position } from "./position";
 import { ProgressToken } from "./progressToken";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-    async focusProblemsTab(): Promise<void> {
-        await this.execute({
-            commandName: 'workbench.panel.markers.view.focus'
-        });
-    }
+    
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
 
@@ -119,6 +115,12 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
 
     clearDiagnostics(): void {
         this.diagnosticCollection.clear();
+    }
+
+    async focusProblemsTab(): Promise<void> {
+        await this.execute({
+            commandName: 'workbench.panel.markers.view.focus'
+        });
     }
 }
 

@@ -6,9 +6,9 @@ import { SalesforceOrg } from "./salesforceOrg";
 import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
+import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 
 export class SfSalesforceCli extends SalesforceCli {
-
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
@@ -32,9 +32,9 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     private async noCacheGetOrgList(): Promise<SalesforceOrg[]> {
-        const command : ExecutorCommand = {
-            command : 'sf',
-            args : [
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
                 'org',
                 'list',
                 '--json'
@@ -136,7 +136,7 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployReportResult> {
-        const command : ExecutorCommand = {
+        const command: ExecutorCommand = {
             command: 'sf',
             args: [
                 'project',
@@ -170,7 +170,7 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async projectDeployCancel(params: { jobId: JobId; }): Promise<ProjectDeployCancelResult> {
-        const command : ExecutorCommand = {
+        const command: ExecutorCommand = {
             command: 'sf',
             args: [
                 'project',
@@ -182,6 +182,23 @@ export class SfSalesforceCli extends SalesforceCli {
             ]
         };
         const { stdout } = await this.exec(command);
-        return JSON.parse(stdout);
+        return new ProjectDeployCancelResult();
+    }
+
+    async projectDeployResume(params: { jobId: JobId; }): Promise<ProjectDeployResumeResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'project',
+                'deploy',
+                'resume',
+                '--job-id',
+                params.jobId.toString(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        return new ProjectDeployResumeResult();
     }
 }
