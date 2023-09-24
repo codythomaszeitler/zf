@@ -7,9 +7,9 @@ import { ProjectDeployResumeResult } from "../../projectDeployResumeResult";
 import { ProjectDeployStartResult } from "../../projectDeployStartResult";
 import { SalesforceCli } from "../../salesforceCli";
 import { SalesforceOrg } from "../../salesforceOrg";
+import { SObjectListResult } from "../../sObjectListResult";
 
 export class MockSalesforceCli extends SalesforceCli {
-    
     
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
@@ -165,5 +165,11 @@ export class MockSalesforceCli extends SalesforceCli {
 
     setNoComponentsToDeploy(noComponentsToDeploy : boolean) {
         this.noComponentsToDeploy = noComponentsToDeploy;
+    }
+
+    sobjectList(params : {
+        targetOrg : SalesforceOrg
+    }): Promise<SObjectListResult> {
+        throw new Error("Method not implemented.");
     }
 }
