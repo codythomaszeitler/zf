@@ -22,6 +22,10 @@
       {
         "command": "sf.zsi.projectDeploy",
         "title": "SF ZSI: Project Deploy"
+      },
+      {
+        "command": "sf.zsi.generateFauxSObjects",
+        "title": "SF ZSI: Generate Faux SObjects"
       }
     ]
   },

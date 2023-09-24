@@ -5,6 +5,7 @@ import { VsCode } from "./vscode";
 import { projectDeploy } from './projectDeploy';
 import { SalesforceOrg } from './salesforceOrg';
 import { runCliCommand } from './executor';
+import { generateFauxSObjects } from './genFauxSObjects';
 
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
@@ -33,8 +34,29 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
+	async function generateFauxSObject() {
+		const defaultOrg = await salesforceCli.getDefaultOrg();
+		if (defaultOrg) {
+			await ide.withProgress(async (progressToken) => {
+				try {
+					await generateFauxSObjects({
+						targetOrg: defaultOrg,
+						salesforceCli,
+						outputDir: '.sfdx//tools//sobjects//customObjects',
+						progressToken	
+					});
+				} catch (e: any) {
+					ide.showErrorMessage(e.message);
+				}
+			}, {
+				title : 'Generate SObjects'
+			});
+		}
+	}
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
 }
 
 // this method is called when your extension is deactivated
