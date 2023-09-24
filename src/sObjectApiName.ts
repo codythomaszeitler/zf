@@ -9,4 +9,8 @@ export class SObjectApiName {
     static get(raw: string) {
         return new SObjectApiName(raw);
     }
+
+    public toString() {
+        return this.raw;
+    }
 }

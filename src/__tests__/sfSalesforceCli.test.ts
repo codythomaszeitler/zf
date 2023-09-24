@@ -7,6 +7,9 @@ import { ExecutorCommand } from '../executor';
 import { getWhenDefaultOrgDoesNotExist, getWhenDefaultOrgExists, getWhenResultArrayDoesNotExist, getWhenResultArrayIsEmpty } from './data/configGetOutput';
 import { getWithCustomObject, getWithFailureMessage, getWithoutResultArray } from './data/sobjectListOutputs';
 import { SObjectListResult } from '../sObjectListResult';
+import { SObjectApiName } from '../sObjectApiName';
+import { SObjectDescribeResult, SObjectFieldDescribeResult } from '../sObjectDescribeResult';
+import { getTestObjectDescribe, getSObjectDescribeWithFailureMessage } from './data/sobjectDescribeOutput';
 
 describe('sf salesforce cli - get org list', () => {
     it('should convert nominal response to in memory representation', async () => {
@@ -210,10 +213,112 @@ describe('salesforce cli - sobject list', () => {
             await cli.sobjectList({
                 targetOrg
             });
-        } catch (e : any) {
+        } catch (e: any) {
             caughtException = e;
         }
 
         expect(caughtException.message).toBeTruthy();
+    });
+});
+
+describe('salesforce cli - sobject describe', () => {
+    it('should be able to describe a custom object', async () => {
+        const targetOrg: SalesforceOrg = new SalesforceOrg({
+            alias: 'cso',
+            isActive: true
+        });
+
+        const testObjectApiName: SObjectApiName = SObjectApiName.get('Test_Object__c');
+
+        const mockExecutor = genMockExecutor({
+            "sf org list --json": get(),
+            "sf sobject describe --sobject Test_Object__c --target-org cso --json": getTestObjectDescribe()
+        });
+        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+        const result: SObjectDescribeResult = await cli.sobjectDescribe({
+            targetOrg,
+            sObjectApiName: testObjectApiName
+        });
+
+        expect(result.getApiName()).toStrictEqual(SObjectApiName.get('Test_Object__c'));
+
+        expect(result.getFields().length).not.toBe(0);
+        const testObjectNameFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Id');
+
+        if (testObjectNameFieldDescribe) {
+            expect(testObjectNameFieldDescribe.getApiName()).toBe('Id');
+            expect(testObjectNameFieldDescribe.getType()).toBe('id');
+        } else {
+            expect(true).toBe(false);
+        }
+
+        const isDeletedFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('IsDeleted');
+
+        if (isDeletedFieldDescribe) {
+            expect(isDeletedFieldDescribe.getApiName()).toBe('IsDeleted');
+            expect(isDeletedFieldDescribe.getType()).toBe('boolean');
+        }
+        else {
+            expect(true).toBe(false);
+        }
+
+
+        const nameFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Name');
+
+        if (nameFieldDescribe) {
+            expect(nameFieldDescribe.getApiName()).toBe('Name');
+            expect(nameFieldDescribe.getType()).toBe('string');
+        } else {
+            expect(true).toBe(false);
+        }
+
+        const testUrlFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Test_Url__c');
+
+        if (testUrlFieldDescribe) {
+            expect(testUrlFieldDescribe.getApiName()).toBe('Test_Url__c');
+            expect(testUrlFieldDescribe.getType()).toBe('url');
+        }
+        else {
+            expect(true).toBe(false);
+        }
+
+        const testTimeDescribeResult: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Test_Time__c');
+
+        if (testTimeDescribeResult) {
+            expect(testTimeDescribeResult.getApiName()).toBe('Test_Time__c');
+            expect(testTimeDescribeResult.getType()).toBe('time');
+        }
+        else {
+            expect(true).toBe(false);
+        }
+    });
+
+    it('should be able to describe a custom object', async () => {
+        const targetOrg: SalesforceOrg = new SalesforceOrg({
+            alias: 'cso',
+            isActive: true
+        });
+
+        const testObjectApiName: SObjectApiName = SObjectApiName.get('Test_Object__c');
+
+        const mockExecutor = genMockExecutor({
+            "sf org list --json": get(),
+            "sf sobject describe --sobject Test_Object__c --target-org cso --json": getSObjectDescribeWithFailureMessage()
+        });
+        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+        let caughtException = null;
+        try {
+            await cli.sobjectDescribe({
+                targetOrg,
+                sObjectApiName: testObjectApiName
+            });
+        } catch (e : any) {
+            caughtException = e;
+        }
+
+        expect(caughtException?.message).toBeTruthy();
+        expect(caughtException?.message.includes('Parsing')).toBe(true);
     });
 });

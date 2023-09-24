@@ -9,8 +9,10 @@ import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
 import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 import { SObjectListResult } from "./sObjectListResult";
 import { SObjectApiName } from "./sObjectApiName";
+import { SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
 
 export class SfSalesforceCli extends SalesforceCli {
+
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
@@ -271,5 +273,38 @@ export class SfSalesforceCli extends SalesforceCli {
         return new SObjectListResult({
             sObjectApiNames,
         });
+    }
+
+    async sobjectDescribe(params: { targetOrg: SalesforceOrg; sObjectApiName: SObjectApiName; }): Promise<SObjectDescribeResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'sobject',
+                'describe',
+                '--sobject',
+                params.sObjectApiName.toString(),
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        const fields: SObjectFieldDescribeResult[] = stdout.result.fields.map((field: any) => {
+            return new SObjectFieldDescribeResult({
+                apiName: field.name,
+                type: field.type
+            });
+        });
+
+        const result: SObjectDescribeResult = new SObjectDescribeResult({
+            apiName: params.sObjectApiName,
+            fields
+        });
+        return result;
     }
 }

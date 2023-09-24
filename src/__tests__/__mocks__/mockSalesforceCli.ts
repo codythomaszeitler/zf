@@ -1,4 +1,3 @@
-import { markAsUntransferable } from "worker_threads";
 import { ExecutorCommand } from "../../executor";
 import { JobId } from "../../jobId";
 import { ProjectDeployCancelResult } from "../../projectDeployCancelResult";
@@ -8,8 +7,11 @@ import { ProjectDeployStartResult } from "../../projectDeployStartResult";
 import { SalesforceCli } from "../../salesforceCli";
 import { SalesforceOrg } from "../../salesforceOrg";
 import { SObjectListResult } from "../../sObjectListResult";
+import { SObjectApiName } from "../../sObjectApiName";
+import { SObjectDescribeResult } from "../../sObjectDescribeResult";
 
 export class MockSalesforceCli extends SalesforceCli {
+    
     
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
@@ -170,6 +172,10 @@ export class MockSalesforceCli extends SalesforceCli {
     sobjectList(params : {
         targetOrg : SalesforceOrg
     }): Promise<SObjectListResult> {
+        throw new Error("Method not implemented.");
+    }
+
+    sobjectDescribe(params: { targetOrg: SalesforceOrg; sObjectApiName: SObjectApiName; }): Promise<SObjectDescribeResult> {
         throw new Error("Method not implemented.");
     }
 }
