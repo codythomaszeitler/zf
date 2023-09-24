@@ -5,6 +5,8 @@ import { SfSalesforceCli } from '../sfSalesforceCli';
 import { SalesforceOrg } from "../salesforceOrg";
 import { ExecutorCommand } from '../executor';
 import { getWhenDefaultOrgDoesNotExist, getWhenDefaultOrgExists, getWhenResultArrayDoesNotExist, getWhenResultArrayIsEmpty } from './data/configGetOutput';
+import { getWithCustomObject, getWithFailureMessage, getWithoutResultArray } from './data/sobjectListOutputs';
+import { SObjectListResult } from '../sObjectListResult';
 
 describe('sf salesforce cli - get org list', () => {
     it('should convert nominal response to in memory representation', async () => {
@@ -151,3 +153,67 @@ function genMockExecutor(commandToStdOutput: any) {
         };
     };
 }
+
+describe('salesforce cli - sobject list', () => {
+
+    it('should be able to get the list of salesforce sobjects as domain objects', async () => {
+        const targetOrg: SalesforceOrg = new SalesforceOrg({
+            alias: 'cso',
+            isActive: true
+        });
+
+        const mockExecutor = genMockExecutor({
+            "sf org list --json": get(),
+            "sf sobject list --target-org cso --json": getWithCustomObject()
+        });
+        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+        const result: SObjectListResult = await cli.sobjectList({
+            targetOrg
+        });
+        expect(result.getSObjectApiNames()).not.toHaveLength(0);
+        expect(result.getSObjectApiNames()).toHaveLength(1136);
+    });
+
+    it('should give you an empty list of api names if no result is found but is successful', async () => {
+        const targetOrg: SalesforceOrg = new SalesforceOrg({
+            alias: 'cso',
+            isActive: true
+        });
+
+        const mockExecutor = genMockExecutor({
+            "sf org list --json": get(),
+            "sf sobject list --target-org cso --json": getWithoutResultArray()
+        });
+        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+        const result: SObjectListResult = await cli.sobjectList({
+            targetOrg
+        });
+        expect(result.getSObjectApiNames()).toHaveLength(0);
+    });
+
+    it('should throw an exception if result comes back as non-zero with error message', async () => {
+        const targetOrg: SalesforceOrg = new SalesforceOrg({
+            alias: 'cso',
+            isActive: true
+        });
+
+        const mockExecutor = genMockExecutor({
+            "sf org list --json": get(),
+            "sf sobject list --target-org cso --json": getWithFailureMessage()
+        });
+        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+        let caughtException = null;
+        try {
+            await cli.sobjectList({
+                targetOrg
+            });
+        } catch (e : any) {
+            caughtException = e;
+        }
+
+        expect(caughtException.message).toBeTruthy();
+    });
+});

@@ -7,9 +7,10 @@ import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
 import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
+import { SObjectListResult } from "./sObjectListResult";
+import { SObjectApiName } from "./sObjectApiName";
 
 export class SfSalesforceCli extends SalesforceCli {
-
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
@@ -236,5 +237,39 @@ export class SfSalesforceCli extends SalesforceCli {
 
         const { stdout } = await this.exec(command);
         return new ProjectDeployResumeResult();
+    }
+
+    async sobjectList(params: {
+        targetOrg: SalesforceOrg
+    }): Promise<SObjectListResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'sobject',
+                'list',
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        if (!stdout.result) {
+            return new SObjectListResult({
+                sObjectApiNames: []
+            });
+        }
+
+        const sObjectApiNames = stdout.result.map((result: string) => {
+            return SObjectApiName.get(result);
+        });
+
+        return new SObjectListResult({
+            sObjectApiNames,
+        });
     }
 }
