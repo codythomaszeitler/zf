@@ -9,9 +9,9 @@ import { SalesforceOrg } from "../../salesforceOrg";
 import { SObjectListResult } from "../../sObjectListResult";
 import { SObjectApiName } from "../../sObjectApiName";
 import { SObjectDescribeResult } from "../../sObjectDescribeResult";
+import { ApexRunResult } from "../../apexRunResult";
 
 export class MockSalesforceCli extends SalesforceCli {
-    
     
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
@@ -176,6 +176,10 @@ export class MockSalesforceCli extends SalesforceCli {
     }
 
     sobjectDescribe(params: { targetOrg: SalesforceOrg; sObjectApiName: SObjectApiName; }): Promise<SObjectDescribeResult> {
+        throw new Error("Method not implemented.");
+    }
+
+    apexRun(params: { targetOrg: SalesforceOrg; apexCode: string; }): Promise<ApexRunResult> {
         throw new Error("Method not implemented.");
     }
 }

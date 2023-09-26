@@ -12,6 +12,11 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract setDiagnostics(uri: Uri, diagnostics: Diagnostic[]): void;
     abstract clearDiagnostics() : void;
     abstract focusProblemsTab() : Promise<void>;
+    abstract showOutput(params : {
+        logs : string[];
+        show : true;
+    }) : Promise<void>;
+    abstract getHighlightedText()  : Promise<string>;
 }
 
 export interface Command {
