@@ -10,9 +10,9 @@ import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 import { SObjectListResult } from "./sObjectListResult";
 import { SObjectApiName } from "./sObjectApiName";
 import { SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
+import { ApexRunResult } from "./apexRunResult";
 
 export class SfSalesforceCli extends SalesforceCli {
-
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
@@ -306,5 +306,31 @@ export class SfSalesforceCli extends SalesforceCli {
             fields
         });
         return result;
+    }
+
+    async apexRun(params: { targetOrg: SalesforceOrg; apexCode: string; }): Promise<ApexRunResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'apex',
+                'run',
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ],
+            standardInput: params.apexCode,
+            prompt : 'Start typing Apex code. Press the Enter key after each line, then press CTRL+D when finished.\n'
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        return new ApexRunResult({
+            compiled: stdout.result.compiled,
+            success: stdout.result.success,
+            logs: stdout.result.logs
+        });
     }
 }

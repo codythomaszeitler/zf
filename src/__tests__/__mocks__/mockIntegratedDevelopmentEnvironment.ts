@@ -6,6 +6,7 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
+    
 
     selectQuickPickItem: (item: string) => void;
 
@@ -167,6 +168,14 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     didShowAnyWarningMessage() : boolean {
         return this.shownWarningMessages.length !== 0;
+    }
+
+    showOutput(params: { logs: string[]; show: true; }): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    getHighlightedText(): Promise<string> {
+        throw new Error("Method not implemented.");
     }
 }
 

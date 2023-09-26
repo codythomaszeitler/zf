@@ -8,6 +8,7 @@ import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 import { SObjectListResult } from "./sObjectListResult";
 import { SObjectDescribeResult } from "./sObjectDescribeResult";
 import { SObjectApiName } from "./sObjectApiName";
+import { ApexRunResult } from "./apexRunResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -32,6 +33,11 @@ export abstract class SalesforceCli {
         targetOrg: SalesforceOrg,
         sObjectApiName: SObjectApiName
     }): Promise<SObjectDescribeResult>;
+
+    abstract apexRun(params: {
+        targetOrg : SalesforceOrg,
+        apexCode : string; 
+    }): Promise<ApexRunResult>;
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
         const { stdout } = await this.executor(command);

@@ -3,9 +3,9 @@ import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
 import { VsCode } from "./vscode";
 import { projectDeploy } from './projectDeploy';
-import { SalesforceOrg } from './salesforceOrg';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
+import { runHighlightedApex } from './apexRun';
 
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
@@ -43,13 +43,24 @@ export function activate(context: vscode.ExtensionContext) {
 						targetOrg: defaultOrg,
 						salesforceCli,
 						outputDir: '.sfdx//tools//sobjects//customObjects',
-						progressToken	
+						progressToken
 					});
 				} catch (e: any) {
 					ide.showErrorMessage(e.message);
 				}
 			}, {
-				title : 'Generate SObjects'
+				title: 'Generate SObjects'
+			});
+		}
+	}
+
+	async function runHighlightedApexCommand() {
+		const defaultOrg = await salesforceCli.getDefaultOrg();
+		if (defaultOrg) {
+			await runHighlightedApex({
+				ide,
+				salesforceCli,
+				targetOrg: defaultOrg
 			});
 		}
 	}
@@ -57,6 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runHighlightedApex', runHighlightedApexCommand));
 }
 
 // this method is called when your extension is deactivated

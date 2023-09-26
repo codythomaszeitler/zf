@@ -26,6 +26,10 @@
       {
         "command": "sf.zsi.generateFauxSObjects",
         "title": "SF ZSI: Generate Faux SObjects"
+      },
+      {
+        "command": "sf.zsi.runHighlightedApex",
+        "title": "SF ZSI: Run Highlighted Apex"
       }
     ]
   },

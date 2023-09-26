@@ -3,16 +3,16 @@ import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
 import { ProgressToken } from "./progressToken";
-import { time } from "console";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-    
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
+    private readonly outputChannel: vscode.LogOutputChannel;
 
     constructor() {
         super();
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('Salesforce Apex Cody');
+        this.outputChannel = vscode.window.createOutputChannel('Salesforce Apex Code', { log: true });
     }
 
     withProgress(toMonitor: (progressToken: ProgressToken) => Promise<void>, options: { title: string; }): Promise<void> {
@@ -28,10 +28,10 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
                         get isCancellationRequested() {
                             return cancelToken.isCancellationRequested;
                         },
-                        report: function (params: { progress: number; title? : string}): void {
+                        report: function (params: { progress: number; title?: string }): void {
                             progress.report({
                                 increment: params.progress - currentProgress,
-                                message : params.title || undefined
+                                message: params.title || undefined
                             });
                             currentProgress = params.progress - currentProgress;
                         }
@@ -123,6 +123,27 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         await this.execute({
             commandName: 'workbench.panel.markers.view.focus'
         });
+    }
+
+    async showOutput(params: { logs: string[]; show: true; }): Promise<void> {
+        this.outputChannel.clear();
+        params.logs.forEach(log => {
+            this.outputChannel.appendLine(log);
+        });
+        this.outputChannel.show(!params.show);
+    }
+
+    async getHighlightedText(): Promise<string> {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const selection = editor.selection;
+            if (selection && !selection.isEmpty) {
+                const selectionRange = new vscode.Range(selection.start.line, selection.start.character, selection.end.line, selection.end.character);
+                const highlighted = editor.document.getText(selectionRange);
+                return highlighted;
+            }
+        }
+        return '';
     }
 }
 
