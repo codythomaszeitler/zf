@@ -12,9 +12,15 @@ import { ApexRunResult } from "./apexRunResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
+    private readonly env : Object;
 
-    constructor(executor: Executor) {
+    constructor(executor: Executor, proxy? : {}) {
         this.executor = executor;
+
+        this.env = {
+            ...process.env,
+            ...proxy 
+        };
     }
 
     abstract getOrgList(): Promise<SalesforceOrg[]>;
@@ -40,6 +46,7 @@ export abstract class SalesforceCli {
     }): Promise<ApexRunResult>;
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
+        command.env = this.env;
         const { stdout } = await this.executor(command);
         if (!stdout) {
             throw new Error(command + ' did not return any output.');

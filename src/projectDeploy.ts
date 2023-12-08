@@ -89,7 +89,7 @@ async function doProjectDeploy(params: {
     });
     await showFailuresInProblemsTab(params.ide, projectDeployReportResult);
 
-    if (params.ide.getConfig('zsi.vscode.shouldFocusProblemsWhenDeployFails', true) && didHaveAnyFailures(projectDeployReportResult)) {
+    if (params.ide.getConfig('sf.zsi.vscode.shouldFocusProblemsWhenDeployFails', true) && didHaveAnyFailures(projectDeployReportResult)) {
         await params.ide.focusProblemsTab();
     }
 }

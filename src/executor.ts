@@ -8,6 +8,7 @@ export interface ExecutorCommand {
     args: string[];
     standardInput?: string;
     prompt?: string;
+    env? : Object;
 }
 
 export interface ExecutorResult {
@@ -17,7 +18,8 @@ export interface ExecutorResult {
 export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorResult> {
     return new Promise((resolve, reject) => {
         const cli = spawn(command.command, command.args, {
-            shell: true
+            shell: true,
+            env : command.env || process.env
         });
 
         cli.on('spawn', () => {

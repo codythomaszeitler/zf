@@ -16,7 +16,7 @@ export class SfSalesforceCli extends SalesforceCli {
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
-    constructor(executor: Executor) {
+    constructor(executor: Executor, proxy? : {}) {
         super(executor);
 
         this.cached = [];

@@ -31,7 +31,21 @@
         "command": "sf.zsi.runHighlightedApex",
         "title": "SF ZSI: Run Highlighted Apex"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "sf zsi",
+      "properties": {
+        "sf.zsi.vscode.shouldFocusProblemsWhenDeployFails": {
+          "type": "boolean",
+          "default": true,
+          "description": "It 'Project Deploy' should focus the problems tab when a failure occurs."
+        },
+        "sf.zsi.vscode.proxy": {
+          "type": "object",
+          "description": "Proxy settings given to the shell as a JSON object"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

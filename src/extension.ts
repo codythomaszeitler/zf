@@ -9,7 +9,9 @@ import { runHighlightedApex } from './apexRun';
 
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
-	const salesforceCli = new SfSalesforceCli(runCliCommand);
+
+	const proxy = ide.getConfig("sf.zsi.vscode.proxy", {});
+	const salesforceCli = new SfSalesforceCli(runCliCommand, proxy);
 
 	async function runSfOrgOpen() {
 		try {
