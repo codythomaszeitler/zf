@@ -1,3 +1,4 @@
+import { Logger } from "./logger";
 import { ProgressToken } from "./progressToken";
 import { SObjectDescribeResult, SObjectFieldDescribeResult, SObjectFieldType } from "./sObjectDescribeResult";
 import { SObjectListResult } from "./sObjectListResult";
@@ -67,7 +68,7 @@ export async function generateFauxSObjects(params: {
             await fs.writeFile(fileName, contents).then(() => {
                 completed++;
             }).catch(e => {
-                console.log(e);
+                Logger.get().warn(e.message);
             });
 
             return runSObjectDescribe();
