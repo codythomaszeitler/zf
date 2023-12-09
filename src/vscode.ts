@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
 import { ProgressToken } from "./progressToken";
+import { Logger } from "./logger";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
 
@@ -12,7 +13,25 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
     constructor() {
         super();
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('Salesforce Apex Cody');
-        this.outputChannel = vscode.window.createOutputChannel('Salesforce Apex Code', { log: true });
+        this.outputChannel = vscode.window.createOutputChannel('sf-zsi', { log: true });
+    }
+
+    generateLogger() : Logger {
+        const that = this;
+        let shown = false;
+
+        class VsCodeLogger extends Logger {
+            write(message: string): void {
+                that.outputChannel.append(message);        
+
+                if (!shown) {
+                    that.outputChannel.show();
+                    shown = true;
+                }
+            }
+        }
+
+        return new VsCodeLogger();
     }
 
     withProgress(toMonitor: (progressToken: ProgressToken) => Promise<void>, options: { title: string; }): Promise<void> {
