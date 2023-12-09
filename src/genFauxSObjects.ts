@@ -1,4 +1,3 @@
-import { kMaxLength } from "buffer";
 import { ProgressToken } from "./progressToken";
 import { SObjectDescribeResult, SObjectFieldDescribeResult, SObjectFieldType } from "./sObjectDescribeResult";
 import { SObjectListResult } from "./sObjectListResult";
@@ -20,6 +19,10 @@ export async function generateFauxSObjects(params: {
     outputDir: string,
     progressToken: ProgressToken
 }) {
+    await fs.mkdir(params.outputDir, {
+        recursive : true
+    });
+
     const sobjectListResult: SObjectListResult = await params.salesforceCli.sobjectList({
         targetOrg: params.targetOrg
     });
@@ -29,6 +32,10 @@ export async function generateFauxSObjects(params: {
     let completed = 0;
 
     const runSObjectDescribe = async (): Promise<any> => {
+        if (params.progressToken.isCancellationRequested) {
+            return;
+        }
+
         const apiName = names.pop();
         if (!apiName) {
             return;
