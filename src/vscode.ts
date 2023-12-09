@@ -89,7 +89,7 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
     }
 
     getConfig<T>(property: string, defaultValue: T): T {
-        const config = vscode.workspace.getConfiguration('zsi-vscode');
+        const config = vscode.workspace.getConfiguration();
         const value = config.get<T>(property);
 
         if (value === undefined) {
