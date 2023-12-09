@@ -33,7 +33,7 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
                                 increment: params.progress - currentProgress,
                                 message: params.title || undefined
                             });
-                            currentProgress = params.progress - currentProgress;
+                            currentProgress = params.progress;
                         }
                     };
 
