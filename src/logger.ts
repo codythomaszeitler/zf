@@ -34,7 +34,9 @@ export abstract class Logger {
 
 	private writeWithLogLevelCheck(level: LogLevel, message: string): void {
 		if (this.level.encompasses(level)) {
-			this.write(this.formatString(level, message));
+			if (message) {
+				this.write(this.formatString(level, message));
+			}
 		}
 	}
 

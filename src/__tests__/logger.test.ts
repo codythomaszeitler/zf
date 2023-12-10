@@ -36,6 +36,11 @@ describe('logger', () => {
 		const re = /\[[\d]+\] \[INFO\] - Test String/;
 		expect(testObject.contains(re)).toBeFalsy();
 	});
+
+	it('should NOT log a message if given a falsy string', () => {
+		testObject.info('');
+		expect(testObject.messages).toHaveLength(0);
+	});
 });
 
 class TestLogger extends Logger {
