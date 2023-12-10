@@ -1,4 +1,3 @@
-import { IntegratedDevelopmentEnvironment } from "../integratedDevelopmentEnvironment";
 import { openOrg } from "../openOrg";
 import { SalesforceOrg } from "../salesforceOrg";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
