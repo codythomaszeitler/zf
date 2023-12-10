@@ -6,11 +6,13 @@ import { projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
-import { Logger } from './logger';
+import { LogLevel, Logger } from './logger';
 
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
-	Logger.setGlobalLogger(ide.generateLogger());
+	const logger = ide.generateLogger();
+	logger.setLogLevel(LogLevel.info);
+	Logger.setGlobalLogger(logger);
 
 	const proxy = ide.getConfig("sf.zsi.vscode.proxy", {});
 	const salesforceCli = new SfSalesforceCli(runCliCommand, proxy);

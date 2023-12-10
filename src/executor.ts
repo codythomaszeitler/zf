@@ -1,5 +1,5 @@
 const { spawn } = require('node:child_process');
-const os = require('os');
+import { Logger } from "./logger";
 
 export type Executor = (command: ExecutorCommand) => Promise<ExecutorResult>;
 
@@ -8,7 +8,7 @@ export interface ExecutorCommand {
     args: string[];
     standardInput?: string;
     prompt?: string;
-    env? : Object;
+    env?: Object;
 }
 
 export interface ExecutorResult {
@@ -17,9 +17,12 @@ export interface ExecutorResult {
 
 export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorResult> {
     return new Promise((resolve, reject) => {
+
+        Logger.get().info(intoString(command));
+
         const cli = spawn(command.command, command.args, {
             shell: true,
-            env : command.env || process.env
+            env: command.env || process.env
         });
 
         cli.on('spawn', () => {
@@ -46,15 +49,16 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
         });
 
         cli.on('close', () => {
-            if (stdout) {
-                resolve({
-                    stdout: JSON.parse(stdout)
-                });
-            } else {
-                resolve({
-                    stdout: {}
-                });
-            }
+            const output = stdout ? JSON.parse(stdout) : {};
+            Logger.get().info(stdout);
+            resolve({
+                stdout: output
+            });
         });
     });
+}
+
+function intoString(command: ExecutorCommand): string {
+    const toString = command.command + " " + command.args.join(" ");
+    return toString;
 }
