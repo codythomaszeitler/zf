@@ -45,7 +45,9 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
         });
 
         cli.on('error', (error: string) => {
-            reject(new Error(error));
+            const e = new Error(error);
+            Logger.get().error(e);
+            reject(e);
         });
 
         cli.on('close', () => {
