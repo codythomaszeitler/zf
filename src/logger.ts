@@ -1,5 +1,3 @@
-import exp = require("constants");
-
 export abstract class Logger {
 
 	private static singleton: Logger;
