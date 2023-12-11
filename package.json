@@ -1,6 +1,7 @@
 {
   "name": "sf-zsi",
   "displayName": "sf zsi",
+  "repository": "https://github.com/codythomaszeitler/sf-zsi.git",
   "description": "vscode extensions for salesforce.",
   "version": "0.0.1",
   "engines": {
