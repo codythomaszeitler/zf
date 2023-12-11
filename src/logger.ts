@@ -1,3 +1,5 @@
+import exp = require("constants");
+
 export abstract class Logger {
 
 	private static singleton: Logger;
@@ -32,6 +34,15 @@ export abstract class Logger {
 		this.writeWithLogLevelCheck(LogLevel.info, message);
 	}
 
+	public error(exception: Error): void {
+		if (exception.stack) {
+			const message = exception.message + ' - ' + exception.stack;
+			this.writeWithLogLevelCheck(LogLevel.error, message);
+		} else {
+			this.writeWithLogLevelCheck(LogLevel.error, exception.message);
+		}
+	}
+
 	private writeWithLogLevelCheck(level: LogLevel, message: string): void {
 		if (this.level.encompasses(level)) {
 			if (message) {
@@ -54,6 +65,7 @@ export class LogLevel {
 	public static readonly fine: LogLevel = new LogLevel(0, "FINE");
 	public static readonly info: LogLevel = new LogLevel(1, "INFO");
 	public static readonly warn: LogLevel = new LogLevel(2, "WARN");
+	public static readonly error: LogLevel = new LogLevel(3, "ERROR");
 
 	private readonly ordering: number;
 	private readonly raw: string;

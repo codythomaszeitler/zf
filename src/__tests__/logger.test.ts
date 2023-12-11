@@ -26,6 +26,25 @@ describe('logger', () => {
 		expect(testObject.contains(re)).toBeTruthy();
 	});
 
+	it('should log an error when commanded', () => {
+		const e = new Error('Test Exception');
+		testObject.error(e);
+
+		const re = /\[[\d]+\] \[ERROR\] - Test Exception - .*/;
+		expect(testObject.contains(re)).toBeTruthy();
+	});
+
+	it('should log an error without stack trace when commanded', () => {
+		const e = new Error('Test Exception');
+		e.stack = undefined;
+		testObject.error(e);
+
+		const re = /\[[\d]+\] \[ERROR\] - Test Exception - .*/;
+		expect(testObject.contains(re)).toBeFalsy();
+
+		expect(testObject.messages).toHaveLength(1);
+	});
+
 	it('should NOT log an info message if log level is currently warn', () => {
 
 		testObject.setLogLevel(LogLevel.warn);
@@ -47,16 +66,16 @@ class TestLogger extends Logger {
 
 	public messages: string[];
 
-	constructor() {
+	public constructor() {
 		super();
 		this.messages = [];
 	}
 
-	write(message: string): void {
+	public write(message: string): void {
 		this.messages.push(message);
 	}
 
-	contains(re: RegExp): boolean {
+	public contains(re: RegExp): boolean {
 		return !!this.messages.find(message => re.test(message));
 	}
 }
