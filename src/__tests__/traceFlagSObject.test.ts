@@ -1,4 +1,4 @@
-import {describe, expect, test} from '@jest/globals';
+import { describe, expect } from '@jest/globals';
 import { TraceFlagSObjectBuilder } from '../traceFlagSObject';
 import { SalesforceLogLevel } from '../salesforceLogLevel';
 
@@ -9,7 +9,7 @@ describe('trace flag sobject', () => {
 		builder.withApexCode(SalesforceLogLevel.debug);
 		builder.withCallout(SalesforceLogLevel.debug);
 		builder.withDatabase(SalesforceLogLevel.debug);
-		builder.withSystem(SalesforceLogLevel.debug);
+		builder.withSystem(SalesforceLogLevel.info);
 		builder.withValidation(SalesforceLogLevel.debug);
 		builder.withVisualforce(SalesforceLogLevel.debug);
 
@@ -18,7 +18,7 @@ describe('trace flag sobject', () => {
 		expect(testObject.apexCode).toBe(SalesforceLogLevel.debug);
 		expect(testObject.callout).toBe(SalesforceLogLevel.debug);
 		expect(testObject.database).toBe(SalesforceLogLevel.debug);
-		expect(testObject.system).toBe(SalesforceLogLevel.debug);
+		expect(testObject.system).toBe(SalesforceLogLevel.info);
 		expect(testObject.validation).toBe(SalesforceLogLevel.debug);
 		expect(testObject.visualforce).toBe(SalesforceLogLevel.debug);
 	});
