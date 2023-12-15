@@ -1,3 +1,4 @@
+import { trace } from 'console';
 import { SalesforceLogLevel } from './salesforceLogLevel';
 
 export interface TraceFlagSObject {
@@ -5,7 +6,7 @@ export interface TraceFlagSObject {
 	readonly debugLevelId: string;
 	readonly expirationDate: Date;
 	readonly logType: LogType;
-	readonly startDate: Date;
+	readonly startDate?: Date;
 	readonly tracedEntityId: string;
 	readonly apexCode: SalesforceLogLevel;
 	readonly callout: SalesforceLogLevel;
@@ -102,7 +103,7 @@ export class TraceFlagSObjectBuilder {
 			debugLevelId: this.debugLevelId || "",
 			expirationDate: this.expirationDate || new Date(Date.now()),
 			logType: this.logType || LogType.developerLog,
-			startDate: this.startDate || new Date(Date.now()),
+			startDate: this.startDate,
 			tracedEntityId: this.tracedEntityId || "",
 			apexCode: this.apexCode || SalesforceLogLevel.none,
 			callout: this.callout || SalesforceLogLevel.none,
@@ -115,6 +116,10 @@ export class TraceFlagSObjectBuilder {
 	}
 }
 
+export function intoKeyValueString(traceFlagSObject : TraceFlagSObject) : string {
+	return intoKeyValueStrings(traceFlagSObject).join(" ");
+}
+
 export function intoKeyValueStrings(traceFlagSObject: TraceFlagSObject): string[] {
 	const keyValuePairs: string[] = [];
 
@@ -123,6 +128,16 @@ export function intoKeyValueStrings(traceFlagSObject: TraceFlagSObject): string[
 	}
 
 	keyValuePairs.push(`LogType=${traceFlagSObject.logType}`);
+
+	if (traceFlagSObject.tracedEntityId) {
+		keyValuePairs.push(`TraceEntityId=${traceFlagSObject.tracedEntityId}`);
+	}
+
+	if (traceFlagSObject.startDate) {
+		keyValuePairs.push(`StartDate=${traceFlagSObject.startDate.toISOString()}`);
+	}
+
+	keyValuePairs.push(`ExpirationDate=${traceFlagSObject.expirationDate.toISOString()}`);
 
 	return keyValuePairs;
 }
