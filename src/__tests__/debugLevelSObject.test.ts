@@ -1,6 +1,6 @@
 import {describe, expect, test} from '@jest/globals';
 import { SalesforceLogLevel } from '../salesforceLogLevel';
-import { DebugLevelBuilder, intoKeyValueStrings } from '../debugLevelSObject';
+import { DebugLevelBuilder, intoKeyValueString, intoKeyValueStrings } from '../debugLevelSObject';
 
 describe('trace flag sobject builder', () => {
 	it('should be able to create a trace flag sobject with all levels set', () => {
@@ -46,6 +46,8 @@ describe('trace flag sobject values', () => {
 		expect(keyValuePairs).toContain(`Callout=${debugLevel.callout}`);
 		expect(keyValuePairs).toContain(`Validation=${debugLevel.validation}`);
 		expect(keyValuePairs).toContain(`Workflow=${debugLevel.workflow}`);
+
+		expect(intoKeyValueString(debugLevel)).not.toHaveLength(0);
 	});
 });
 
