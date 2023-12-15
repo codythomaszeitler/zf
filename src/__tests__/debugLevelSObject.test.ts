@@ -38,6 +38,7 @@ describe('trace flag sobject values', () => {
 		const debugLevel = builder.build();
 		const keyValuePairs = intoKeyValueStrings(debugLevel);
 		expect(keyValuePairs).toContain(`DeveloperName=${debugLevel.developerName}`);
+		expect(keyValuePairs).toContain(`MasterLabel=${debugLevel.developerName}`);
 		expect(keyValuePairs).toContain(`ApexCode=${debugLevel.apexCode}`);
 		expect(keyValuePairs).toContain(`Visualforce=${debugLevel.visualforce}`);
 		expect(keyValuePairs).toContain(`System=${debugLevel.system}`);

@@ -102,6 +102,7 @@ export function intoKeyValueStrings(debugLevelSObject : DebugLevel) : string[] {
 	const keyValuePairs : string[] = [];
 
 	keyValuePairs.push(`DeveloperName=${debugLevelSObject.developerName}`);
+	keyValuePairs.push(`MasterLabel=${debugLevelSObject.developerName}`);
 	keyValuePairs.push(`ApexCode=${debugLevelSObject.apexCode}`);
 	keyValuePairs.push(`Visualforce=${debugLevelSObject.visualforce}`);
 	keyValuePairs.push(`System=${debugLevelSObject.system}`);
