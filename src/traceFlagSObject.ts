@@ -1,11 +1,10 @@
-
 import { SalesforceLogLevel } from './salesforceLogLevel';
 
 export interface TraceFlagSObject {
 	readonly id: string;
 	readonly debugLevelId: string;
 	readonly expirationDate: Date;
-	readonly logType: string;
+	readonly logType: LogType;
 	readonly startDate: Date;
 	readonly tracedEntityId: string;
 	readonly apexCode: SalesforceLogLevel;
@@ -21,7 +20,7 @@ export class TraceFlagSObjectBuilder {
 	private id?: string;
 	private debugLevelId?: string;
 	private expirationDate?: Date;
-	private logType?: string;
+	private logType?: LogType;
 	private startDate?: Date;
 	private tracedEntityId?: string;
 	private apexCode?: SalesforceLogLevel;
@@ -31,6 +30,11 @@ export class TraceFlagSObjectBuilder {
 	private validation?: SalesforceLogLevel;
 	private visualforce?: SalesforceLogLevel;
 	private workflow?: SalesforceLogLevel;
+
+	public withLogType(logType: LogType): TraceFlagSObjectBuilder {
+		this.logType = logType;
+		return this;
+	}
 
 	public withDebugLevelId(debugLevelId: string): TraceFlagSObjectBuilder {
 		this.debugLevelId = debugLevelId;
@@ -97,7 +101,7 @@ export class TraceFlagSObjectBuilder {
 			id: this.id || "",
 			debugLevelId: this.debugLevelId || "",
 			expirationDate: this.expirationDate || new Date(Date.now()),
-			logType: this.logType || "DEVELOPER_LOG",
+			logType: this.logType || LogType.developerLog,
 			startDate: this.startDate || new Date(Date.now()),
 			tracedEntityId: this.tracedEntityId || "",
 			apexCode: this.apexCode || SalesforceLogLevel.none,
@@ -108,5 +112,35 @@ export class TraceFlagSObjectBuilder {
 			visualforce: this.visualforce || SalesforceLogLevel.none,
 			workflow: this.workflow || SalesforceLogLevel.none
 		};
+	}
+}
+
+export function intoKeyValueStrings(traceFlagSObject: TraceFlagSObject): string[] {
+	const keyValuePairs: string[] = [];
+
+	if (traceFlagSObject.debugLevelId) {
+		keyValuePairs.push(`DebugLevelId=${traceFlagSObject.debugLevelId}`);
+	}
+
+	keyValuePairs.push(`LogType=${traceFlagSObject.logType}`);
+
+	return keyValuePairs;
+}
+
+export class LogType {
+
+	public static readonly classTracing: LogType = new LogType("CLASS_TRACING");
+	public static readonly developerLog: LogType = new LogType("DEVELOPER_LOG");
+	public static readonly profiling: LogType = new LogType("PROFILING");
+	public static readonly userDebug: LogType = new LogType("USER_DEBUG");
+
+	private readonly raw: string;
+
+	private constructor(raw: string) {
+		this.raw = raw;
+	}
+
+	public toString() {
+		return this.raw;
 	}
 }
