@@ -2,8 +2,8 @@ import {describe, expect, test} from '@jest/globals';
 import { SalesforceLogLevel } from '../salesforceLogLevel';
 import { DebugLevelBuilder, intoKeyValueString, intoKeyValueStrings } from '../debugLevelSObject';
 
-describe('trace flag sobject builder', () => {
-	it('should be able to create a trace flag sobject with all levels set', () => {
+describe('debug flag sobject builder', () => {
+	it('should be able to create a debug flag sobject with all levels set', () => {
 
 		const builder = new DebugLevelBuilder({
 			developerName : 'TestDeveloperName'
@@ -26,8 +26,8 @@ describe('trace flag sobject builder', () => {
 	});
 });
 
-describe('trace flag sobject values', () => {
-	it('should be able to construct a string key value pair from sobject trace flag', () => {
+describe('debug flag sobject values', () => {
+	it('should be able to construct a string key value pair from sobject debug flag', () => {
 		const testDeveloperName = 'TestDeveloperName';
 		const builder = new DebugLevelBuilder({
 			developerName : testDeveloperName
