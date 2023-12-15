@@ -1,5 +1,5 @@
 import { describe, expect } from '@jest/globals';
-import { LogType, TraceFlagSObjectBuilder, intoKeyValueStrings } from '../traceFlagSObject';
+import { LogType, TraceFlagSObjectBuilder, intoKeyValueString, intoKeyValueStrings } from '../traceFlagSObject';
 import { SalesforceLogLevel } from '../salesforceLogLevel';
 
 describe('trace flag sobject builder', () => {
@@ -39,6 +39,11 @@ describe('trace flag sobject values', () => {
 
 		expect(keyValuePairs).toContain("DebugLevelId=7dl170000008U36AAE");
 		expect(keyValuePairs).toContain("LogType=CLASS_TRACING");
+		expect(keyValuePairs).toContain("TraceEntityId=01p17000000R6bLAAS");
+		expect(keyValuePairs).toContain("StartDate=2022-12-15T00:26:04.000Z");
+		expect(keyValuePairs).toContain("ExpirationDate=2022-12-15T00:56:04.000Z");
+
+		expect(intoKeyValueString(testObject)).not.toHaveLength(0);
 	});
 });
 
