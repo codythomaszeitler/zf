@@ -48,6 +48,7 @@ describe('debug flag sobject values', () => {
 		expect(keyValuePairs).toContain(`Workflow=${debugLevel.workflow}`);
 
 		expect(intoKeyValueString(debugLevel)).not.toHaveLength(0);
+		expect(debugLevel.intoKeyValueString()).not.toHaveLength(0);
 	});
 });
 

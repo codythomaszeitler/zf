@@ -11,12 +11,16 @@ import { SObjectListResult } from "./sObjectListResult";
 import { SObjectApiName } from "./sObjectApiName";
 import { SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
 import { ApexRunResult } from "./apexRunResult";
+import { DataCreateRecordResult } from "./dataCreateRecordResult";
+import { CreateableSObject } from "./createableSObject";
+import { DebugLogLevelId } from "./debugLogLevelId";
 
 export class SfSalesforceCli extends SalesforceCli {
+
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
-    constructor(executor: Executor, proxy? : {}) {
+    constructor(executor: Executor, proxy?: {}) {
         super(executor, proxy);
 
         this.cached = [];
@@ -319,7 +323,7 @@ export class SfSalesforceCli extends SalesforceCli {
                 '--json'
             ],
             standardInput: params.apexCode,
-            prompt : 'Start typing Apex code. Press the Enter key after each line, then press CTRL+D when finished.\n'
+            prompt: 'Start typing Apex code. Press the Enter key after each line, then press CTRL+D when finished.\n'
         };
 
         const { stdout } = await this.exec(command);
@@ -331,6 +335,34 @@ export class SfSalesforceCli extends SalesforceCli {
             compiled: stdout.result.compiled,
             success: stdout.result.success,
             logs: stdout.result.logs
+        });
+    }
+
+    async dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'data',
+                'create',
+                'record',
+                '--use-tooling-api',
+                '--sobject',
+                params.sObject.getSObjectName(),
+                '--values',
+                params.sObject.intoKeyValueString(),
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        return new DataCreateRecordResult({
+            debugLogLevelId: new DebugLogLevelId(stdout.result.id)
         });
     }
 }
