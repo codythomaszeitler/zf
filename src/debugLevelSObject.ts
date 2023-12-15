@@ -25,6 +25,12 @@ export class DebugLevelBuilder {
 	private validation?: SalesforceLogLevel;
 	private workflow?: SalesforceLogLevel;
 
+	public constructor(params : {
+		developerName : string
+	}) {
+		this.developerName = params.developerName;	
+	}
+
 	public withId(id: string): DebugLevelBuilder {
 		this.id = id;
 		return this;
@@ -89,4 +95,13 @@ export class DebugLevelBuilder {
 			workflow: this.workflow || SalesforceLogLevel.none
 		};
 	}
+}
+
+export function intoKeyValueStrings(debugLevelSObject : DebugLevel) : string[] {
+
+	const keyValuePairs : string[] = [];
+
+	keyValuePairs.push(`DeveloperName=${debugLevelSObject.developerName}`);
+
+	return keyValuePairs;
 }
