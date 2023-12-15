@@ -130,7 +130,7 @@ export function intoKeyValueStrings(traceFlagSObject: TraceFlagSObject): string[
 	keyValuePairs.push(`LogType=${traceFlagSObject.logType}`);
 
 	if (traceFlagSObject.tracedEntityId) {
-		keyValuePairs.push(`TraceEntityId=${traceFlagSObject.tracedEntityId}`);
+		keyValuePairs.push(`TracedEntityId=${traceFlagSObject.tracedEntityId}`);
 	}
 
 	if (traceFlagSObject.startDate) {
