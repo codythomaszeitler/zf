@@ -1,6 +1,7 @@
+import { CreateableSObject } from "./createableSObject";
 import { SalesforceLogLevel } from "./salesforceLogLevel";
 
-export interface DebugLevel {
+export interface DebugLevel extends CreateableSObject {
 	id?: string;
 	developerName: string;
 	language: SalesforceLogLevel;
@@ -25,10 +26,10 @@ export class DebugLevelBuilder {
 	private validation?: SalesforceLogLevel;
 	private workflow?: SalesforceLogLevel;
 
-	public constructor(params : {
-		developerName : string
+	public constructor(params: {
+		developerName: string
 	}) {
-		this.developerName = params.developerName;	
+		this.developerName = params.developerName;
 	}
 
 	public withId(id: string): DebugLevelBuilder {
@@ -92,18 +93,24 @@ export class DebugLevelBuilder {
 			database: this.database || SalesforceLogLevel.none,
 			callout: this.callout || SalesforceLogLevel.none,
 			validation: this.validation || SalesforceLogLevel.none,
-			workflow: this.workflow || SalesforceLogLevel.none
+			workflow: this.workflow || SalesforceLogLevel.none,
+			getSObjectName(): string {
+				return 'DebugLevel';
+			},
+			intoKeyValueString(): string {
+				return intoKeyValueString(this);
+			}
 		};
 	}
 }
 
-export function intoKeyValueString(debugLevelSObject : DebugLevel) : string {
+export function intoKeyValueString(debugLevelSObject: DebugLevel): string {
 	return intoKeyValueStrings(debugLevelSObject).join(" ");
 }
 
-export function intoKeyValueStrings(debugLevelSObject : DebugLevel) : string[] {
+export function intoKeyValueStrings(debugLevelSObject: DebugLevel): string[] {
 
-	const keyValuePairs : string[] = [];
+	const keyValuePairs: string[] = [];
 
 	keyValuePairs.push(`DeveloperName=${debugLevelSObject.developerName}`);
 	keyValuePairs.push(`MasterLabel=${debugLevelSObject.developerName}`);

@@ -9,17 +9,19 @@ import { SObjectListResult } from "./sObjectListResult";
 import { SObjectDescribeResult } from "./sObjectDescribeResult";
 import { SObjectApiName } from "./sObjectApiName";
 import { ApexRunResult } from "./apexRunResult";
+import { DataCreateRecordResult } from "./dataCreateRecordResult";
+import { CreateableSObject } from "./createableSObject";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
-    private readonly env : Object;
+    private readonly env: Object;
 
-    constructor(executor: Executor, proxy? : {}) {
+    constructor(executor: Executor, proxy?: {}) {
         this.executor = executor;
 
         this.env = {
             ...process.env,
-            ...proxy 
+            ...proxy
         };
     }
 
@@ -41,9 +43,14 @@ export abstract class SalesforceCli {
     }): Promise<SObjectDescribeResult>;
 
     abstract apexRun(params: {
-        targetOrg : SalesforceOrg,
-        apexCode : string; 
+        targetOrg: SalesforceOrg,
+        apexCode: string;
     }): Promise<ApexRunResult>;
+
+    abstract dataCreateRecord(params: {
+        targetOrg: SalesforceOrg,
+        sObject: CreateableSObject;
+    }): Promise<DataCreateRecordResult>;
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
         command.env = this.env;

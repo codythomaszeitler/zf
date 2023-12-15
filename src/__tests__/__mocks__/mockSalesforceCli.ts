@@ -10,24 +10,26 @@ import { SObjectListResult } from "../../sObjectListResult";
 import { SObjectApiName } from "../../sObjectApiName";
 import { SObjectDescribeResult } from "../../sObjectDescribeResult";
 import { ApexRunResult } from "../../apexRunResult";
+import { CreateableSObject } from "../../createableSObject";
+import { DataCreateRecordResult } from "../../dataCreateRecordResult";
 
 export class MockSalesforceCli extends SalesforceCli {
-    
+
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
 
-    public toThrowOnProjectDeployCancel : Error | undefined;
+    public toThrowOnProjectDeployCancel: Error | undefined;
     public toThrowOnGetOrgList: Error | undefined;
 
     private deploymentJobId: JobId | null;
     private deploymentStatus: string;
     private failures: ComponentFailure[];
     private wasProjectDeployResumeCalled: boolean;
-    private waitForDeploymentToStart : (value :unknown) => void;
-    private noComponentsToDeploy : boolean;
+    private waitForDeploymentToStart: (value: unknown) => void;
+    private noComponentsToDeploy: boolean;
 
     constructor() {
-        super(async (command: ExecutorCommand) => { return { stdout: ''};});
+        super(async (command: ExecutorCommand) => { return { stdout: '' }; });
         this.orgs = [];
         this.openedOrgs = [];
         this.deploymentJobId = null;
@@ -35,7 +37,7 @@ export class MockSalesforceCli extends SalesforceCli {
         this.failures = [];
         this.wasProjectDeployResumeCalled = false;
         this.stopInfiniteLoopCounter = 0;
-        this.waitForDeploymentToStart = () => {};
+        this.waitForDeploymentToStart = () => { };
         this.noComponentsToDeploy = false;
     }
 
@@ -70,7 +72,7 @@ export class MockSalesforceCli extends SalesforceCli {
     async projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult> {
         if (this.noComponentsToDeploy) {
             return new ProjectDeployStartResult({
-                jobId : new JobId('')
+                jobId: new JobId('')
             });
         }
 
@@ -82,7 +84,7 @@ export class MockSalesforceCli extends SalesforceCli {
         return new ProjectDeployStartResult({ jobId: this.deploymentJobId });
     }
 
-    private stopInfiniteLoopCounter : number;
+    private stopInfiniteLoopCounter: number;
     async projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployReportResult> {
         this.stopInfiniteLoopCounter++;
         if (this.stopInfiniteLoopCounter === 1000) {
@@ -154,7 +156,7 @@ export class MockSalesforceCli extends SalesforceCli {
 
     async projectDeployResume(params: { jobId: JobId; }): Promise<ProjectDeployResumeResult> {
         this.wasProjectDeployResumeCalled = true;
-        return new ProjectDeployResumeResult(); 
+        return new ProjectDeployResumeResult();
     }
 
     didResumeProjectDeployment() {
@@ -165,12 +167,12 @@ export class MockSalesforceCli extends SalesforceCli {
         throw new Error("Method not implemented.");
     }
 
-    setNoComponentsToDeploy(noComponentsToDeploy : boolean) {
+    setNoComponentsToDeploy(noComponentsToDeploy: boolean) {
         this.noComponentsToDeploy = noComponentsToDeploy;
     }
 
-    sobjectList(params : {
-        targetOrg : SalesforceOrg
+    sobjectList(params: {
+        targetOrg: SalesforceOrg
     }): Promise<SObjectListResult> {
         throw new Error("Method not implemented.");
     }
@@ -180,6 +182,10 @@ export class MockSalesforceCli extends SalesforceCli {
     }
 
     apexRun(params: { targetOrg: SalesforceOrg; apexCode: string; }): Promise<ApexRunResult> {
+        throw new Error("Method not implemented.");
+    }
+
+    dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
         throw new Error("Method not implemented.");
     }
 }
