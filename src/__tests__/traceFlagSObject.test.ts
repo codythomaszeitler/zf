@@ -39,7 +39,7 @@ describe('trace flag sobject values', () => {
 
 		expect(keyValuePairs).toContain("DebugLevelId=7dl170000008U36AAE");
 		expect(keyValuePairs).toContain("LogType=CLASS_TRACING");
-		expect(keyValuePairs).toContain("TraceEntityId=01p17000000R6bLAAS");
+		expect(keyValuePairs).toContain("TracedEntityId=01p17000000R6bLAAS");
 		expect(keyValuePairs).toContain("StartDate=2022-12-15T00:26:04.000Z");
 		expect(keyValuePairs).toContain("ExpirationDate=2022-12-15T00:56:04.000Z");
 
