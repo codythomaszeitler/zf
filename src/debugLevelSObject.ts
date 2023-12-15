@@ -97,6 +97,10 @@ export class DebugLevelBuilder {
 	}
 }
 
+export function intoKeyValueString(debugLevelSObject : DebugLevel) : string {
+	return intoKeyValueStrings(debugLevelSObject).join(" ");
+}
+
 export function intoKeyValueStrings(debugLevelSObject : DebugLevel) : string[] {
 
 	const keyValuePairs : string[] = [];
