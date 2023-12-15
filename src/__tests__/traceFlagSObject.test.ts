@@ -1,8 +1,8 @@
 import { describe, expect } from '@jest/globals';
-import { TraceFlagSObjectBuilder } from '../traceFlagSObject';
+import { LogType, TraceFlagSObjectBuilder, intoKeyValueStrings } from '../traceFlagSObject';
 import { SalesforceLogLevel } from '../salesforceLogLevel';
 
-describe('trace flag sobject', () => {
+describe('trace flag sobject builder', () => {
 	it('should be able to create a trace flag sobject with all levels set', () => {
 
 		const builder = new TraceFlagSObjectBuilder();
@@ -21,6 +21,24 @@ describe('trace flag sobject', () => {
 		expect(testObject.system).toBe(SalesforceLogLevel.info);
 		expect(testObject.validation).toBe(SalesforceLogLevel.debug);
 		expect(testObject.visualforce).toBe(SalesforceLogLevel.debug);
+	});
+});
+
+describe('trace flag sobject values', () => {
+	it('should be able to construct a string key value pair from sobject trace flag', () => {
+		const builder = new TraceFlagSObjectBuilder();
+		builder.withDebugLevelId('7dl170000008U36AAE');
+		builder.withStartDate(new Date(Date.parse('2022-12-15T00:26:04.000+0000')));
+		builder.withExpirationDate(new Date(Date.parse('2022-12-15T00:56:04.000+0000')));
+		builder.withTracedEntityId('01p17000000R6bLAAS');
+		builder.withLogType(LogType.classTracing);
+
+		const testObject = builder.build();
+
+		const keyValuePairs = intoKeyValueStrings(testObject);
+
+		expect(keyValuePairs).toContain("DebugLevelId=7dl170000008U36AAE");
+		expect(keyValuePairs).toContain("LogType=CLASS_TRACING");
 	});
 });
 
