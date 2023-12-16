@@ -1,5 +1,5 @@
 import { SalesforceCli } from "./salesforceCli";
-import { UserId } from "./salesforceId";
+import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
 
 export async function getCurrentUser(params: {
@@ -20,5 +20,5 @@ export async function getCurrentUser(params: {
 }
 
 export interface CurrentUser {
-	userId: UserId;
+	userId: SalesforceId;
 }

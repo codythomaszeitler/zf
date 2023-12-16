@@ -13,7 +13,6 @@ import { ApexRunResult } from "../../apexRunResult";
 import { CreateableSObject } from "../../createableSObject";
 import { DataCreateRecordResult } from "../../dataCreateRecordResult";
 import { OrgListUsersResult } from "../../orgListUsersResult";
-import { trace } from "console";
 
 export class MockSalesforceCli extends SalesforceCli {
 
@@ -187,8 +186,9 @@ export class MockSalesforceCli extends SalesforceCli {
         throw new Error("Method not implemented.");
     }
 
-    dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
-        throw new Error("Method not implemented.");
+    // Maybe it should just always go through when you given something to this command?
+    async dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
+        throw new Error('not currently implemented');
     }
 
     private readonly orgsWithUsers: OrgWithListsUsersResult[] = [];
@@ -213,3 +213,4 @@ interface OrgWithListsUsersResult {
     targetOrg: SalesforceOrg;
     result: OrgListUsersResult;
 }
+

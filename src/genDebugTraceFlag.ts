@@ -34,7 +34,7 @@ export async function generateDebugTraceFlag(params: {
 		sObject: debugLogLevelSObject
 	});
 
-	const debugLogLevelId = debugLogLevelCreationResult.getDebugLogLevelId();
+	const debugLogLevelId = debugLogLevelCreationResult.getRecordId();
 
 	const traceFlagSObjectBuilder = new TraceFlagSObjectBuilder();
 	traceFlagSObjectBuilder.withDebugLevelId(debugLogLevelId);
@@ -49,4 +49,3 @@ export async function generateDebugTraceFlag(params: {
 		sObject: traceFlagSObjectBuilder.build()
 	});
 }
-

@@ -2,14 +2,14 @@ import { expect, describe } from '@jest/globals';
 import { MockSalesforceCli } from './__mocks__/mockSalesforceCli';
 import { SalesforceOrg } from '../salesforceOrg';
 import { OrgListUsersResult } from '../orgListUsersResult';
-import { UserId } from '../salesforceId';
+import { SalesforceId } from '../salesforceId';
 import { getCurrentUser } from '../getCurrentUser';
 
 describe('get current user', () => {
 
 	let mockCli: MockSalesforceCli;
 	let org: SalesforceOrg;
-	const userId = new UserId('1234567890');
+	const userId = SalesforceId.get('1234567890');
 
 	beforeEach(() => {
 		mockCli = new MockSalesforceCli();

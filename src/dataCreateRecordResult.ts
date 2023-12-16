@@ -1,15 +1,14 @@
-import { DebugLogLevelId } from "./debugLogLevelId";
 import { SalesforceId } from "./salesforceId";
 
 export class DataCreateRecordResult {
 
-	private debugLogLevelId: SalesforceId;
+	private recordId: SalesforceId;
 
-	public constructor(params: { debugLogLevelId: SalesforceId}) {
-		this.debugLogLevelId = params.debugLogLevelId;
+	public constructor(params: { recordId: SalesforceId}) {
+		this.recordId = params.recordId;
 	}
 
-	public getDebugLogLevelId(): SalesforceId {
-		return this.debugLogLevelId;
+	public getRecordId(): SalesforceId {
+		return this.recordId;
 	}
 }
