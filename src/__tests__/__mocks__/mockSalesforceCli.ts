@@ -264,6 +264,7 @@ class RecordIdToSObject {
         const sObject: SObject = {
             type: object.getSObjectName()
         };
+        sObject["Id"] = recordId;
         keyValuePairs.forEach((keyValuePair: string) => {
             const keyValue = keyValuePair.split('=');
             const key = keyValue[0];
