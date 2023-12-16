@@ -6,6 +6,8 @@ import { SalesforceId } from '../salesforceId';
 import { generateDebugTraceFlag } from '../genDebugTraceFlag';
 import { getCurrentUser } from '../getCurrentUser';
 import { trace } from 'console';
+import { SalesforceLogLevel } from '../salesforceLogLevel';
+import { LogType } from '../traceFlagSObject';
 
 describe('generate debug trace flag', () => {
 
@@ -56,8 +58,8 @@ describe('generate debug trace flag', () => {
 
 		expect(debugLogLevels.getSObjects()).toHaveLength(1);
 		const debugLogLevel = debugLogLevels.getSObjects()[0];
-		expect(debugLogLevel["ApexCode"]).toBe("DEBUG");
-		expect(debugLogLevel["Visualforce"]).toBe("NONE");
+		expect(debugLogLevel["ApexCode"]).toBe(SalesforceLogLevel.debug.toString());
+		expect(debugLogLevel["Visualforce"]).toBe(SalesforceLogLevel.none.toString());
 
 		const traceFlags = await cli.dataQuery({
 			targetOrg: org,
@@ -70,5 +72,6 @@ describe('generate debug trace flag', () => {
 		const traceFlag = traceFlags.getSObjects()[0];
 		expect(traceFlag["DebugLevelId"]).toBe(debugLogLevel["Id"]);
 		expect(SalesforceId.get(traceFlag["TracedEntityId"])).toBe(user?.userId);
+		expect(traceFlag["LogType"]).toBe(LogType.developerLog.toString());
 	});
 });
