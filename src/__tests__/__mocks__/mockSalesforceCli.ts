@@ -13,6 +13,12 @@ import { ApexRunResult } from "../../apexRunResult";
 import { CreateableSObject } from "../../createableSObject";
 import { DataCreateRecordResult } from "../../dataCreateRecordResult";
 import { OrgListUsersResult } from "../../orgListUsersResult";
+import { SalesforceId } from "../../salesforceId";
+import { SObject } from "../../sObject";
+import { DataGetRecordResult } from "../../dataGetRecordResult";
+import { SoqlQuery } from "../../soqlQuery";
+import { DataQueryResult } from "../../dataQueryResult";
+import { genRandomId } from "../salesforceId.test";
 
 export class MockSalesforceCli extends SalesforceCli {
 
@@ -29,6 +35,8 @@ export class MockSalesforceCli extends SalesforceCli {
     private waitForDeploymentToStart: (value: unknown) => void;
     private noComponentsToDeploy: boolean;
 
+    private readonly sObjects: RecordIdToSObject;
+
     constructor() {
         super(async (command: ExecutorCommand) => { return { stdout: '' }; });
         this.orgs = [];
@@ -40,6 +48,7 @@ export class MockSalesforceCli extends SalesforceCli {
         this.stopInfiniteLoopCounter = 0;
         this.waitForDeploymentToStart = () => { };
         this.noComponentsToDeploy = false;
+        this.sObjects = new RecordIdToSObject();
     }
 
     getDeploymentJobId(): JobId | null {
@@ -186,9 +195,32 @@ export class MockSalesforceCli extends SalesforceCli {
         throw new Error("Method not implemented.");
     }
 
-    // Maybe it should just always go through when you given something to this command?
     async dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
-        throw new Error('not currently implemented');
+        const recordId = genRandomId(params.sObject.getSObjectName());
+        this.sObjects.put(recordId, params.sObject);
+
+        return new DataCreateRecordResult({
+            recordId
+        });
+    }
+
+    async dataGetRecord(params: { targetOrg: SalesforceOrg; recordId: SalesforceId; }): Promise<DataGetRecordResult> {
+        const sObject = this.sObjects.get(params.recordId);
+
+        if (!sObject) {
+            throw new Error(`The requested resource does not exist.`);
+        }
+
+        return new DataGetRecordResult({
+            sObject
+        });
+    }
+
+    async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery }): Promise<DataQueryResult> {
+        const from = params.query.from;
+        return new DataQueryResult({
+            sObjects: this.sObjects.getSObjectsWithType(from)
+        });
     }
 
     private readonly orgsWithUsers: OrgWithListsUsersResult[] = [];
@@ -214,3 +246,42 @@ interface OrgWithListsUsersResult {
     result: OrgListUsersResult;
 }
 
+class RecordIdToSObject {
+    private readonly records: Map<SalesforceId, SObject>;
+
+    public constructor() {
+        this.records = new Map();
+    }
+
+    public get(recordId: SalesforceId) {
+        return this.records.get(recordId);
+    }
+
+    public put(recordId: SalesforceId, object: CreateableSObject) {
+        const keyValuePairsString = object.intoKeyValueString();
+        const keyValuePairs = keyValuePairsString.split(" ");
+
+        const sObject: SObject = {
+            type: object.getSObjectName()
+        };
+        keyValuePairs.forEach((keyValuePair: string) => {
+            const keyValue = keyValuePair.split('=');
+            const key = keyValue[0];
+            const value = keyValue[1];
+
+            sObject[key] = value;
+        });
+
+        this.records.set(recordId, sObject);
+    }
+
+    public getSObjectsWithType(type: string) {
+        const sObjects: SObject[] = [];
+        this.records.forEach((value: SObject) => {
+            if (value.type === type) {
+                sObjects.push(value);
+            }
+        });
+        return sObjects;
+    }
+}
