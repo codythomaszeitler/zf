@@ -1,5 +1,5 @@
 import { CreateableSObject } from "./createableSObject";
-import { SalesforceId, UserId } from "./salesforceId";
+import { SalesforceId } from "./salesforceId";
 
 export interface TraceFlagSObject extends CreateableSObject {
 	readonly id: SalesforceId;
@@ -7,7 +7,7 @@ export interface TraceFlagSObject extends CreateableSObject {
 	readonly expirationDate: Date;
 	readonly logType: LogType;
 	readonly startDate?: Date;
-	readonly tracedEntityId: UserId;
+	readonly tracedEntityId: SalesforceId;
 }
 
 export class TraceFlagSObjectBuilder {
@@ -16,7 +16,7 @@ export class TraceFlagSObjectBuilder {
 	private expirationDate?: Date;
 	private logType?: LogType;
 	private startDate?: Date;
-	private tracedEntityId?: UserId;
+	private tracedEntityId?: SalesforceId;
 
 	public withLogType(logType: LogType): TraceFlagSObjectBuilder {
 		this.logType = logType;
@@ -38,7 +38,7 @@ export class TraceFlagSObjectBuilder {
 		return this;
 	}
 
-	public withTracedEntityId(tracedEntityId: UserId): TraceFlagSObjectBuilder {
+	public withTracedEntityId(tracedEntityId: SalesforceId): TraceFlagSObjectBuilder {
 		this.tracedEntityId = tracedEntityId;
 		return this;
 	}

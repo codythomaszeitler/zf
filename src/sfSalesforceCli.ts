@@ -13,9 +13,8 @@ import { SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDesc
 import { ApexRunResult } from "./apexRunResult";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
 import { CreateableSObject } from "./createableSObject";
-import { DebugLogLevelId } from "./debugLogLevelId";
 import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
-import { UserId } from "./salesforceId";
+import { SalesforceId } from "./salesforceId";
 import { Logger } from "./logger";
 
 export class SfSalesforceCli extends SalesforceCli {
@@ -365,7 +364,7 @@ export class SfSalesforceCli extends SalesforceCli {
         }
 
         return new DataCreateRecordResult({
-            debugLogLevelId: new DebugLogLevelId(stdout.result.id)
+            recordId: SalesforceId.get(stdout.result.id)
         });
     }
 
@@ -409,7 +408,7 @@ export class SfSalesforceCli extends SalesforceCli {
                 const result: OrgListUser = {
                     alias: getSfOrg(),
                     defaultMarker: user.defaultMarker || "",
-                    userId: new UserId(user.userId)
+                    userId: SalesforceId.get(user.userId)
                 };
                 return result;
             }
