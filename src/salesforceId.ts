@@ -3,3 +3,9 @@ export abstract class SalesforceId extends String {
         super(rawId || '');
     }
 }
+
+export class UserId extends SalesforceId {
+    public constructor(rawId: string) {
+        super(rawId);
+    }
+}

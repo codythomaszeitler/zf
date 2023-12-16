@@ -1,8 +1,8 @@
 import { SandboxOrgListResult, SfOrgListResult, ScratchOrgListResult } from "./sfOrgListResult";
 import { JobId } from "./jobId";
 import { SalesforceCli } from "./salesforceCli";
-import { Executor, ExecutorCommand } from "./executor";
-import { SalesforceOrg } from "./salesforceOrg";
+import { Executor, ExecutorCommand, intoCliCommandString } from "./executor";
+import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
 import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
@@ -14,6 +14,9 @@ import { ApexRunResult } from "./apexRunResult";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
 import { CreateableSObject } from "./createableSObject";
 import { DebugLogLevelId } from "./debugLogLevelId";
+import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
+import { UserId } from "./salesforceId";
+import { Logger } from "./logger";
 
 export class SfSalesforceCli extends SalesforceCli {
 
@@ -363,6 +366,61 @@ export class SfSalesforceCli extends SalesforceCli {
 
         return new DataCreateRecordResult({
             debugLogLevelId: new DebugLogLevelId(stdout.result.id)
+        });
+    }
+
+    async orgListUsers(params: { targetOrg: SalesforceOrg; }): Promise<OrgListUsersResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'org',
+                'list',
+                'users',
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        if (!stdout.result) {
+            Logger.get().warn(`Could not find result array during ${intoCliCommandString(command)}, returning empty list of users.`);
+            return new OrgListUsersResult({
+                users: []
+            });
+        }
+
+        const users: OrgListUser[] = stdout.result.map((user: any) => {
+            const getSfOrg = () => {
+                if (user.alias) {
+                    return new SalesforceOrg({
+                        alias: user.alias
+                    });
+                } else {
+                    return NO_SF_ORG_FOUND;
+                }
+            };
+
+            if (user.userId) {
+                const result: OrgListUser = {
+                    alias: getSfOrg(),
+                    defaultMarker: user.defaultMarker || "",
+                    userId: new UserId(user.userId)
+                };
+                return result;
+            }
+            else {
+                Logger.get().warn(`Found user object without user id. Skipping over user in return result. Skipped user object: [${JSON.stringify(user)}].`);
+                return undefined;
+            }
+        }).filter((user: any) => user);
+
+        return new OrgListUsersResult({
+            users
         });
     }
 }
