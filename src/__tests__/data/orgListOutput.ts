@@ -1,3 +1,5 @@
+import { SalesforceOrg } from "../../salesforceOrg";
+
 export function get() {
   return JSON.stringify({
     "status": 0,
@@ -222,7 +224,7 @@ export function getMissingScratchOrgsProperty() {
     "status": 0,
     "result": {
       "nonScratchOrgs": [],
-      "scratchOrgs" : []
+      "scratchOrgs": []
     },
     "warnings": []
   });
@@ -232,7 +234,7 @@ export function getMissingSandboxesProperty() {
   return JSON.stringify({
     "status": 0,
     "result": {
-      "scratchOrgs" : []
+      "scratchOrgs": []
     },
     "warnings": []
   });
@@ -241,6 +243,28 @@ export function getMissingSandboxesProperty() {
 export function getMissingResultProperty() {
   return JSON.stringify({
     "status": 0,
+    "warnings": []
+  });
+}
+
+export function getOrgListUsersNominalResponse(params: {
+  orgAlias: SalesforceOrg
+}) {
+  return JSON.stringify({
+    "status": 0,
+    "result": [
+      {
+        "defaultMarker": "(A)",
+        "alias": `${params.orgAlias.getAlias()}`,
+        "username": "test-7yrotqw6z1en@example.com",
+        "profileName": "System Administrator",
+        "orgId": "00DDC000000rVVl2AM",
+        "accessToken": "a3f4c20798c68dca9a1fb4e8f1c118e84b6dd6b1fca19158ef0dd05eb5418da122c08272ae060a3157561f9fa9a82675965f0960fb19cc4b55affc4a772ea14d4450439997c430951f5cfda177e5eaef956b268422eebd0275d369443f3bcfb8eaf9ad75df621e2ede660d02f1fa87004f327a33be2c:25d9b1a30211b0bf8b96158f2d30452e",
+        "instanceUrl": "https://momentum-platform-58622-dev-ed.scratch.my.salesforce.com",
+        "loginUrl": "https://CS236.salesforce.com",
+        "userId": "005DC000004mxEMYAY"
+      }
+    ],
     "warnings": []
   });
 }

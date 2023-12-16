@@ -3,7 +3,7 @@ import { JobId } from "./jobId";
 import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
-import { Executor, ExecutorCommand } from "./executor";
+import { Executor, ExecutorCommand, intoCliCommandString } from "./executor";
 import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 import { SObjectListResult } from "./sObjectListResult";
 import { SObjectDescribeResult } from "./sObjectDescribeResult";
@@ -11,6 +11,7 @@ import { SObjectApiName } from "./sObjectApiName";
 import { ApexRunResult } from "./apexRunResult";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
 import { CreateableSObject } from "./createableSObject";
+import { OrgListUsersResult } from "./orgListUsersResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -51,6 +52,10 @@ export abstract class SalesforceCli {
         targetOrg: SalesforceOrg,
         sObject: CreateableSObject;
     }): Promise<DataCreateRecordResult>;
+
+    abstract orgListUsers(params: {
+        targetOrg: SalesforceOrg,
+    }): Promise<OrgListUsersResult>;
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
         command.env = this.env;

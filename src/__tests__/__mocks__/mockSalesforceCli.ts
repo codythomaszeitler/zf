@@ -12,6 +12,8 @@ import { SObjectDescribeResult } from "../../sObjectDescribeResult";
 import { ApexRunResult } from "../../apexRunResult";
 import { CreateableSObject } from "../../createableSObject";
 import { DataCreateRecordResult } from "../../dataCreateRecordResult";
+import { OrgListUsersResult } from "../../orgListUsersResult";
+import { trace } from "console";
 
 export class MockSalesforceCli extends SalesforceCli {
 
@@ -188,4 +190,26 @@ export class MockSalesforceCli extends SalesforceCli {
     dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
         throw new Error("Method not implemented.");
     }
+
+    private readonly orgsWithUsers: OrgWithListsUsersResult[] = [];
+
+    async orgListUsers(params: { targetOrg: SalesforceOrg; }): Promise<OrgListUsersResult> {
+        const found = this.orgsWithUsers.find(orgWithUser => orgWithUser.targetOrg.getAlias() === params.targetOrg.getAlias());
+        if (!found) {
+            throw new Error(`Cannot find org with alias ${params.targetOrg.getAlias()}.`);
+        }
+        return found.result;
+    }
+
+    addUser(params: { targetOrg: SalesforceOrg; result: OrgListUsersResult }) {
+        this.orgsWithUsers.push({
+            targetOrg: params.targetOrg,
+            result: params.result
+        });
+    }
+}
+
+interface OrgWithListsUsersResult {
+    targetOrg: SalesforceOrg;
+    result: OrgListUsersResult;
 }

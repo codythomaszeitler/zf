@@ -15,3 +15,9 @@ export class SalesforceOrg {
         return this.isActive;
     }
 }
+
+
+export const NO_SF_ORG_FOUND = new SalesforceOrg({
+    alias : 'SF-ZSI-NOT-FOUND',
+    isActive : false
+});

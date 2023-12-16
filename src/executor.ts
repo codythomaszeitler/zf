@@ -18,7 +18,7 @@ export interface ExecutorResult {
 export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorResult> {
     return new Promise((resolve, reject) => {
 
-        Logger.get().info(intoString(command));
+        Logger.get().info(intoCliCommandString(command));
 
         const cli = spawn(command.command, command.args, {
             shell: true,
@@ -60,7 +60,7 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
     });
 }
 
-function intoString(command: ExecutorCommand): string {
+export function intoCliCommandString(command: ExecutorCommand): string {
     const toString = command.command + " " + command.args.join(" ");
     return toString;
 }

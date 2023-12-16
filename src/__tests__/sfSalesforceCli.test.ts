@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { describe, expect, it } from '@jest/globals';
-import { get, getMissingResultProperty, getMissingSandboxesProperty, getMissingScratchOrgsProperty, getNoSandboxesAndNoScratches, getScratchOrgMissingAliasProperty, getScratchOrgMissingIsExpiredProperty } from './data/orgListOutput';
+import { get, getMissingResultProperty, getMissingSandboxesProperty, getMissingScratchOrgsProperty, getNoSandboxesAndNoScratches, getOrgListUsersNominalResponse, getScratchOrgMissingAliasProperty, getScratchOrgMissingIsExpiredProperty } from './data/orgListOutput';
 import { SfSalesforceCli } from '../sfSalesforceCli';
-import { SalesforceOrg } from "../salesforceOrg";
+import { NO_SF_ORG_FOUND, SalesforceOrg } from "../salesforceOrg";
 import { ExecutorCommand } from '../executor';
 import { getWhenDefaultOrgDoesNotExist, getWhenDefaultOrgExists, getWhenResultArrayDoesNotExist, getWhenResultArrayIsEmpty } from './data/configGetOutput';
 import { getWithCustomObject, getWithFailureMessage, getWithoutResultArray } from './data/sobjectListOutputs';
@@ -10,315 +10,465 @@ import { SObjectListResult } from '../sObjectListResult';
 import { SObjectApiName } from '../sObjectApiName';
 import { SObjectDescribeResult, SObjectFieldDescribeResult } from '../sObjectDescribeResult';
 import { getTestObjectDescribe, getSObjectDescribeWithFailureMessage } from './data/sobjectDescribeOutput';
+import { Logger } from '../logger';
+import { TestLogger } from './logger.test';
 
-describe('sf salesforce cli - get org list', () => {
-    it('should convert nominal response to in memory representation', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get()
-        });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+describe('sf salesforce cli', () => {
 
-        const orgs: SalesforceOrg[] = await cli.getOrgList();
-        expect(orgs).toHaveLength(5);
+    let testLogger : TestLogger;
+
+    beforeEach(() => {
+        testLogger = new TestLogger();
+        Logger.setGlobalLogger(testLogger);
     });
 
-    it('should not get any orgs when response contains no scratches and no sandboxes', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": getNoSandboxesAndNoScratches()
-        });
-
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-        const orgs: SalesforceOrg[] = await cli.getOrgList();
-        expect(orgs).toHaveLength(0);
+    afterEach(() => {
+        Logger.setGlobalLogger(new TestLogger());
     });
 
-    it('should show org as not-active if isExpired flag is missing on ScratchOrgListResult', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": getScratchOrgMissingIsExpiredProperty()
+    describe('sf salesforce cli - get org list', () => {
+        it('should convert nominal response to in memory representation', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get()
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const orgs: SalesforceOrg[] = await cli.getOrgList();
+            expect(orgs).toHaveLength(5);
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should not get any orgs when response contains no scratches and no sandboxes', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": getNoSandboxesAndNoScratches()
+            });
 
-        const orgs: SalesforceOrg[] = await cli.getOrgList();
-        expect(orgs).toHaveLength(1);
-        expect(orgs[0].getIsActive()).toBe(false);
-    });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-    it('should show org with \'\' alias if alias flag is missing on ScratchOrgListResult', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": getScratchOrgMissingAliasProperty()
+            const orgs: SalesforceOrg[] = await cli.getOrgList();
+            expect(orgs).toHaveLength(0);
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should show org as not-active if isExpired flag is missing on ScratchOrgListResult', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": getScratchOrgMissingIsExpiredProperty()
+            });
 
-        const orgs: SalesforceOrg[] = await cli.getOrgList();
-        expect(orgs).toHaveLength(1);
-        expect(orgs[0].getAlias()).toBe('');
-    });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-    it('should parse an empty list of orgs when scratchOrgs property is missing on SfOrgListResult', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": getMissingScratchOrgsProperty()
+            const orgs: SalesforceOrg[] = await cli.getOrgList();
+            expect(orgs).toHaveLength(1);
+            expect(orgs[0].getIsActive()).toBe(false);
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should show org with \'\' alias if alias flag is missing on ScratchOrgListResult', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": getScratchOrgMissingAliasProperty()
+            });
 
-        const orgs: SalesforceOrg[] = await cli.getOrgList();
-        expect(orgs).toHaveLength(0);
-    });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-    it('should parse an empty list of orgs when nonScratchOrgs property is missing on SfOrgListResult', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": getMissingSandboxesProperty()
+            const orgs: SalesforceOrg[] = await cli.getOrgList();
+            expect(orgs).toHaveLength(1);
+            expect(orgs[0].getAlias()).toBe('');
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should parse an empty list of orgs when scratchOrgs property is missing on SfOrgListResult', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": getMissingScratchOrgsProperty()
+            });
 
-        const orgs: SalesforceOrg[] = await cli.getOrgList();
-        expect(orgs).toHaveLength(0);
-    });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-    it('should parse an empty list of orgs when result is missing on the SfOrgListResult', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": getMissingResultProperty()
+            const orgs: SalesforceOrg[] = await cli.getOrgList();
+            expect(orgs).toHaveLength(0);
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should parse an empty list of orgs when nonScratchOrgs property is missing on SfOrgListResult', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": getMissingSandboxesProperty()
+            });
 
-        const orgs: SalesforceOrg[] = await cli.getOrgList();
-        expect(orgs).toHaveLength(0);
-    });
-});
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-describe('salesforce cli - get default org', () => {
-    it('should be able to get the default org when one exists', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf config get target-org --json": getWhenDefaultOrgExists()
+            const orgs: SalesforceOrg[] = await cli.getOrgList();
+            expect(orgs).toHaveLength(0);
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should parse an empty list of orgs when result is missing on the SfOrgListResult', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": getMissingResultProperty()
+            });
 
-        const org: SalesforceOrg | null = await cli.getDefaultOrg();
-        if (!org) {
-            expect(false).toBe(true);
-        } else {
-            expect(org.getAlias()).toBe('cso');
-        }
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const orgs: SalesforceOrg[] = await cli.getOrgList();
+            expect(orgs).toHaveLength(0);
+        });
     });
 
-    it('should return null if no default org exists', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf config get target-org --json": getWhenDefaultOrgDoesNotExist()
+    describe('salesforce cli - get default org', () => {
+        it('should be able to get the default org when one exists', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf config get target-org --json": getWhenDefaultOrgExists()
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const org: SalesforceOrg | null = await cli.getDefaultOrg();
+            if (!org) {
+                expect(false).toBe(true);
+            } else {
+                expect(org.getAlias()).toBe('cso');
+            }
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should return null if no default org exists', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf config get target-org --json": getWhenDefaultOrgDoesNotExist()
+            });
 
-        const org: SalesforceOrg | null = await cli.getDefaultOrg();
-        expect(org).toBeNull();
-    });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-    it('should return null if result array is empty', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf config get target-org --json": getWhenResultArrayIsEmpty()
+            const org: SalesforceOrg | null = await cli.getDefaultOrg();
+            expect(org).toBeNull();
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should return null if result array is empty', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf config get target-org --json": getWhenResultArrayIsEmpty()
+            });
 
-        const org: SalesforceOrg | null = await cli.getDefaultOrg();
-        expect(org).toBeNull();
-    });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-    it('should return null if result array does not exist', async () => {
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf config get target-org --json": getWhenResultArrayDoesNotExist()
+            const org: SalesforceOrg | null = await cli.getDefaultOrg();
+            expect(org).toBeNull();
         });
 
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+        it('should return null if result array does not exist', async () => {
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf config get target-org --json": getWhenResultArrayDoesNotExist()
+            });
 
-        const org: SalesforceOrg | null = await cli.getDefaultOrg();
-        expect(org).toBeNull();
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const org: SalesforceOrg | null = await cli.getDefaultOrg();
+            expect(org).toBeNull();
+        });
     });
-});
 
-function genMockExecutor(commandToStdOutput: any) {
-    return async function (command: ExecutorCommand) {
-        const asString = command.command + ' ' + command.args.join(' ');
-        const stdout = commandToStdOutput[asString];
+    function genMockExecutor(commandToStdOutput: any) {
+        return async function (command: ExecutorCommand) {
+            const asString = command.command + ' ' + command.args.join(' ');
+            const stdout = commandToStdOutput[asString];
 
-        return {
-            stdout: JSON.parse(stdout)
+            return {
+                stdout: JSON.parse(stdout)
+            };
         };
-    };
-}
+    }
 
-describe('salesforce cli - sobject list', () => {
+    describe('salesforce cli - sobject list', () => {
 
-    it('should be able to get the list of salesforce sobjects as domain objects', async () => {
-        const targetOrg: SalesforceOrg = new SalesforceOrg({
-            alias: 'cso',
-            isActive: true
-        });
+        it('should be able to get the list of salesforce sobjects as domain objects', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
 
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf sobject list --target-org cso --json": getWithCustomObject()
-        });
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf sobject list --target-org cso --json": getWithCustomObject()
+            });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-        const result: SObjectListResult = await cli.sobjectList({
-            targetOrg
-        });
-        expect(result.getSObjectApiNames()).not.toHaveLength(0);
-        expect(result.getSObjectApiNames()).toHaveLength(1136);
-    });
-
-    it('should give you an empty list of api names if no result is found but is successful', async () => {
-        const targetOrg: SalesforceOrg = new SalesforceOrg({
-            alias: 'cso',
-            isActive: true
-        });
-
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf sobject list --target-org cso --json": getWithoutResultArray()
-        });
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-        const result: SObjectListResult = await cli.sobjectList({
-            targetOrg
-        });
-        expect(result.getSObjectApiNames()).toHaveLength(0);
-    });
-
-    it('should throw an exception if result comes back as non-zero with error message', async () => {
-        const targetOrg: SalesforceOrg = new SalesforceOrg({
-            alias: 'cso',
-            isActive: true
-        });
-
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf sobject list --target-org cso --json": getWithFailureMessage()
-        });
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-        let caughtException = null;
-        try {
-            await cli.sobjectList({
+            const result: SObjectListResult = await cli.sobjectList({
                 targetOrg
             });
-        } catch (e: any) {
-            caughtException = e;
-        }
-
-        expect(caughtException.message).toBeTruthy();
-    });
-});
-
-describe('salesforce cli - sobject describe', () => {
-    it('should be able to describe a custom object', async () => {
-        const targetOrg: SalesforceOrg = new SalesforceOrg({
-            alias: 'cso',
-            isActive: true
+            expect(result.getSObjectApiNames()).not.toHaveLength(0);
+            expect(result.getSObjectApiNames()).toHaveLength(1136);
         });
 
-        const testObjectApiName: SObjectApiName = SObjectApiName.get('Test_Object__c');
+        it('should give you an empty list of api names if no result is found but is successful', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
 
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf sobject describe --sobject Test_Object__c --target-org cso --json": getTestObjectDescribe()
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf sobject list --target-org cso --json": getWithoutResultArray()
+            });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result: SObjectListResult = await cli.sobjectList({
+                targetOrg
+            });
+            expect(result.getSObjectApiNames()).toHaveLength(0);
         });
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-        const result: SObjectDescribeResult = await cli.sobjectDescribe({
-            targetOrg,
-            sObjectApiName: testObjectApiName
+        it('should throw an exception if result comes back as non-zero with error message', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf sobject list --target-org cso --json": getWithFailureMessage()
+            });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            let caughtException = null;
+            try {
+                await cli.sobjectList({
+                    targetOrg
+                });
+            } catch (e: any) {
+                caughtException = e;
+            }
+
+            expect(caughtException.message).toBeTruthy();
         });
-
-        expect(result.getApiName()).toStrictEqual(SObjectApiName.get('Test_Object__c'));
-
-        expect(result.getFields().length).not.toBe(0);
-        const testObjectNameFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Id');
-
-        if (testObjectNameFieldDescribe) {
-            expect(testObjectNameFieldDescribe.getApiName()).toBe('Id');
-            expect(testObjectNameFieldDescribe.getType()).toBe('id');
-        } else {
-            expect(true).toBe(false);
-        }
-
-        const isDeletedFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('IsDeleted');
-
-        if (isDeletedFieldDescribe) {
-            expect(isDeletedFieldDescribe.getApiName()).toBe('IsDeleted');
-            expect(isDeletedFieldDescribe.getType()).toBe('boolean');
-        }
-        else {
-            expect(true).toBe(false);
-        }
-
-
-        const nameFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Name');
-
-        if (nameFieldDescribe) {
-            expect(nameFieldDescribe.getApiName()).toBe('Name');
-            expect(nameFieldDescribe.getType()).toBe('string');
-        } else {
-            expect(true).toBe(false);
-        }
-
-        const testUrlFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Test_Url__c');
-
-        if (testUrlFieldDescribe) {
-            expect(testUrlFieldDescribe.getApiName()).toBe('Test_Url__c');
-            expect(testUrlFieldDescribe.getType()).toBe('url');
-        }
-        else {
-            expect(true).toBe(false);
-        }
-
-        const testTimeDescribeResult: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Test_Time__c');
-
-        if (testTimeDescribeResult) {
-            expect(testTimeDescribeResult.getApiName()).toBe('Test_Time__c');
-            expect(testTimeDescribeResult.getType()).toBe('time');
-        }
-        else {
-            expect(true).toBe(false);
-        }
     });
 
-    it('should be able to describe a custom object', async () => {
-        const targetOrg: SalesforceOrg = new SalesforceOrg({
-            alias: 'cso',
-            isActive: true
-        });
+    describe('salesforce cli - sobject describe', () => {
+        it('should be able to describe a custom object', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
 
-        const testObjectApiName: SObjectApiName = SObjectApiName.get('Test_Object__c');
+            const testObjectApiName: SObjectApiName = SObjectApiName.get('Test_Object__c');
 
-        const mockExecutor = genMockExecutor({
-            "sf org list --json": get(),
-            "sf sobject describe --sobject Test_Object__c --target-org cso --json": getSObjectDescribeWithFailureMessage()
-        });
-        const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf sobject describe --sobject Test_Object__c --target-org cso --json": getTestObjectDescribe()
+            });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-        let caughtException = null;
-        try {
-            await cli.sobjectDescribe({
+            const result: SObjectDescribeResult = await cli.sobjectDescribe({
                 targetOrg,
                 sObjectApiName: testObjectApiName
             });
-        } catch (e : any) {
-            caughtException = e;
-        }
 
-        expect(caughtException?.message).toBeTruthy();
-        expect(caughtException?.message.includes('Parsing')).toBe(true);
+            expect(result.getApiName()).toStrictEqual(SObjectApiName.get('Test_Object__c'));
+
+            expect(result.getFields().length).not.toBe(0);
+            const testObjectNameFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Id');
+
+            if (testObjectNameFieldDescribe) {
+                expect(testObjectNameFieldDescribe.getApiName()).toBe('Id');
+                expect(testObjectNameFieldDescribe.getType()).toBe('id');
+            } else {
+                expect(true).toBe(false);
+            }
+
+            const isDeletedFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('IsDeleted');
+
+            if (isDeletedFieldDescribe) {
+                expect(isDeletedFieldDescribe.getApiName()).toBe('IsDeleted');
+                expect(isDeletedFieldDescribe.getType()).toBe('boolean');
+            }
+            else {
+                expect(true).toBe(false);
+            }
+
+
+            const nameFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Name');
+
+            if (nameFieldDescribe) {
+                expect(nameFieldDescribe.getApiName()).toBe('Name');
+                expect(nameFieldDescribe.getType()).toBe('string');
+            } else {
+                expect(true).toBe(false);
+            }
+
+            const testUrlFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Test_Url__c');
+
+            if (testUrlFieldDescribe) {
+                expect(testUrlFieldDescribe.getApiName()).toBe('Test_Url__c');
+                expect(testUrlFieldDescribe.getType()).toBe('url');
+            }
+            else {
+                expect(true).toBe(false);
+            }
+
+            const testTimeDescribeResult: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Test_Time__c');
+
+            if (testTimeDescribeResult) {
+                expect(testTimeDescribeResult.getApiName()).toBe('Test_Time__c');
+                expect(testTimeDescribeResult.getType()).toBe('time');
+            }
+            else {
+                expect(true).toBe(false);
+            }
+        });
+
+        it('should be able to describe a custom object', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const testObjectApiName: SObjectApiName = SObjectApiName.get('Test_Object__c');
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf sobject describe --sobject Test_Object__c --target-org cso --json": getSObjectDescribeWithFailureMessage()
+            });
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            let caughtException = null;
+            try {
+                await cli.sobjectDescribe({
+                    targetOrg,
+                    sObjectApiName: testObjectApiName
+                });
+            } catch (e: any) {
+                caughtException = e;
+            }
+
+            expect(caughtException?.message).toBeTruthy();
+            expect(caughtException?.message.includes('Parsing')).toBe(true);
+        });
+    });
+
+    describe('salesforce cli - org list users', () => {
+        it('should be able to get the list of users for an org', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf org list users --target-org cso --json": getOrgListUsersNominalResponse({
+                    orgAlias: targetOrg
+                }),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const orgListUsersResult = await cli.orgListUsers({
+                targetOrg
+            });
+
+            expect(orgListUsersResult.getUsers()).toHaveLength(1);
+        });
+
+        it('should not return any users if no result key found', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf org list users --target-org cso --json": getMissingResultProperty(),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.orgListUsers({
+                targetOrg
+            });
+            expect(result.getUsers()).toHaveLength(0);
+
+            const re = /.*Could not find result array during sf org list users --target-org cso --json, returning empty list of users\..*/;
+            expect(testLogger.contains(re)).toBeTruthy();
+        });
+
+        it('should skip over user that does not have user id in list of users', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const orgListUsersNominalResultString = getOrgListUsersNominalResponse({
+                orgAlias: targetOrg
+            });
+
+            const orgListUsersNominalResult = JSON.parse(orgListUsersNominalResultString);
+            delete orgListUsersNominalResult.result[0].userId;
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf org list users --target-org cso --json": JSON.stringify(orgListUsersNominalResult),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.orgListUsers({
+                targetOrg
+            });
+
+            expect(result.getUsers()).toHaveLength(0);
+
+            const re = /.*Found user object without user id. Skipping over user in return result\. Skipped user object: \[.*\]\..*/;
+            expect(testLogger.contains(re)).toBeTruthy();
+        });
+
+        it('should be able to process user that does not have default marker', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const orgListUsersNominalResultString = getOrgListUsersNominalResponse({
+                orgAlias: targetOrg
+            });
+
+            const orgListUsersNominalResult = JSON.parse(orgListUsersNominalResultString);
+            delete orgListUsersNominalResult.result[0].defaultMarker;
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf org list users --target-org cso --json": JSON.stringify(orgListUsersNominalResult),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.orgListUsers({
+                targetOrg
+            });
+
+            expect(result.getUsers()).toHaveLength(1);
+            expect(result.getUsers()[0].defaultMarker).toBe('');
+        });
+
+        it('should be able to process user that does not have an alias', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const orgListUsersNominalResultString = getOrgListUsersNominalResponse({
+                orgAlias: targetOrg
+            });
+
+            const orgListUsersNominalResult = JSON.parse(orgListUsersNominalResultString);
+            delete orgListUsersNominalResult.result[0].alias;
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf org list users --target-org cso --json": JSON.stringify(orgListUsersNominalResult),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.orgListUsers({
+                targetOrg
+            });
+
+            expect(result.getUsers()).toHaveLength(1);
+            expect(result.getUsers()[0].alias).toEqual(NO_SF_ORG_FOUND);
+        });
     });
 });
+
