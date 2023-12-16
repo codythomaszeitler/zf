@@ -48,5 +48,14 @@ describe('generate debug trace flag', () => {
 		});
 
 		expect(debugLogLevels.getSObjects()).toHaveLength(1);
+
+		const traceFlags = await cli.dataQuery({
+			targetOrg : org,
+			query : {
+				from : 'TraceFlag'
+			}
+		});
+
+		expect(traceFlags.getSObjects()).toHaveLength(1);
 	});
 });
