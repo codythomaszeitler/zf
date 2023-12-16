@@ -31,6 +31,10 @@
       {
         "command": "sf.zsi.runHighlightedApex",
         "title": "SF ZSI: Run Highlighted Apex"
+      },
+      {
+        "command": "sf.zsi.enableDebugLogForCurrentUser",
+        "title": "SF ZSI: Enable Debug Logging"
       }
     ],
     "configuration": {
