@@ -2,7 +2,6 @@ import { CreateableSObject } from "./createableSObject";
 import { SalesforceId } from "./salesforceId";
 
 export interface TraceFlagSObject extends CreateableSObject {
-	readonly id: SalesforceId;
 	readonly debugLevelId: SalesforceId;
 	readonly expirationDate: Date;
 	readonly logType: LogType;

@@ -198,6 +198,7 @@ export class MockSalesforceCli extends SalesforceCli {
     async dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
         const recordId = genRandomId(params.sObject.getSObjectName());
         this.sObjects.put(recordId, params.sObject);
+        params.sObject.id = recordId;
 
         return new DataCreateRecordResult({
             recordId

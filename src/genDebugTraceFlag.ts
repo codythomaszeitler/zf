@@ -1,6 +1,7 @@
-import { DebugLevelBuilder } from "./debugLevelSObject";
+import { DebugLevel, DebugLevelBuilder } from "./debugLevelSObject";
 import { getCurrentUser } from "./getCurrentUser";
 import { SalesforceCli } from "./salesforceCli";
+import { SalesforceId } from "./salesforceId";
 import { SalesforceLogLevel } from "./salesforceLogLevel";
 import { SalesforceOrg } from "./salesforceOrg";
 import { LogType, TraceFlagSObjectBuilder } from "./traceFlagSObject";
@@ -9,7 +10,7 @@ export async function generateDebugTraceFlag(params: {
 	targetOrg: SalesforceOrg,
 	salesforceCli: SalesforceCli
 }) {
-	const addHours = function (date : Date, h : number) {
+	const addHours = function (date: Date, h: number) {
 		date.setTime(date.getTime() + (h * 60 * 60 * 1000));
 		return date;
 	};
@@ -22,22 +23,14 @@ export async function generateDebugTraceFlag(params: {
 		throw new Error(`Could not find user for org ${params.targetOrg.getAlias()}`);
 	}
 
-	const debugLogLevelBuilder = new DebugLevelBuilder({
-		developerName: 'ZFDebugTraceFlag'
-	});
-	debugLogLevelBuilder.withApexCode(SalesforceLogLevel.debug);
-
-	const debugLogLevelSObject = debugLogLevelBuilder.build();
-
-	const debugLogLevelCreationResult = await params.salesforceCli.dataCreateRecord({
+	const debugLogLevelSObject = await generateDebugLogLevelOrGetExisting({
 		targetOrg: params.targetOrg,
-		sObject: debugLogLevelSObject
+		cli: params.salesforceCli,
+		debugLogLevelApiName: 'ZFDebugTraceFlag'
 	});
-
-	const debugLogLevelId = debugLogLevelCreationResult.getRecordId();
 
 	const traceFlagSObjectBuilder = new TraceFlagSObjectBuilder();
-	traceFlagSObjectBuilder.withDebugLevelId(debugLogLevelId);
+	traceFlagSObjectBuilder.withDebugLevelId(debugLogLevelSObject.id);
 	traceFlagSObjectBuilder.withLogType(LogType.developerLog);
 	traceFlagSObjectBuilder.withTracedEntityId(currentUser?.userId);
 
@@ -48,4 +41,23 @@ export async function generateDebugTraceFlag(params: {
 		targetOrg: params.targetOrg,
 		sObject: traceFlagSObjectBuilder.build()
 	});
+}
+
+export async function generateDebugLogLevelOrGetExisting(params: {
+	targetOrg: SalesforceOrg,
+	cli: SalesforceCli,
+	debugLogLevelApiName: string
+}): Promise<DebugLevel> {
+	const debugLogLevelBuilder = new DebugLevelBuilder({
+		developerName: params.debugLogLevelApiName
+	});
+	debugLogLevelBuilder.withApexCode(SalesforceLogLevel.debug);
+
+	const debugLogLevelSObject = debugLogLevelBuilder.build();
+	await params.cli.dataCreateRecord({
+		targetOrg: params.targetOrg,
+		sObject: debugLogLevelSObject
+	});
+
+	return debugLogLevelSObject;
 }
