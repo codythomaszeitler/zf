@@ -4,6 +4,8 @@ import { SalesforceOrg } from '../salesforceOrg';
 import { OrgListUsersResult } from '../orgListUsersResult';
 import { SalesforceId } from '../salesforceId';
 import { generateDebugTraceFlag } from '../genDebugTraceFlag';
+import { getCurrentUser } from '../getCurrentUser';
+import { trace } from 'console';
 
 describe('generate debug trace flag', () => {
 
@@ -35,6 +37,11 @@ describe('generate debug trace flag', () => {
 	});
 
 	it('should create a debug log level and trace flag for current running user', async () => {
+		const user = await getCurrentUser({
+			targetOrg: org,
+			cli
+		});
+
 		await generateDebugTraceFlag({
 			targetOrg: org,
 			salesforceCli: cli
@@ -48,14 +55,18 @@ describe('generate debug trace flag', () => {
 		});
 
 		expect(debugLogLevels.getSObjects()).toHaveLength(1);
+		const debugLogLevel = debugLogLevels.getSObjects()[0];
 
 		const traceFlags = await cli.dataQuery({
-			targetOrg : org,
-			query : {
-				from : 'TraceFlag'
+			targetOrg: org,
+			query: {
+				from: 'TraceFlag'
 			}
 		});
 
 		expect(traceFlags.getSObjects()).toHaveLength(1);
+		const traceFlag = traceFlags.getSObjects()[0];
+		expect(traceFlag["DebugLevelId"]).toBe(debugLogLevel["Id"]);
+		expect(SalesforceId.get(traceFlag["TracedEntityId"])).toBe(user?.userId);
 	});
 });
