@@ -7,6 +7,7 @@ import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
+import { generateDebugTraceFlag } from './genDebugTraceFlag';
 
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
@@ -71,10 +72,26 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
+	async function runEnableDebugLogForCurrentUser() {
+		try {
+			const defaultOrg = await salesforceCli.getDefaultOrg();
+			if (defaultOrg) {
+
+				await generateDebugTraceFlag({
+					targetOrg: defaultOrg,
+					salesforceCli
+				});
+			}
+		} catch (e: any) {
+			ide.showErrorMessage(e.message);
+		}
+	}
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runHighlightedApex', runHighlightedApexCommand));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.enableDebugLogForCurrentUser', runEnableDebugLogForCurrentUser));
 }
 
 // this method is called when your extension is deactivated

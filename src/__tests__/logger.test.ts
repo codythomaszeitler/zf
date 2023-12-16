@@ -62,7 +62,7 @@ describe('logger', () => {
 	});
 });
 
-class TestLogger extends Logger {
+export class TestLogger extends Logger {
 
 	public messages: string[];
 

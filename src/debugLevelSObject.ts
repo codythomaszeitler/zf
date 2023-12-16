@@ -1,8 +1,9 @@
 import { CreateableSObject } from "./createableSObject";
+import { SalesforceId } from "./salesforceId";
 import { SalesforceLogLevel } from "./salesforceLogLevel";
 
 export interface DebugLevel extends CreateableSObject {
-	id?: string;
+	id?: SalesforceId;
 	developerName: string;
 	language: SalesforceLogLevel;
 	apexCode: SalesforceLogLevel;
@@ -15,7 +16,7 @@ export interface DebugLevel extends CreateableSObject {
 }
 
 export class DebugLevelBuilder {
-	private id?: string;
+	private id?: SalesforceId;
 	private developerName?: string;
 	private language?: SalesforceLogLevel;
 	private apexCode?: SalesforceLogLevel;
@@ -32,7 +33,7 @@ export class DebugLevelBuilder {
 		this.developerName = params.developerName;
 	}
 
-	public withId(id: string): DebugLevelBuilder {
+	public withId(id: SalesforceId): DebugLevelBuilder {
 		this.id = id;
 		return this;
 	}

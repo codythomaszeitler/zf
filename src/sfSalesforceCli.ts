@@ -352,7 +352,7 @@ export class SfSalesforceCli extends SalesforceCli {
                 '--sobject',
                 params.sObject.getSObjectName(),
                 '--values',
-                params.sObject.intoKeyValueString(),
+                '"' + params.sObject.intoKeyValueString() + '"',
                 '--target-org',
                 params.targetOrg.getAlias(),
                 '--json'
