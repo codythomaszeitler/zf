@@ -17,7 +17,6 @@ export abstract class SalesforceId extends String {
             if (rawId.startsWith(DEBUG_LEVEL_ID_PREFIX)) {
                 return DebugLogLevelId;
             }
-
             return GenericSalesforceId;
         };
 
@@ -51,4 +50,4 @@ class DebugLogLevelId extends SalesforceId {
     }
 }
 
-
+export const NULL_SF_ID = SalesforceId.get("000000000000000");

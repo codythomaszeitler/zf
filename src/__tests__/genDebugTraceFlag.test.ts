@@ -5,7 +5,6 @@ import { OrgListUsersResult } from '../orgListUsersResult';
 import { SalesforceId } from '../salesforceId';
 import { generateDebugTraceFlag } from '../genDebugTraceFlag';
 import { getCurrentUser } from '../getCurrentUser';
-import { trace } from 'console';
 import { SalesforceLogLevel } from '../salesforceLogLevel';
 import { LogType } from '../traceFlagSObject';
 
@@ -73,5 +72,12 @@ describe('generate debug trace flag', () => {
 		expect(traceFlag["DebugLevelId"]).toBe(debugLogLevel["Id"]);
 		expect(SalesforceId.get(traceFlag["TracedEntityId"])).toBe(user?.userId);
 		expect(traceFlag["LogType"]).toBe(LogType.developerLog.toString());
+	});
+
+	it("should reuse a debug log level if one already exists with the default zf name", async () => {
+		await generateDebugTraceFlag({
+			targetOrg: org,
+			salesforceCli: cli
+		});
 	});
 });
