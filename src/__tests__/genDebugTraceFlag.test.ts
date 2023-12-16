@@ -56,6 +56,8 @@ describe('generate debug trace flag', () => {
 
 		expect(debugLogLevels.getSObjects()).toHaveLength(1);
 		const debugLogLevel = debugLogLevels.getSObjects()[0];
+		expect(debugLogLevel["ApexCode"]).toBe("DEBUG");
+		expect(debugLogLevel["Visualforce"]).toBe("NONE");
 
 		const traceFlags = await cli.dataQuery({
 			targetOrg: org,
