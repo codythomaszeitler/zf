@@ -21,7 +21,7 @@ export class DebugLogLevelSelector {
 			targetOrg: params.targetOrg, query: {
 				fields: ["DeveloperName"],
 				from: DEBUG_LEVEL_SOBJECT_NAME,
-				where: `DeveloperName = ${params.developerName}`
+				where: `DeveloperName = '${params.developerName}'`
 			}
 		});
 
