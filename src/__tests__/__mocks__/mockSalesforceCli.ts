@@ -19,6 +19,7 @@ import { DataGetRecordResult } from "../../dataGetRecordResult";
 import { SoqlQuery } from "../../soqlQuery";
 import { DataQueryResult } from "../../dataQueryResult";
 import { genRandomId } from "../salesforceId.test";
+import { DEBUG_LEVEL_SOBJECT_NAME } from "../../debugLevelSObject";
 
 export class MockSalesforceCli extends SalesforceCli {
 
@@ -37,6 +38,8 @@ export class MockSalesforceCli extends SalesforceCli {
 
     private readonly sObjects: RecordIdToSObject;
 
+    private readonly validations: DatabaseValidation[];
+
     constructor() {
         super(async (command: ExecutorCommand) => { return { stdout: '' }; });
         this.orgs = [];
@@ -49,6 +52,7 @@ export class MockSalesforceCli extends SalesforceCli {
         this.waitForDeploymentToStart = () => { };
         this.noComponentsToDeploy = false;
         this.sObjects = new RecordIdToSObject();
+        this.validations = [new DebugLevelDatabaseValidation({ sObjectApiName: DEBUG_LEVEL_SOBJECT_NAME })];
     }
 
     getDeploymentJobId(): JobId | null {
@@ -197,12 +201,35 @@ export class MockSalesforceCli extends SalesforceCli {
 
     async dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
         const recordId = genRandomId(params.sObject.getSObjectName());
-        this.sObjects.put(recordId, params.sObject);
+        const newSObject = generateSObject(params.sObject, recordId);
+
+        await this.runDatabaseValidationsFor({ sObject: newSObject });
+
+        this.sObjects.put(recordId, newSObject);
         params.sObject.id = recordId;
 
         return new DataCreateRecordResult({
             recordId
         });
+    }
+
+    private async runDatabaseValidationsFor(params: { sObject: SObject }) {
+        const validationsToRun = this.validations.filter(validation => validation.getSObjectApiName() === params.sObject.type);
+
+        const integrityCheckPromises = validationsToRun.map(validation => {
+            return validation.integrityCheck({
+                newSObject: params.sObject,
+                alreadyExistingSObjects: this.sObjects.getSObjectsWithType(params.sObject.type)
+            });
+        });
+
+        const integrityCheckResults = await Promise.all(integrityCheckPromises);
+        for (let i = 0; i < integrityCheckResults.length; i++) {
+            const integrityCheckResult = integrityCheckResults[i];
+            if (!integrityCheckResult.passed) {
+                throw new Error(`Mock Database Failed : ${integrityCheckResult.message}`);
+            }
+        }
     }
 
     async dataGetRecord(params: { targetOrg: SalesforceOrg; recordId: SalesforceId; }): Promise<DataGetRecordResult> {
@@ -247,6 +274,26 @@ interface OrgWithListsUsersResult {
     result: OrgListUsersResult;
 }
 
+
+function generateSObject(createableSObject: CreateableSObject, recordId: SalesforceId | undefined): SObject {
+    const keyValuePairsString = createableSObject.intoKeyValueString();
+    const keyValuePairs = keyValuePairsString.split(" ");
+
+    const sObject: SObject = {
+        type: createableSObject.getSObjectName()
+    };
+    sObject["Id"] = recordId?.toString();
+    keyValuePairs.forEach((keyValuePair: string) => {
+        const keyValue = keyValuePair.split('=');
+        const key = keyValue[0];
+        const value = keyValue[1];
+
+        sObject[key] = value;
+    });
+
+    return sObject;
+}
+
 class RecordIdToSObject {
     private readonly records: Map<SalesforceId, SObject>;
 
@@ -258,22 +305,7 @@ class RecordIdToSObject {
         return this.records.get(recordId);
     }
 
-    public put(recordId: SalesforceId, object: CreateableSObject) {
-        const keyValuePairsString = object.intoKeyValueString();
-        const keyValuePairs = keyValuePairsString.split(" ");
-
-        const sObject: SObject = {
-            type: object.getSObjectName()
-        };
-        sObject["Id"] = recordId;
-        keyValuePairs.forEach((keyValuePair: string) => {
-            const keyValue = keyValuePair.split('=');
-            const key = keyValue[0];
-            const value = keyValue[1];
-
-            sObject[key] = value;
-        });
-
+    public put(recordId: SalesforceId, sObject: SObject) {
         this.records.set(recordId, sObject);
     }
 
@@ -285,5 +317,47 @@ class RecordIdToSObject {
             }
         });
         return sObjects;
+    }
+}
+
+abstract class DatabaseValidation {
+
+    private readonly sObjectApiName: string;
+
+    public constructor(params: {
+        sObjectApiName: string
+    }) {
+        this.sObjectApiName = params.sObjectApiName;
+    }
+
+    abstract integrityCheck(params: {
+        newSObject: SObject,
+        alreadyExistingSObjects: SObject[]
+    }): Promise<IntegrityCheckResult>;
+
+    public getSObjectApiName(): string {
+        return this.sObjectApiName;
+    }
+}
+
+interface IntegrityCheckResult {
+    passed: boolean;
+    message: string;
+}
+
+class DebugLevelDatabaseValidation extends DatabaseValidation {
+    async integrityCheck(params: { newSObject: SObject; alreadyExistingSObjects: SObject[]; }): Promise<IntegrityCheckResult> {
+        const duplicate = params.alreadyExistingSObjects.find((existingSObject: SObject) => existingSObject.type === params.newSObject.type);
+        if (duplicate) {
+            return {
+                passed : false,
+                message : "Found duplicate debug level."
+            }
+        } else {
+            return {
+                passed : true,
+                message : ""
+            };
+        }
     }
 }

@@ -2,8 +2,8 @@ import { describe, expect, test } from '@jest/globals';
 import { MockSalesforceCli } from './__mocks__/mockSalesforceCli';
 import { SalesforceOrg } from '../salesforceOrg';
 import { OrgListUsersResult } from '../orgListUsersResult';
-import { SalesforceId } from '../salesforceId';
-import { generateDebugTraceFlag } from '../genDebugTraceFlag';
+import { NULL_SF_ID, SalesforceId } from '../salesforceId';
+import { generateDebugLogLevelOrGetExisting, generateDebugTraceFlag } from '../genDebugTraceFlag';
 import { getCurrentUser } from '../getCurrentUser';
 import { SalesforceLogLevel } from '../salesforceLogLevel';
 import { LogType } from '../traceFlagSObject';
@@ -45,7 +45,8 @@ describe('generate debug trace flag', () => {
 
 		await generateDebugTraceFlag({
 			targetOrg: org,
-			salesforceCli: cli
+			salesforceCli: cli,
+			debugLogLevelApiName: 'TestDebugLogLevelName'
 		});
 
 		const debugLogLevels = await cli.dataQuery({
@@ -69,15 +70,37 @@ describe('generate debug trace flag', () => {
 
 		expect(traceFlags.getSObjects()).toHaveLength(1);
 		const traceFlag = traceFlags.getSObjects()[0];
-		expect(traceFlag["DebugLevelId"]).toBe(debugLogLevel["Id"]);
+		expect(traceFlag["DebugLevelId"]).toEqual(debugLogLevel["Id"]);
 		expect(SalesforceId.get(traceFlag["TracedEntityId"])).toBe(user?.userId);
 		expect(traceFlag["LogType"]).toBe(LogType.developerLog.toString());
 	});
 
 	it("should reuse a debug log level if one already exists with the default zf name", async () => {
+		const debugLogLevelApiName = 'TestDebugLogLevelName';
+
+		const debugLogLevel = await generateDebugLogLevelOrGetExisting({
+			targetOrg: org,
+			cli: cli,
+			debugLogLevelApiName
+		});
+
+		expect(debugLogLevel.id).not.toBe(NULL_SF_ID);
+
 		await generateDebugTraceFlag({
 			targetOrg: org,
-			salesforceCli: cli
+			salesforceCli: cli,
+			debugLogLevelApiName
 		});
+
+		const traceFlags = await cli.dataQuery({
+			targetOrg: org,
+			query: {
+				from: 'TraceFlag'
+			}
+		});
+
+		expect(traceFlags.getSObjects()).toHaveLength(1);
+		const traceFlag = traceFlags.getSObjects()[0];
+		expect(SalesforceId.get(traceFlag["DebugLevelId"])).toBe(debugLogLevel.id);
 	});
 });

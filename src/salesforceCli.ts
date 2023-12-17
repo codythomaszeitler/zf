@@ -12,6 +12,8 @@ import { ApexRunResult } from "./apexRunResult";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
 import { CreateableSObject } from "./createableSObject";
 import { OrgListUsersResult } from "./orgListUsersResult";
+import { SoqlQuery } from "./soqlQuery";
+import { DataQueryResult } from "./dataQueryResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -52,6 +54,8 @@ export abstract class SalesforceCli {
         targetOrg: SalesforceOrg,
         sObject: CreateableSObject;
     }): Promise<DataCreateRecordResult>;
+
+    abstract dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery }): Promise<DataQueryResult>;
 
     abstract orgListUsers(params: {
         targetOrg: SalesforceOrg,

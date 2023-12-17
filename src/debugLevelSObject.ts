@@ -2,6 +2,8 @@ import { CreateableSObject } from "./createableSObject";
 import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { SalesforceLogLevel } from "./salesforceLogLevel";
 
+export const DEBUG_LEVEL_SOBJECT_NAME = 'DebugLevel';
+
 export interface DebugLevel extends CreateableSObject {
 	developerName: string;
 	language: SalesforceLogLevel;
@@ -95,7 +97,7 @@ export class DebugLevelBuilder {
 			validation: this.validation || SalesforceLogLevel.none,
 			workflow: this.workflow || SalesforceLogLevel.none,
 			getSObjectName(): string {
-				return 'DebugLevel';
+				return DEBUG_LEVEL_SOBJECT_NAME;
 			},
 			intoKeyValueString(): string {
 				return intoKeyValueString(this);

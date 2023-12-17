@@ -31,5 +31,5 @@ export function genRandomId(type: string) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
         counter += 1;
     }
-    return result;
+    return SalesforceId.get(result);
 }
