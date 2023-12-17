@@ -449,7 +449,7 @@ export class SfSalesforceCli extends SalesforceCli {
                 return "";
             }
 
-            return `WHERE ${params.query.where}`;
+            return ` WHERE ${params.query.where}`;
         };
 
         const command: ExecutorCommand = {
@@ -458,7 +458,7 @@ export class SfSalesforceCli extends SalesforceCli {
                 'data',
                 'query',
                 '--query',
-                `"SELECT ${joined()} FROM ${params.query.from} ${whereClause()}"`,
+                `"SELECT ${joined()} FROM ${params.query.from}${whereClause()}"`,
                 '--use-tooling-api',
                 '--target-org',
                 params.targetOrg.getAlias(),
@@ -471,10 +471,24 @@ export class SfSalesforceCli extends SalesforceCli {
             throw new Error(stdout.message);
         }
 
+        if (!stdout.result) {
+            Logger.get().warn(`${intoCliCommandString(command)} did not have a result variable. Returning empty list of sobjects.`);
+            return new DataQueryResult({
+                sObjects: []
+            });
+        }
+
+        if (!stdout.result.records) {
+            Logger.get().warn(`${intoCliCommandString(command)} did not have a records variable on result. Returning empty list of sobjects.`);
+            return new DataQueryResult({
+                sObjects: []
+            });
+        }
+
         const sObjects = stdout.result.records.map((record: any) => {
-            const sObject : SObject = {
+            const sObject: SObject = {
                 ...record,
-                type : params.query.from
+                type: params.query.from
             };
             return sObject;
         });
