@@ -431,6 +431,10 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; }): Promise<DataQueryResult> {
+        if (!params.query.from) {
+            throw new Error('Cannot run data query with empty from table.');
+        }
+
         const fields = new Set();
         fields.add("Id");
         if (params.query.fields) {

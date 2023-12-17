@@ -625,5 +625,32 @@ describe('sf salesforce cli', () => {
             const re = /.* did not have a result variable\. Returning empty list of sobjects\./;
             expect(testLogger.contains(re)).toBeTruthy();
         });
+
+        it('should throw an exception if empty from query is given', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            let caughtException: any = null;
+            try {
+                await cli.dataQuery({
+                    targetOrg,
+                    query: {
+                        from: '',
+                    }
+                });
+            } catch (e: any) {
+                caughtException = e;
+            }
+
+            expect(caughtException?.message).toBe('Cannot run data query with empty from table.');
+        });
     });
 });
