@@ -73,18 +73,25 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function runEnableDebugLogForCurrentUser() {
-		try {
-			const defaultOrg = await salesforceCli.getDefaultOrg();
-			if (defaultOrg) {
-				await generateDebugTraceFlag({
-					targetOrg: defaultOrg,
-					salesforceCli,
-					debugLogLevelApiName: 'SFDC_DevConsole'
-				});
+		await ide.withProgress(async (progressToken) => {
+			try {
+				const defaultOrg = await salesforceCli.getDefaultOrg();
+				if (defaultOrg) {
+					await generateDebugTraceFlag({
+						targetOrg: defaultOrg,
+						salesforceCli,
+						debugLogLevelApiName: 'SFDC_DevConsole',
+						ide: ide
+					});
+				}
+			} catch (e: any) {
+				ide.showErrorMessage(e.message);
 			}
-		} catch (e: any) {
-			ide.showErrorMessage(e.message);
-		}
+		}, {
+			title: 'Enable Debug Logging'
+		});
+
+
 	}
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));

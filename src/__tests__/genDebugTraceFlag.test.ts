@@ -7,12 +7,14 @@ import { generateDebugLogLevelOrGetExisting, generateDebugTraceFlag } from '../g
 import { getCurrentUser } from '../getCurrentUser';
 import { SalesforceLogLevel } from '../salesforceLogLevel';
 import { LogType } from '../traceFlagSObject';
+import { MockIDE } from './__mocks__/mockIntegratedDevelopmentEnvironment';
 
 describe('generate debug trace flag', () => {
 
 	let cli: MockSalesforceCli;
 	let org: SalesforceOrg;
 	let currentRunningUserId: SalesforceId;
+	let ide : MockIDE;
 
 	beforeEach(() => {
 		cli = new MockSalesforceCli();
@@ -20,6 +22,7 @@ describe('generate debug trace flag', () => {
 			alias: 'TestOrg',
 			isActive: true
 		});
+		ide = new MockIDE();
 
 		currentRunningUserId = SalesforceId.get('1234567890');
 
@@ -46,6 +49,7 @@ describe('generate debug trace flag', () => {
 		await generateDebugTraceFlag({
 			targetOrg: org,
 			salesforceCli: cli,
+			ide : ide,
 			debugLogLevelApiName: 'TestDebugLogLevelName'
 		});
 
@@ -81,6 +85,7 @@ describe('generate debug trace flag', () => {
 		const debugLogLevel = await generateDebugLogLevelOrGetExisting({
 			targetOrg: org,
 			cli: cli,
+			ide : ide,
 			debugLogLevelApiName
 		});
 
@@ -89,7 +94,8 @@ describe('generate debug trace flag', () => {
 		await generateDebugTraceFlag({
 			targetOrg: org,
 			salesforceCli: cli,
-			debugLogLevelApiName
+			debugLogLevelApiName,
+			ide : ide
 		});
 
 		const traceFlags = await cli.dataQuery({
