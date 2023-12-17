@@ -16,8 +16,11 @@ import { CreateableSObject } from "./createableSObject";
 import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
 import { SalesforceId } from "./salesforceId";
 import { Logger } from "./logger";
+import { DataQueryResult } from "./dataQueryResult";
+import { SoqlQuery } from "./soqlQuery";
 
 export class SfSalesforceCli extends SalesforceCli {
+    
 
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
@@ -421,5 +424,9 @@ export class SfSalesforceCli extends SalesforceCli {
         return new OrgListUsersResult({
             users
         });
+    }
+
+    dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; }): Promise<DataQueryResult> {
+        throw new Error("Method not implemented.");
     }
 }
