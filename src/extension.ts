@@ -80,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await generateDebugTraceFlag({
 					targetOrg: defaultOrg,
 					salesforceCli,
-					debugLogLevelApiName : 'SfZsiDebugLogLevel'
+					debugLogLevelApiName : 'SFDC_DevConsole'
 				});
 			}
 		} catch (e: any) {
