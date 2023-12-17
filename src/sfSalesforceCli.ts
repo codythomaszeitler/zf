@@ -18,9 +18,10 @@ import { SalesforceId } from "./salesforceId";
 import { Logger } from "./logger";
 import { DataQueryResult } from "./dataQueryResult";
 import { SoqlQuery } from "./soqlQuery";
+import { SObject } from "./sObject";
 
 export class SfSalesforceCli extends SalesforceCli {
-    
+
 
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
@@ -366,8 +367,11 @@ export class SfSalesforceCli extends SalesforceCli {
             throw new Error(stdout.message);
         }
 
+        const recordId = SalesforceId.get(stdout.result.id);
+        params.sObject.id = recordId;
+
         return new DataCreateRecordResult({
-            recordId: SalesforceId.get(stdout.result.id)
+            recordId
         });
     }
 
@@ -426,7 +430,58 @@ export class SfSalesforceCli extends SalesforceCli {
         });
     }
 
-    dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; }): Promise<DataQueryResult> {
-        throw new Error("Method not implemented.");
+    async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; }): Promise<DataQueryResult> {
+        const fields = new Set();
+        fields.add("Id");
+        if (params.query.fields) {
+            params.query.fields.forEach(field => {
+                fields.add(field);
+            });
+        }
+
+        const joined = () => {
+            const asList = [...fields];
+            return asList.join(", ");
+        };
+
+        const whereClause = () => {
+            if (!params.query.where) {
+                return "";
+            }
+
+            return `WHERE ${params.query.where}`;
+        };
+
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'data',
+                'query',
+                '--query',
+                `"SELECT ${joined()} FROM ${params.query.from} ${whereClause()}"`,
+                '--use-tooling-api',
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        const sObjects = stdout.result.records.map((record: any) => {
+            const sObject : SObject = {
+                ...record,
+                type : params.query.from
+            };
+            return sObject;
+        });
+
+        return new DataQueryResult({
+            sObjects
+        });
+
     }
 }

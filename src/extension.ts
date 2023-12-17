@@ -79,7 +79,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 				await generateDebugTraceFlag({
 					targetOrg: defaultOrg,
-					salesforceCli
+					salesforceCli,
+					debugLogLevelApiName : 'SfZsiDebugLogLevel'
 				});
 			}
 		} catch (e: any) {
