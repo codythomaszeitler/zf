@@ -76,11 +76,10 @@ export function activate(context: vscode.ExtensionContext) {
 		try {
 			const defaultOrg = await salesforceCli.getDefaultOrg();
 			if (defaultOrg) {
-
 				await generateDebugTraceFlag({
 					targetOrg: defaultOrg,
 					salesforceCli,
-					debugLogLevelApiName : 'SFDC_DevConsole'
+					debugLogLevelApiName: 'SFDC_DevConsole'
 				});
 			}
 		} catch (e: any) {
