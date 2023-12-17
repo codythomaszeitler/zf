@@ -12,11 +12,12 @@ import { SObjectDescribeResult, SObjectFieldDescribeResult } from '../sObjectDes
 import { getTestObjectDescribe, getSObjectDescribeWithFailureMessage } from './data/sobjectDescribeOutput';
 import { Logger } from '../logger';
 import { TestLogger } from './logger.test';
-
+import { getDebugLevelWithDeveloperName, getDebugLogWithDeveloperNameFilter, getNoRecordsFound, getNoRecordsVariableFound } from './data/dataQueryOutput';
+import { DEBUG_LEVEL_SOBJECT_NAME } from '../debugLevelSObject';
 
 describe('sf salesforce cli', () => {
 
-    let testLogger : TestLogger;
+    let testLogger: TestLogger;
 
     beforeEach(() => {
         testLogger = new TestLogger();
@@ -470,5 +471,159 @@ describe('sf salesforce cli', () => {
             expect(result.getUsers()[0].alias).toEqual(NO_SF_ORG_FOUND);
         });
     });
-});
 
+    describe('sf salesforce cli - data query', () => {
+        it('should be able to query a generic sobject', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf data query --query \"SELECT Id, DeveloperName FROM DebugLevel\" --use-tooling-api --target-org cso --json": getDebugLevelWithDeveloperName(),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.dataQuery({
+                targetOrg,
+                query: {
+                    fields: ['DeveloperName'],
+                    from: DEBUG_LEVEL_SOBJECT_NAME,
+                }
+            });
+
+            expect(result.getSObjects()).toHaveLength(4);
+        });
+
+        it('should be able to query a generic sobject without fields, but it should add Id', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf data query --query \"SELECT Id FROM DebugLevel\" --use-tooling-api --target-org cso --json": getDebugLevelWithDeveloperName(),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.dataQuery({
+                targetOrg,
+                query: {
+                    from: DEBUG_LEVEL_SOBJECT_NAME,
+                }
+            });
+
+            expect(result.getSObjects()).toHaveLength(4);
+        });
+
+        it('should be able to query a generic sobject without fields with a condition', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'ZFDebugTraceFlag'\" --use-tooling-api --target-org cso --json": getDebugLogWithDeveloperNameFilter(),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.dataQuery({
+                targetOrg,
+                query: {
+                    from: DEBUG_LEVEL_SOBJECT_NAME,
+                    where: "DeveloperName = 'ZFDebugTraceFlag'"
+                }
+            });
+
+            expect(result.getSObjects()).toHaveLength(1);
+            const sObject = result.getSObjects()[0];
+            expect(sObject["DeveloperName"]).toBe("ZFDebugTraceFlag");
+            expect(sObject["Id"]).toBe("7dl8N0000004lHqQAI");
+            expect(sObject.type).toBe(DEBUG_LEVEL_SOBJECT_NAME);
+        });
+
+        it('should return an empty list of sobjects if no records found', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --json": getNoRecordsFound(),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.dataQuery({
+                targetOrg,
+                query: {
+                    from: DEBUG_LEVEL_SOBJECT_NAME,
+                    where: "DeveloperName = 'NOT-FOUND'"
+                }
+            });
+
+            expect(result.getSObjects()).toHaveLength(0);
+        });
+
+        it('should return an empty list of sobjects if records variable is not found', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --json": getNoRecordsVariableFound(),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.dataQuery({
+                targetOrg,
+                query: {
+                    from: DEBUG_LEVEL_SOBJECT_NAME,
+                    where: "DeveloperName = 'NOT-FOUND'"
+                }
+            });
+
+            expect(result.getSObjects()).toHaveLength(0);
+
+            const re = /.* did not have a records variable on result\. Returning empty list of sobjects\./;
+            expect(testLogger.contains(re)).toBeTruthy();
+        });
+
+        it('should return an empty list of sobjects if result variable is not found', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --json": getMissingResultProperty(),
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const result = await cli.dataQuery({
+                targetOrg,
+                query: {
+                    from: DEBUG_LEVEL_SOBJECT_NAME,
+                    where: "DeveloperName = 'NOT-FOUND'"
+                }
+            });
+
+            expect(result.getSObjects()).toHaveLength(0);
+
+            const re = /.* did not have a result variable\. Returning empty list of sobjects\./;
+            expect(testLogger.contains(re)).toBeTruthy();
+        });
+    });
+});
