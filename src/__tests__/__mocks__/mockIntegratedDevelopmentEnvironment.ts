@@ -34,7 +34,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this.currentProgressToken = null;
     }
 
-    async withProgress(toMonitor: (progressToken: ProgressToken) => Promise<void>, options: { title: string; }): Promise<void> {
+    async withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; }): Promise<T> {
         this.shownWindowLoadingMessages.push(options.title);
 
         this.currentProgressToken = {
@@ -48,7 +48,8 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
             progress: 0,
             title : ''
         };
-        await toMonitor(this.currentProgressToken);
+        const result = await toMonitor(this.currentProgressToken);
+        return result;
     }
 
     getCurrentProgressToken(): MockProgressToken | null {

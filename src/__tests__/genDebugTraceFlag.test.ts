@@ -14,7 +14,7 @@ describe('generate debug trace flag', () => {
 	let cli: MockSalesforceCli;
 	let org: SalesforceOrg;
 	let currentRunningUserId: SalesforceId;
-	let ide : MockIDE;
+	let ide: MockIDE;
 
 	beforeEach(() => {
 		cli = new MockSalesforceCli();
@@ -46,11 +46,16 @@ describe('generate debug trace flag', () => {
 			cli
 		});
 
-		await generateDebugTraceFlag({
-			targetOrg: org,
-			salesforceCli: cli,
-			ide : ide,
-			debugLogLevelApiName: 'TestDebugLogLevelName'
+		await ide.withProgress(async (progressToken) => {
+			await generateDebugTraceFlag({
+				targetOrg: org,
+				salesforceCli: cli,
+				ide: ide,
+				debugLogLevelApiName: 'TestDebugLogLevelName',
+				progressToken: progressToken
+			});
+		}, {
+			title: 'Test'
 		});
 
 		const debugLogLevels = await cli.dataQuery({
@@ -85,17 +90,22 @@ describe('generate debug trace flag', () => {
 		const debugLogLevel = await generateDebugLogLevelOrGetExisting({
 			targetOrg: org,
 			cli: cli,
-			ide : ide,
+			ide: ide,
 			debugLogLevelApiName
 		});
 
 		expect(debugLogLevel.id).not.toBe(NULL_SF_ID);
 
-		await generateDebugTraceFlag({
-			targetOrg: org,
-			salesforceCli: cli,
-			debugLogLevelApiName,
-			ide : ide
+		await ide.withProgress(async (progressToken) => {
+			await generateDebugTraceFlag({
+				targetOrg: org,
+				salesforceCli: cli,
+				debugLogLevelApiName,
+				ide: ide,
+				progressToken
+			});
+		}, {
+			title : 'Test'
 		});
 
 		const traceFlags = await cli.dataQuery({

@@ -16,13 +16,13 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         this.outputChannel = vscode.window.createOutputChannel('sf-zsi', { log: true });
     }
 
-    generateLogger() : Logger {
+    generateLogger(): Logger {
         const that = this;
         let shown = false;
 
         class VsCodeLogger extends Logger {
             write(message: string): void {
-                that.outputChannel.append(message);        
+                that.outputChannel.append(message);
 
                 if (!shown) {
                     that.outputChannel.show();
@@ -34,7 +34,7 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         return new VsCodeLogger();
     }
 
-    withProgress(toMonitor: (progressToken: ProgressToken) => Promise<void>, options: { title: string; }): Promise<void> {
+    withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; }): Promise<T> {
         return new Promise((resolve, reject) => {
             vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -56,8 +56,8 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
                         }
                     };
 
-                    await toMonitor(progressToken);
-                    resolve();
+                    const result = await toMonitor(progressToken);
+                    resolve(result);
                 } catch (e) {
                     reject(e);
                 }
