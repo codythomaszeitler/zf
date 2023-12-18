@@ -68,6 +68,9 @@ export class DebugTraceFlagGenerateCommand extends Command {
 		developerName: string,
 		progressToken: ProgressToken
 	}) {
+		if (params.progressToken.isCancellationRequested) {
+			return;
+		}
 		params.progressToken.report({
 			progress: 0,
 			title: 'Getting current user'
@@ -81,6 +84,9 @@ export class DebugTraceFlagGenerateCommand extends Command {
 			throw new Error(`Could not find user for org ${params.targetOrg.getAlias()}`);
 		}
 
+		if (params.progressToken.isCancellationRequested) {
+			return;
+		}
 		params.progressToken.report({
 			progress: 33,
 			title: `Getting debug log ${params.developerName}`
@@ -99,6 +105,9 @@ export class DebugTraceFlagGenerateCommand extends Command {
 		const expirationDate = addHours(new Date(Date.now()), 23);
 		traceFlagSObjectBuilder.withExpirationDate(expirationDate);
 
+		if (params.progressToken.isCancellationRequested) {
+			return;
+		}
 		params.progressToken.report({
 			progress: 66,
 			title: `Generating trace flag for ${currentUser.userId} with debug level ${debugLogLevel.id}`
