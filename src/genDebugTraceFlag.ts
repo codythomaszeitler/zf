@@ -152,7 +152,7 @@ export class DebugLogLevelGetOrCreateCommand extends Command {
 		return newDebugLogLevel;
 	}
 
-	protected async queryByDeveloperName(params: {
+	private async queryByDeveloperName(params: {
 		targetOrg: SalesforceOrg,
 		developerName: string
 	}) {
