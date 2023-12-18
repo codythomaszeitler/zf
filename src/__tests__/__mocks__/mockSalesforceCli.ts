@@ -20,9 +20,9 @@ import { SoqlQuery } from "../../soqlQuery";
 import { DataQueryResult } from "../../dataQueryResult";
 import { genRandomId } from "../salesforceId.test";
 import { DEBUG_LEVEL_SOBJECT_NAME } from "../../debugLevelSObject";
+import { ApexGetLogResult } from "../../apexGetLogResult";
 
 export class MockSalesforceCli extends SalesforceCli {
-
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
 
@@ -266,6 +266,10 @@ export class MockSalesforceCli extends SalesforceCli {
             targetOrg: params.targetOrg,
             result: params.result
         });
+    }
+
+    apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number; logDir: string; }): Promise<ApexGetLogResult> {
+        throw new Error("Method not implemented.");
     }
 }
 

@@ -1,4 +1,4 @@
-import { Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, Uri } from "../../integratedDevelopmentEnvironment";
+import { Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { ProgressToken } from "../../progressToken";
 
 function nonStartedQuickPick(item: string): void {
@@ -6,8 +6,6 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
-    
-
     selectQuickPickItem: (item: string) => void;
 
     private _waitForShowQuickPickResolve: (value: unknown) => void;
@@ -176,6 +174,10 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 
     getHighlightedText(): Promise<string> {
+        throw new Error("Method not implemented.");
+    }
+
+    readLineAt(params: { uri: Uri; line: number; }): Promise<TextLine> {
         throw new Error("Method not implemented.");
     }
 }
