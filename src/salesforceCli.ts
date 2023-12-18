@@ -14,6 +14,7 @@ import { CreateableSObject } from "./createableSObject";
 import { OrgListUsersResult } from "./orgListUsersResult";
 import { SoqlQuery } from "./soqlQuery";
 import { DataQueryResult } from "./dataQueryResult";
+import { ApexGetLogResult } from "./apexGetLogResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -60,6 +61,12 @@ export abstract class SalesforceCli {
     abstract orgListUsers(params: {
         targetOrg: SalesforceOrg,
     }): Promise<OrgListUsersResult>;
+
+    abstract apexGetLog(params: {
+        targetOrg: SalesforceOrg,
+        numLogs: number,
+        logDir: string
+    }): Promise<ApexGetLogResult>;
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
         command.env = this.env;

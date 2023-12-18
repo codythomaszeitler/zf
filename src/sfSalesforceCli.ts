@@ -19,10 +19,9 @@ import { Logger } from "./logger";
 import { DataQueryResult } from "./dataQueryResult";
 import { SoqlQuery } from "./soqlQuery";
 import { SObject } from "./sObject";
+import { ApexGetLogResult } from "./apexGetLogResult";
 
 export class SfSalesforceCli extends SalesforceCli {
-
-
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
@@ -500,6 +499,30 @@ export class SfSalesforceCli extends SalesforceCli {
         return new DataQueryResult({
             sObjects
         });
+    }
 
+    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number; logDir: string; }): Promise<ApexGetLogResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'apex',
+                'get',
+                'log',
+                '--output-dir',
+                `${params.logDir}`,
+                '--number',
+                `${params.numLogs}`,
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        return new ApexGetLogResult();
     }
 }

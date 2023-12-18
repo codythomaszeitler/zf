@@ -8,6 +8,7 @@ import { generateFauxSObjects } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
+import { getRecentApexLogs } from './getRecentApexLogs';
 
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
@@ -93,11 +94,32 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
+	async function runGetRecentApexLogs() {
+		await ide.withProgress(async (progressToken) => {
+			try {
+				const defaultOrg = await salesforceCli.getDefaultOrg();
+				if (defaultOrg) {
+					await getRecentApexLogs({
+						targetOrg: defaultOrg,
+						numLogs: 25,
+						logDir: '.zf/logs',
+						cli: salesforceCli
+					});
+				}
+			} catch (e: any) {
+				ide.showErrorMessage(e.message);
+			}
+		}, {
+			title: 'Get Recent Apex Logs'
+		});
+	}
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runHighlightedApex', runHighlightedApexCommand));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.enableDebugLogForCurrentUser', runEnableDebugLogForCurrentUser));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));
 }
 
 // this method is called when your extension is deactivated

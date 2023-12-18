@@ -7,6 +7,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract showWarningMessage(message: string): Promise<void>;
     abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string }): Promise<T>;
     abstract findFile(glob: string): Promise<Uri | null>;
+    abstract readLineAt(params : {uri : Uri, line : number}) : Promise<TextLine>;
     abstract getConfig<T>(property: string, defaultValue: T): T;
     abstract execute(command: Command): Promise<CommandExecuteResult>;
     abstract setDiagnostics(uri: Uri, diagnostics: Diagnostic[]): void;
@@ -40,6 +41,20 @@ export class Uri {
 
     public getValue(): string {
         return this.value;
+    }
+}
+
+export class TextLine {
+    private readonly text: string;
+
+    public constructor(params: {
+        text: string
+    }) {
+        this.text = params.text;
+    }
+
+    public getText(): string {
+        return this.text;
     }
 }
 

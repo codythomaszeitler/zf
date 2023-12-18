@@ -1,4 +1,4 @@
-import { Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
+import { Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, TextLine, Uri } from "./integratedDevelopmentEnvironment";
 import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
@@ -14,6 +14,18 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         super();
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('Salesforce Apex Cody');
         this.outputChannel = vscode.window.createOutputChannel('sf-zsi', { log: true });
+    }
+
+    async readLineAt(params: {
+        uri: Uri,
+        line: number
+    }) {
+        const uriMapper = new UriMapper();
+        const textDocument = await vscode.workspace.openTextDocument(uriMapper.intoVsCodeRepresentation(params.uri));
+        const vscodeTextDoc = textDocument.lineAt(params.line);
+        return new TextLine({
+            text: vscodeTextDoc.text
+        });
     }
 
     generateLogger(): Logger {
