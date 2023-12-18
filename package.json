@@ -77,8 +77,5 @@
     "mocha": "^9.1.3",
     "ts-jest": "^29.1.1",
     "typescript": "^4.4.4"
-  },
-  "dependencies": {
-    "n-readlines": "^1.0.1"
   }
 }
