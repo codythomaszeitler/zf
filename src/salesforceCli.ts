@@ -65,7 +65,7 @@ export abstract class SalesforceCli {
         command.env = this.env;
         const { stdout } = await this.executor(command);
         if (!stdout) {
-            throw new Error(command + ' did not return any output.');
+            throw new Error(intoCliCommandString(command) + ' did not return any output.');
         }
 
         return {
