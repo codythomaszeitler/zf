@@ -81,7 +81,8 @@ export function activate(context: vscode.ExtensionContext) {
 						targetOrg: defaultOrg,
 						salesforceCli,
 						debugLogLevelApiName: 'SFDC_DevConsole',
-						ide: ide
+						progressToken,
+						ide: ide,
 					});
 				}
 			} catch (e: any) {
@@ -90,8 +91,6 @@ export function activate(context: vscode.ExtensionContext) {
 		}, {
 			title: 'Enable Debug Logging'
 		});
-
-
 	}
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));

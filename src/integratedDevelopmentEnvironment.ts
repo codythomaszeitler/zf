@@ -5,18 +5,18 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract showQuickPick(items: string[]): Thenable<string>;
     abstract showErrorMessage(message: string): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
-    abstract withProgress(toMonitor: (progressToken : ProgressToken) => Promise<void>, options: { title: string }): Promise<void>;
+    abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string }): Promise<T>;
     abstract findFile(glob: string): Promise<Uri | null>;
     abstract getConfig<T>(property: string, defaultValue: T): T;
     abstract execute(command: Command): Promise<CommandExecuteResult>;
     abstract setDiagnostics(uri: Uri, diagnostics: Diagnostic[]): void;
-    abstract clearDiagnostics() : void;
-    abstract focusProblemsTab() : Promise<void>;
-    abstract showOutput(params : {
-        logs : string[];
-        show : true;
-    }) : Promise<void>;
-    abstract getHighlightedText()  : Promise<string>;
+    abstract clearDiagnostics(): void;
+    abstract focusProblemsTab(): Promise<void>;
+    abstract showOutput(params: {
+        logs: string[];
+        show: true;
+    }): Promise<void>;
+    abstract getHighlightedText(): Promise<string>;
 }
 
 export interface Command {

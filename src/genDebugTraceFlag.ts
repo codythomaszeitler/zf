@@ -4,6 +4,7 @@ import { DebugLevel, DebugLevelBuilder } from "./debugLevelSObject";
 import { DebugLogLevelSelector } from "./debugLogLevelSelector";
 import { getCurrentUser } from "./getCurrentUser";
 import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
+import { ProgressToken } from "./progressToken";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceLogLevel } from "./salesforceLogLevel";
 import { SalesforceOrg } from "./salesforceOrg";
@@ -12,8 +13,9 @@ import { LogType, TraceFlagSObjectBuilder } from "./traceFlagSObject";
 export async function generateDebugTraceFlag(params: {
 	targetOrg: SalesforceOrg,
 	salesforceCli: SalesforceCli,
-	debugLogLevelApiName: string,
-	ide: IntegratedDevelopmentEnvironment
+	ide: IntegratedDevelopmentEnvironment,
+	progressToken: ProgressToken,
+	debugLogLevelApiName: string
 }) {
 	const debugTraceFlagGenerateCommand = new DebugTraceFlagGenerateCommand({
 		ide: params.ide,
@@ -24,9 +26,10 @@ export async function generateDebugTraceFlag(params: {
 		})
 	});
 
-	return debugTraceFlagGenerateCommand.execute({
+	await debugTraceFlagGenerateCommand.execute({
 		targetOrg: params.targetOrg,
-		developerName: params.debugLogLevelApiName
+		developerName: params.debugLogLevelApiName,
+		progressToken: params.progressToken
 	});
 }
 
@@ -62,8 +65,14 @@ export class DebugTraceFlagGenerateCommand extends Command {
 
 	public async execute(params: {
 		targetOrg: SalesforceOrg,
-		developerName: string
+		developerName: string,
+		progressToken: ProgressToken
 	}) {
+		params.progressToken.report({
+			progress: 0,
+			title: 'Getting current user'
+		});
+
 		const currentUser = await getCurrentUser({
 			targetOrg: params.targetOrg,
 			cli: this.getCli()
@@ -71,6 +80,11 @@ export class DebugTraceFlagGenerateCommand extends Command {
 		if (!currentUser) {
 			throw new Error(`Could not find user for org ${params.targetOrg.getAlias()}`);
 		}
+
+		params.progressToken.report({
+			progress: 33,
+			title: `Getting debug log ${params.developerName}`
+		});
 
 		const debugLogLevel = await this.getOrCreateCommand.execute({
 			targetOrg: params.targetOrg,
@@ -84,6 +98,11 @@ export class DebugTraceFlagGenerateCommand extends Command {
 
 		const expirationDate = addHours(new Date(Date.now()), 23);
 		traceFlagSObjectBuilder.withExpirationDate(expirationDate);
+
+		params.progressToken.report({
+			progress: 66,
+			title: `Generating trace flag for ${currentUser.userId} with debug level ${debugLogLevel.id}`
+		});
 
 		await this.getCli().dataCreateRecord({
 			targetOrg: params.targetOrg,
@@ -121,7 +140,6 @@ export class DebugLogLevelGetOrCreateCommand extends Command {
 			targetOrg: params.targetOrg,
 			sObject: newDebugLogLevel
 		});
-
 		return newDebugLogLevel;
 	}
 
