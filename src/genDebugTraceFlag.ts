@@ -102,7 +102,9 @@ export class DebugTraceFlagGenerateCommand extends Command {
 		traceFlagSObjectBuilder.withLogType(LogType.developerLog);
 		traceFlagSObjectBuilder.withTracedEntityId(currentUser?.userId);
 
-		const expirationDate = addHours(new Date(Date.now()), 23);
+		const startDate = new Date(Date.now());
+		const expirationDate = addHours(new Date(startDate.getTime()), 23);
+		traceFlagSObjectBuilder.withStartDate(startDate);
 		traceFlagSObjectBuilder.withExpirationDate(expirationDate);
 
 		if (params.progressToken.isCancellationRequested) {

@@ -6,6 +6,7 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
+
     selectQuickPickItem: (item: string) => void;
 
     private _waitForShowQuickPickResolve: (value: unknown) => void;
@@ -37,14 +38,14 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
         this.currentProgressToken = {
             isCancellationRequested: false,
-            report: function (params: { progress: number; title? : string }): void {
+            report: function (params: { progress: number; title?: string }): void {
                 this.progress = params.progress;
                 if (params.title) {
                     this.title = params.title;
                 }
             },
             progress: 0,
-            title : ''
+            title: ''
         };
         const result = await toMonitor(this.currentProgressToken);
         return result;
@@ -109,6 +110,10 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return foundFile;
     }
 
+    findFiles(glob: string): Promise<Uri[]> {
+        throw new Error("Method not implemented.");
+    }
+
     addFile(uri: Uri) {
         this.filesystem.set(uri.getValue(), uri);
     }
@@ -149,7 +154,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return this.diagnostics.size !== 0;
     }
 
-    getDiagnosticsFor(uri : Uri) : Diagnostic[] {
+    getDiagnosticsFor(uri: Uri): Diagnostic[] {
         const diagnostics = this.diagnostics.get(uri);
         if (!diagnostics) {
             return [];
@@ -165,7 +170,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return this._didFocusProblemsTab;
     }
 
-    didShowAnyWarningMessage() : boolean {
+    didShowAnyWarningMessage(): boolean {
         return this.shownWarningMessages.length !== 0;
     }
 
@@ -184,5 +189,5 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
 export interface MockProgressToken extends ProgressToken {
     progress: number;
-    title : string;
+    title: string;
 }

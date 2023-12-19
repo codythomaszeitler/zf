@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { VsCode } from "./vscode";
+import { ApexLogTreeProvider, VsCode, createTreeView } from "./vscode";
 import { projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
@@ -102,7 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
 					await getRecentApexLogs({
 						targetOrg: defaultOrg,
 						numLogs: 25,
-						logDir: '.zf/logs',
+						logDir: '.zf\\logs',
 						cli: salesforceCli
 					});
 				}
@@ -120,6 +120,11 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runHighlightedApex', runHighlightedApexCommand));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.enableDebugLogForCurrentUser', runEnableDebugLogForCurrentUser));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));
+
+	createTreeView({
+		cli : salesforceCli,
+		ide : ide
+	});
 }
 
 // this method is called when your extension is deactivated
