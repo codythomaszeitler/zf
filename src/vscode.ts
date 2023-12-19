@@ -4,9 +4,10 @@ import { Range } from "./range";
 import { Position } from "./position";
 import { ProgressToken } from "./progressToken";
 import { Logger } from "./logger";
+import { ApexLogDirectoryReadCommand, InFileApexLog } from "./apexLogDirectoryReadCommand";
+import { SalesforceCli } from "./salesforceCli";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -115,6 +116,18 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
                         resolve(null);
                     }
                 }
+            });
+        });
+    }
+
+    findFiles(glob: string): Promise<Uri[]> {
+        return new Promise((resolve, reject) => {
+            vscode.workspace.findFiles(glob).then(vscodeUris => {
+                const uris = vscodeUris.map(vscodeUri => {
+                    const uriMapper = new UriMapper();
+                    return uriMapper.intoDomainRepresentation(vscodeUri);
+                });
+                resolve(uris);
             });
         });
     }
@@ -237,5 +250,95 @@ class DiagnosticSeverityMapper {
                 throw new Error(`Severity ${severity} is not a known enum value.`);
         }
 
+    }
+}
+
+export function createTreeView(params : {
+    cli : SalesforceCli,
+    ide : IntegratedDevelopmentEnvironment
+}) {
+    const apexLogTreeProvider = new ApexLogTreeProvider({
+        cli: params.cli,
+        ide: params.ide,
+        logDir: '.zf\\logs'
+    });
+
+    const treeView = vscode.window.createTreeView('apex-logs', {
+        treeDataProvider: apexLogTreeProvider
+    });
+
+    treeView.onDidChangeSelection(async (e) => {
+        if (e.selection.length === 0) {
+            return;
+        }
+
+        const selection = e.selection[0];
+        const uriMapper = new UriMapper();
+        const vscodeUri = uriMapper.intoVsCodeRepresentation(selection.apexLog.uri);
+        const document = await vscode.workspace.openTextDocument(vscodeUri);
+        vscode.window.showTextDocument(document);
+    });
+
+    return treeView;
+}
+
+export class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeItem> {
+
+    private readonly cli: SalesforceCli;
+    private readonly ide: IntegratedDevelopmentEnvironment;
+    private readonly logDir: string;
+
+    public constructor(params: {
+        cli: SalesforceCli,
+        ide: IntegratedDevelopmentEnvironment,
+        logDir: string
+    }) {
+        this.cli = params.cli;
+        this.ide = params.ide;
+        this.logDir = params.logDir;
+    }
+    getTreeItem(element: ApexLogTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+        return element;
+    }
+    getChildren(element?: ApexLogTreeItem | undefined): vscode.ProviderResult<ApexLogTreeItem[]> {
+        if (!element) {
+            return new Promise((resolve, reject) => {
+                const apexLogDirectoryReadCommand = new ApexLogDirectoryReadCommand({
+                    cli: this.cli,
+                    ide: this.ide
+                });
+
+                apexLogDirectoryReadCommand.execute({
+                    logDir: this.logDir
+                }).then(results => {
+                    resolve(results.map((result: InFileApexLog) => {
+                        const label: string = result.name;
+                        return new ApexLogTreeItem(label, vscode.TreeItemCollapsibleState.None, result);
+                    }));
+                }).catch(e => {
+                    reject(e);
+                    Logger.get().warn(e.message);
+                });
+            });
+        }
+    }
+    getParent?(element: ApexLogTreeItem): vscode.ProviderResult<ApexLogTreeItem> {
+        return null;
+    }
+    resolveTreeItem?(item: vscode.TreeItem, element: ApexLogTreeItem, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
+        return item;
+    }
+}
+
+class ApexLogTreeItem extends vscode.TreeItem {
+    public readonly apexLog: InFileApexLog;
+
+    constructor(
+        public readonly label: string,
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+        apexLog: InFileApexLog
+    ) {
+        super(label, collapsibleState);
+        this.apexLog = apexLog;
     }
 }

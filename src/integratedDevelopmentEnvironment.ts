@@ -7,6 +7,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract showWarningMessage(message: string): Promise<void>;
     abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string }): Promise<T>;
     abstract findFile(glob: string): Promise<Uri | null>;
+    abstract findFiles(glob: string): Promise<Uri[]>;
     abstract readLineAt(params : {uri : Uri, line : number}) : Promise<TextLine>;
     abstract getConfig<T>(property: string, defaultValue: T): T;
     abstract execute(command: Command): Promise<CommandExecuteResult>;

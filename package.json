@@ -41,6 +41,16 @@
         "title": "SF ZSI: Get Recent Apex Logs"
       }
     ],
+    "views": {
+      "test": [
+        {
+          "title": "Apex Logs",
+          "id": "apex-logs",
+          "name": "Apex Logs",
+          "icon": "media/dep.svg"
+        }
+      ]
+    },
     "configuration": {
       "title": "sf zsi",
       "properties": {
