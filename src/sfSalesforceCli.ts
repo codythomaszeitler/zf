@@ -554,7 +554,8 @@ export class SfSalesforceCli extends SalesforceCli {
                 duration: apexLog.DurationMilliseconds,
                 logLength: apexLog.LogLength,
                 operation: apexLog.Operation,
-                status: apexLog.Status
+                status: apexLog.Status,
+                startTime: new Date(Date.parse(apexLog.StartTime))
             });
         });
 

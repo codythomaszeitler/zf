@@ -38,7 +38,7 @@ export class ApexLogDirectoryReadCommand extends Command {
 
 			const cliLog = getCliLog(salesforceId);
 			if (cliLog) {
-				const logName = `${cliLog.getId()} ${cliLog.getStatus()} ${cliLog.getLogLength()} ${cliLog.getDuration()} ${cliLog.getOperation()} ${cliLog.getApplication()}`;
+				const logName = `[${cliLog.getStartTime()}]-[${cliLog.getId()}]-[${cliLog.getStatus()}] LogLength [${cliLog.getLogLength()}] Duration [${cliLog.getDuration()}] Operation [${cliLog.getOperation()}] Application [${cliLog.getApplication()}]`;
 				return {
 					uri,
 					name: logName
