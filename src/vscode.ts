@@ -6,8 +6,10 @@ import { ProgressToken } from "./progressToken";
 import { Logger } from "./logger";
 import { ApexLogDirectoryReadCommand, InFileApexLog } from "./apexLogDirectoryReadCommand";
 import { SalesforceCli } from "./salesforceCli";
+import * as path from 'path';
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
+
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -189,6 +191,19 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         }
         return '';
     }
+
+    async getText(params: { uri: Uri; range: Range; }): Promise<TextLine> {
+        const uriMapper = new UriMapper();
+        const textDocument = await vscode.workspace.openTextDocument(uriMapper.intoVsCodeRepresentation(params.uri));
+
+        const rangeMapper = new RangeMapper();
+        const vscodeRange = rangeMapper.intoVsCodeRepresentation(params.range);
+
+        const text = textDocument.getText(vscodeRange);
+        return new TextLine({
+            text
+        });
+    }
 }
 
 class UriMapper {
@@ -253,18 +268,30 @@ class DiagnosticSeverityMapper {
     }
 }
 
-export function createTreeView(params : {
-    cli : SalesforceCli,
-    ide : IntegratedDevelopmentEnvironment
+export function createTreeView(params: {
+    cli: SalesforceCli,
+    ide: IntegratedDevelopmentEnvironment,
+    logDir: string
 }) {
     const apexLogTreeProvider = new ApexLogTreeProvider({
         cli: params.cli,
         ide: params.ide,
-        logDir: '.zf\\logs'
+        logDir: params.logDir
     });
 
     const treeView = vscode.window.createTreeView('apex-logs', {
         treeDataProvider: apexLogTreeProvider
+    });
+
+    const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(`**/*.log`);
+    fileSystemWatcher.onDidCreate(() => {
+        apexLogTreeProvider.refresh();
+    });
+    fileSystemWatcher.onDidChange(() => {
+        apexLogTreeProvider.refresh();
+    });
+    fileSystemWatcher.onDidDelete(() => {
+        apexLogTreeProvider.refresh();
     });
 
     treeView.onDidChangeSelection(async (e) => {
@@ -288,6 +315,9 @@ export class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeI
     private readonly ide: IntegratedDevelopmentEnvironment;
     private readonly logDir: string;
 
+    private readonly eventEmitter: vscode.EventEmitter<ApexLogTreeItem | undefined>;
+    onDidChangeTreeData?: vscode.Event<void | ApexLogTreeItem | ApexLogTreeItem[] | null | undefined> | undefined;
+
     public constructor(params: {
         cli: SalesforceCli,
         ide: IntegratedDevelopmentEnvironment,
@@ -296,11 +326,19 @@ export class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeI
         this.cli = params.cli;
         this.ide = params.ide;
         this.logDir = params.logDir;
+
+        this.eventEmitter = new vscode.EventEmitter<ApexLogTreeItem | undefined>();
+        this.onDidChangeTreeData = this.eventEmitter.event;
     }
-    getTreeItem(element: ApexLogTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+
+    public refresh() {
+        this.eventEmitter.fire(undefined);
+    }
+
+    public getTreeItem(element: ApexLogTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
-    getChildren(element?: ApexLogTreeItem | undefined): vscode.ProviderResult<ApexLogTreeItem[]> {
+    public getChildren(element?: ApexLogTreeItem | undefined): vscode.ProviderResult<ApexLogTreeItem[]> {
         if (!element) {
             return new Promise((resolve, reject) => {
                 const apexLogDirectoryReadCommand = new ApexLogDirectoryReadCommand({
@@ -341,4 +379,48 @@ class ApexLogTreeItem extends vscode.TreeItem {
         super(label, collapsibleState);
         this.apexLog = apexLog;
     }
+
+    iconPath = {
+        light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
+        dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
+    };
+}
+
+export async function cleanLocalApexLogs(ide: IntegratedDevelopmentEnvironment, zfLogDir: string) {
+    await ide.withProgress(async (progressTokens) => {
+        progressTokens.report({
+            progress: 0,
+            title: 'Finding local log files...'
+        });
+        const uris = await ide.findFiles(`**\\${zfLogDir}\\*`);
+        const numFiles = uris.length;
+
+        progressTokens.report({
+            progress: 0,
+            title: `Removing ${numFiles} log files.`
+        });
+
+
+        const promises = [];
+        let completed = 0;
+        for (let i = 0; i < uris.length; i++) {
+
+            const uriMapper = new UriMapper();
+            const vscodeUri = uriMapper.intoVsCodeRepresentation(uris[i]);
+
+            const promise = vscode.workspace.fs.delete(vscodeUri);
+            promise.then(() => {
+                completed++;
+                progressTokens.report({
+                    progress: (completed / numFiles) * 100,
+                });
+            });
+
+            promises.push(promise);
+        }
+
+        await Promise.all(promises);
+    }, {
+        title: 'Cleaning Local Apex Logs'
+    });
 }
