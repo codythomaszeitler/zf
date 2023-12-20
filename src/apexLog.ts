@@ -8,6 +8,7 @@ export class ApexLog {
 	private readonly logLength: number;
 	private readonly operation: string;
 	private readonly status: string;
+	private readonly startTime : Date;
 
 	public constructor(params: {
 		id: SalesforceId;
@@ -16,6 +17,7 @@ export class ApexLog {
 		logLength: number;
 		operation: string;
 		status: string;
+		startTime : Date;
 	}) {
 		this.id = params.id;
 		this.application = params.application;
@@ -23,6 +25,7 @@ export class ApexLog {
 		this.logLength = params.logLength;
 		this.operation = params.operation;
 		this.status = params.status;
+		this.startTime = params.startTime;
 	}
 
 	public getApplication(): string {
@@ -47,5 +50,9 @@ export class ApexLog {
 
 	public getId(): SalesforceId {
 		return this.id;
+	}
+
+	public getStartTime(): Date {
+		return this.startTime;
 	}
 }
