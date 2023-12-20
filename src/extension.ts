@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { VsCode, createTreeView } from "./vscode";
+import { VsCode, cleanLocalApexLogs, createTreeView } from "./vscode";
 import { projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
@@ -95,6 +95,8 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
+	const zfLogDir = path.join('.zf', 'logs');
+
 	async function runGetRecentApexLogs() {
 		await ide.withProgress(async (progressToken) => {
 			try {
@@ -103,7 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
 					await getRecentApexLogs({
 						targetOrg: defaultOrg,
 						numLogs: 25,
-						logDir: path.join('.zf', 'logs'),
+						logDir: zfLogDir,
 						cli: salesforceCli
 					});
 				}
@@ -115,16 +117,22 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
+	async function runCleanLocalApexLogs() {
+		await cleanLocalApexLogs(ide, zfLogDir);	
+	}
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runHighlightedApex', runHighlightedApexCommand));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.enableDebugLogForCurrentUser', runEnableDebugLogForCurrentUser));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
 
 	createTreeView({
-		cli : salesforceCli,
-		ide : ide
+		cli: salesforceCli,
+		ide: ide,
+		logDir: zfLogDir
 	});
 }
 

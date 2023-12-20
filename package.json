@@ -39,6 +39,10 @@
       {
         "command": "sf.zsi.getRecentApexLogs",
         "title": "SF ZSI: Get Recent Apex Logs"
+      },
+      {
+        "command": "sf.zsi.cleanLocalApexLogs",
+        "title": "SF ZSI: Clean Local Apex Logs"
       }
     ],
     "views": {

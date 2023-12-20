@@ -1,12 +1,12 @@
 import { Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { ProgressToken } from "../../progressToken";
+import { Range } from "../../range";
 
 function nonStartedQuickPick(item: string): void {
     throw new Error('Show Quick is not being shown.');
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
-
     selectQuickPickItem: (item: string) => void;
 
     private _waitForShowQuickPickResolve: (value: unknown) => void;
@@ -183,6 +183,10 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 
     readLineAt(params: { uri: Uri; line: number; }): Promise<TextLine> {
+        throw new Error("Method not implemented.");
+    }
+
+    getText(params: { uri: Uri; range: Range; }): Promise<TextLine> {
         throw new Error("Method not implemented.");
     }
 }

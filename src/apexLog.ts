@@ -3,35 +3,49 @@ import { SalesforceId } from "./salesforceId";
 export class ApexLog {
 
 	private readonly id: SalesforceId;
+	private readonly application: string;
 	private readonly duration: number;
-	private readonly location: string;
+	private readonly logLength: number;
 	private readonly operation: string;
-	private readonly request: string;
-	private readonly startTime: Date;
 	private readonly status: string;
 
 	public constructor(params: {
 		id: SalesforceId;
+		application: string;
 		duration: number;
-		location: string;
+		logLength: number;
 		operation: string;
-		request: string;
-		startTime: Date;
 		status: string;
-		filePath : string | undefined;
 	}) {
 		this.id = params.id;
+		this.application = params.application;
 		this.duration = params.duration;
-		this.location = params.location;
+		this.logLength = params.logLength;
 		this.operation = params.operation;
-		this.request = params.request;
-		this.startTime = params.startTime;
 		this.status = params.status;
 	}
 
-	public getId() : SalesforceId {
+	public getApplication(): string {
+		return this.application;
+	}
+
+	public getDuration(): number {
+		return this.duration;
+	}
+
+	public getLogLength(): number {
+		return this.logLength;
+	}
+
+	public getOperation(): string {
+		return this.operation;
+	}
+
+	public getStatus(): string {
+		return this.status;
+	}
+
+	public getId(): SalesforceId {
 		return this.id;
 	}
 }
-
-

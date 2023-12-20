@@ -1,27 +1,30 @@
-import { SandboxOrgListResult, SfOrgListResult, ScratchOrgListResult } from "./sfOrgListResult";
-import { JobId } from "./jobId";
-import { SalesforceCli } from "./salesforceCli";
+import { ApexGetLogResult } from "./apexGetLogResult";
+import { ApexListLogResult } from "./apexListLogResult";
+import { ApexLog } from "./apexLog";
+import { ApexRunResult } from "./apexRunResult";
+import { CreateableSObject } from "./createableSObject";
+import { DataCreateRecordResult } from "./dataCreateRecordResult";
+import { DataQueryResult } from "./dataQueryResult";
 import { Executor, ExecutorCommand, intoCliCommandString } from "./executor";
-import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
-import { ProjectDeployStartResult } from "./projectDeployStartResult";
-import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
+import { JobId } from "./jobId";
+import { Logger } from "./logger";
+import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
+import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
-import { SObjectListResult } from "./sObjectListResult";
+import { ProjectDeployStartResult } from "./projectDeployStartResult";
+import { SObject } from "./sObject";
 import { SObjectApiName } from "./sObjectApiName";
 import { SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
-import { ApexRunResult } from "./apexRunResult";
-import { DataCreateRecordResult } from "./dataCreateRecordResult";
-import { CreateableSObject } from "./createableSObject";
-import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
+import { SObjectListResult } from "./sObjectListResult";
+import { SalesforceCli } from "./salesforceCli";
 import { SalesforceId } from "./salesforceId";
-import { Logger } from "./logger";
-import { DataQueryResult } from "./dataQueryResult";
+import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
+import { SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
 import { SoqlQuery } from "./soqlQuery";
-import { SObject } from "./sObject";
-import { ApexGetLogResult } from "./apexGetLogResult";
 
 export class SfSalesforceCli extends SalesforceCli {
+
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
@@ -524,5 +527,39 @@ export class SfSalesforceCli extends SalesforceCli {
         }
 
         return new ApexGetLogResult();
+    }
+
+    async apexListLog(params: { targetOrg: SalesforceOrg; numLogs: number; logDir: string; }): Promise<ApexListLogResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'apex',
+                'list',
+                'log',
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        const apexLogs: ApexLog[] = stdout.result.map((apexLog: any) => {
+            return new ApexLog({
+                id: SalesforceId.get(apexLog.Id),
+                application: apexLog.Application,
+                duration: apexLog.DurationMilliseconds,
+                logLength: apexLog.LogLength,
+                operation: apexLog.Operation,
+                status: apexLog.Status
+            });
+        });
+
+        return new ApexListLogResult({
+            logs: apexLogs
+        });
     }
 }
