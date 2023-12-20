@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { ApexLogTreeProvider, VsCode, createTreeView } from "./vscode";
+import { VsCode, createTreeView } from "./vscode";
 import { projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
@@ -9,6 +9,7 @@ import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
+import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
@@ -102,7 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
 					await getRecentApexLogs({
 						targetOrg: defaultOrg,
 						numLogs: 25,
-						logDir: '.zf\\logs',
+						logDir: path.join('.zf', 'logs'),
 						cli: salesforceCli
 					});
 				}
