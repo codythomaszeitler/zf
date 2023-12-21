@@ -529,7 +529,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return new ApexGetLogResult();
     }
 
-    async apexListLog(params: { targetOrg: SalesforceOrg; numLogs: number; logDir: string; }): Promise<ApexListLogResult> {
+    async apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
