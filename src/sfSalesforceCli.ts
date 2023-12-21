@@ -548,6 +548,7 @@ export class SfSalesforceCli extends SalesforceCli {
         }
 
         if (!stdout.result) {
+            Logger.get().warn('Missing result in apex list logs. Returning empty log list.');
             return new ApexListLogResult({
                 logs: []
             });
