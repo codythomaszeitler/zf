@@ -10,6 +10,7 @@ import * as path from 'path';
 import { ApexLog } from "./apexLog";
 import { TreeNode } from "./treeNode";
 import { ServerSideApexLogTreeGenerateCommand } from "./serverSideApexLogTreeGenerateCommand";
+import { ShowApexLogCommand } from "./showApeLogCommand";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
 
@@ -97,6 +98,13 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
                 resolve();
             });
         });
+    }
+
+    async showTextDocument(uri: Uri): Promise<void> {
+        const uriMapper = new UriMapper();
+        const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
+        const document = await vscode.workspace.openTextDocument(vscodeUri);
+        await vscode.window.showTextDocument(document);
     }
 
     showWarningMessage(message: string): Promise<void> {
@@ -337,65 +345,28 @@ export async function createServerSideApexLogTree(params: {
     });
 
     treeView.onDidChangeSelection(async (e) => {
-        await params.ide.withProgress(async (progressToken) => {
-            if (e.selection.length === 0) {
-                return;
-            }
+        if (e.selection.length === 0) {
+            return;
+        }
+        const selection = e.selection[0];
+        if (!selection.treeNode.value) {
+            return;
+        }
 
-            const selection = e.selection[0];
-            if (!selection.treeNode.value) {
-                return;
-            }
+        const logId = selection.treeNode.value.getId();
 
-            const id = selection.treeNode.value.getId();
-
-            const hasFile = async () => {
-                const uri = await params.ide.findFile(`**/${id.toString()}.log`);
-                return !!uri;
-            };
-
-            progressToken.report({
-                progress: 25,
-                title: 'Checking if file exists'
-            });
-            if (!(await hasFile())) {
-                progressToken.report({
-                    progress: 50,
-                    title: `Getting log file ${id.toString()}`
-                });
-                await params.cli.apexGetLog({
-                    targetOrg: defaultOrg,
-                    logDir: params.logDir,
-                    logId: id,
-                    numLogs: undefined
-                });
-            }
-
-            progressToken.report({
-                progress: 75,
-                title: `Opening log file ${id.toString()}`
-            });
-            const uri = await params.ide.findFile(`**/${id.toString()}.log`);
-            if (!uri) {
-                params.ide.showWarningMessage(`Could not find log matching ${id.toString()}.`);
-                return;
-            }
-
-            const uriMapper = new UriMapper();
-            const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
-            const document = await vscode.workspace.openTextDocument(vscodeUri);
-            vscode.window.showTextDocument(document);
-        }, {
-            title: 'Opening Log File'
+        const showApexLogCommand = new ShowApexLogCommand(params);
+        await showApexLogCommand.execute({
+            targetOrg: defaultOrg,
+            logId,
+            logDir: params.logDir
         });
-
-
     });
 }
 
 class ServerSideApexLogTreeNode extends vscode.TreeItem {
 
-    public readonly treeNode : TreeNode<ApexLog>;
+    public readonly treeNode: TreeNode<ApexLog>;
 
     public constructor(params: {
         treeNode: TreeNode<ApexLog>
@@ -403,6 +374,11 @@ class ServerSideApexLogTreeNode extends vscode.TreeItem {
         super(params.treeNode.label, params.treeNode.value ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded);
         this.treeNode = params.treeNode;
     }
+
+    iconPath = {
+        light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
+        dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
+    };
 }
 
 
@@ -423,12 +399,12 @@ export class ServerSideApexLogTreeProvider implements vscode.TreeDataProvider<Se
     getChildren(element?: ServerSideApexLogTreeNode | undefined): vscode.ProviderResult<ServerSideApexLogTreeNode[]> {
         if (element) {
             return element.treeNode.children.map(treeNode => new ServerSideApexLogTreeNode({
-                treeNode 
+                treeNode
             }));
         } else {
             return [
                 new ServerSideApexLogTreeNode({
-                    treeNode : this.root
+                    treeNode: this.root
                 })
             ];
         }

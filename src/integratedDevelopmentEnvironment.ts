@@ -5,12 +5,13 @@ import * as path from 'path';
 export abstract class IntegratedDevelopmentEnvironment {
     abstract showQuickPick(items: string[]): Thenable<string>;
     abstract showErrorMessage(message: string): Promise<void>;
+    abstract showTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
     abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string }): Promise<T>;
     abstract findFile(glob: string): Promise<Uri | null>;
     abstract findFiles(glob: string): Promise<Uri[]>;
     abstract readLineAt(params: { uri: Uri, line: number }): Promise<TextLine>;
-    abstract getText(params: { uri: Uri, range : Range }): Promise<TextLine>;
+    abstract getText(params: { uri: Uri, range: Range }): Promise<TextLine>;
     abstract getConfig<T>(property: string, defaultValue: T): T;
     abstract execute(command: Command): Promise<CommandExecuteResult>;
     abstract setDiagnostics(uri: Uri, diagnostics: Diagnostic[]): void;
