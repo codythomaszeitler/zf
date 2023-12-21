@@ -3,7 +3,7 @@ import { ApexLog } from "../apexLog";
 import { genRandomId } from "./salesforceId.test";
 import { SalesforceOrg } from "../salesforceOrg";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
-import { TreeNode } from "../treeItem";
+import { TreeNode } from "../treeNode";
 import { describe, expect, beforeEach } from '@jest/globals';
 import { ServerSideApexLogTreeGenerateCommand } from "../serverSideApexLogTreeGenerateCommand";
 
