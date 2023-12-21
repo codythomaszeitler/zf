@@ -22,9 +22,10 @@ import { genRandomId } from "../salesforceId.test";
 import { DEBUG_LEVEL_SOBJECT_NAME } from "../../debugLevelSObject";
 import { ApexGetLogResult } from "../../apexGetLogResult";
 import { ApexListLogResult } from "../../apexListLogResult";
+import { ApexLog } from "../../apexLog";
 
 export class MockSalesforceCli extends SalesforceCli {
-    
+
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
 
@@ -42,6 +43,8 @@ export class MockSalesforceCli extends SalesforceCli {
 
     private readonly validations: DatabaseValidation[];
 
+    private readonly orgsWithApexLogs: { org: SalesforceOrg; logs: ApexLog[] }[];
+
     constructor() {
         super(async (command: ExecutorCommand) => { return { stdout: '' }; });
         this.orgs = [];
@@ -55,6 +58,7 @@ export class MockSalesforceCli extends SalesforceCli {
         this.noComponentsToDeploy = false;
         this.sObjects = new RecordIdToSObject();
         this.validations = [new DebugLevelDatabaseValidation({ sObjectApiName: DEBUG_LEVEL_SOBJECT_NAME })];
+        this.orgsWithApexLogs = [];
     }
 
     getDeploymentJobId(): JobId | null {
@@ -270,12 +274,38 @@ export class MockSalesforceCli extends SalesforceCli {
         });
     }
 
+    addApexLog(params: { targetOrg: SalesforceOrg; apexLog: ApexLog }) {
+        const hasOrg = () => {
+            return !!this.orgsWithApexLogs.find(orgWithApexLogs => orgWithApexLogs.org.getAlias() === params.targetOrg.getAlias());
+        };
+
+        if (!hasOrg()) {
+            this.orgsWithApexLogs.push({
+                org: params.targetOrg,
+                logs: []
+            });
+        }
+        const orgWithApexLogs = this.orgsWithApexLogs.find(orgWithApexLogs => orgWithApexLogs.org.getAlias() === params.targetOrg.getAlias());
+        if (orgWithApexLogs) {
+            orgWithApexLogs.logs.push(params.apexLog);
+        }
+    }
+
     apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number; logDir: string; }): Promise<ApexGetLogResult> {
         throw new Error("Method not implemented.");
     }
 
-    apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
-        throw new Error("Method not implemented.");
+    async apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
+        const orgWithApexLogs = this.orgsWithApexLogs.find(orgWithApexLogs => orgWithApexLogs.org.getAlias() === params.targetOrg.getAlias());
+        if (!orgWithApexLogs) {
+            return new ApexListLogResult({
+                logs: []
+            });
+        }
+
+        return new ApexListLogResult({
+            logs: orgWithApexLogs.logs
+        });
     }
 }
 
@@ -360,13 +390,13 @@ class DebugLevelDatabaseValidation extends DatabaseValidation {
         const duplicate = params.alreadyExistingSObjects.find((existingSObject: SObject) => existingSObject.type === params.newSObject.type);
         if (duplicate) {
             return {
-                passed : false,
-                message : "Found duplicate debug level."
+                passed: false,
+                message: "Found duplicate debug level."
             };
         } else {
             return {
-                passed : true,
-                message : ""
+                passed: true,
+                message: ""
             };
         }
     }

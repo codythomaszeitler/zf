@@ -3,7 +3,7 @@ import { Command } from "./command";
 import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceOrg } from "./salesforceOrg";
-import { TreeNode } from "./treeItem";
+import { TreeNode } from "./treeNode";
 
 export class ServerSideApexLogTreeGenerateCommand extends Command {
 
