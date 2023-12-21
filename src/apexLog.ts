@@ -8,7 +8,7 @@ export class ApexLog {
 	private readonly logLength: number;
 	private readonly operation: string;
 	private readonly status: string;
-	private readonly startTime : Date;
+	private readonly startTime: Date;
 
 	public constructor(params: {
 		id: SalesforceId;
@@ -17,7 +17,7 @@ export class ApexLog {
 		logLength: number;
 		operation: string;
 		status: string;
-		startTime : Date;
+		startTime: Date;
 	}) {
 		this.id = params.id;
 		this.application = params.application;
@@ -54,5 +54,9 @@ export class ApexLog {
 
 	public getStartTime(): Date {
 		return this.startTime;
+	}
+
+	public getTreeViewString(): string {
+		return `[${this.id.toString()}] - [${this.startTime.toLocaleString()}] - MB: [${this.logLength}] - MiS: [${this.duration}]`;
 	}
 }
