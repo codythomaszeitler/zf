@@ -1,6 +1,5 @@
 import {describe, expect} from '@jest/globals';
 import { ApexLog } from "../apexLog";
-import { SalesforceId } from "../salesforceId";
 import { genRandomId } from "./salesforceId.test";
 
 describe('apex log', () => {

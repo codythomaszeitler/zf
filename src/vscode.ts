@@ -338,6 +338,9 @@ export class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeI
     public getTreeItem(element: ApexLogTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
+
+    // So given some apex log tree item class... return the children that are underneath it.
+    // I am assuming this gets called over and over and over again. 
     public getChildren(element?: ApexLogTreeItem | undefined): vscode.ProviderResult<ApexLogTreeItem[]> {
         if (!element) {
             return new Promise((resolve, reject) => {
