@@ -1,0 +1,71 @@
+52.0 APEX_CODE,FINEST;APEX_PROFILING,INFO;CALLOUT,INFO;DB,INFO;NBA,INFO;SYSTEM,DEBUG;VALIDATION,INFO;VISUALFORCE,INFO;WAVE,INFO;WORKFLOW,INFO
+20:36:08.5 (5237236)|USER_INFO|[EXTERNAL]|0057i00000B9ITY|test-gtrxdexof5ch@example.com|(GMT-08:00) Pacific Standard Time (America/Los_Angeles)|GMT-08:00
+20:36:08.5 (5328509)|EXECUTION_STARTED
+20:36:08.5 (5345257)|CODE_UNIT_STARTED|[EXTERNAL]|01p7i00000W9aY5|SetAccountNameTest.itShouldSetTheAccountNameWhenCommanded()
+20:36:08.5 (12964240)|HEAP_ALLOCATE|[79]|Bytes:3
+20:36:08.5 (13145938)|HEAP_ALLOCATE|[84]|Bytes:152
+20:36:08.5 (13172281)|HEAP_ALLOCATE|[399]|Bytes:408
+20:36:08.5 (13193286)|HEAP_ALLOCATE|[412]|Bytes:408
+20:36:08.5 (13210708)|HEAP_ALLOCATE|[520]|Bytes:48
+20:36:08.5 (13241070)|HEAP_ALLOCATE|[139]|Bytes:6
+20:36:08.5 (13261433)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:3
+20:36:08.5 (13351808)|METHOD_ENTRY|[2]|01p7i00000W9aY5|SetAccountNameTest.SetAccountNameTest()
+20:36:08.5 (13367274)|STATEMENT_EXECUTE|[2]
+20:36:08.5 (13381605)|STATEMENT_EXECUTE|[2]
+20:36:08.5 (13465700)|HEAP_ALLOCATE|[52]|Bytes:5
+20:36:08.5 (13510653)|HEAP_ALLOCATE|[58]|Bytes:5
+20:36:08.5 (13525521)|HEAP_ALLOCATE|[66]|Bytes:7
+20:36:08.5 (14135766)|SYSTEM_MODE_ENTER|false
+20:36:08.5 (14185144)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:5
+20:36:08.5 (14197892)|SYSTEM_MODE_EXIT|false
+20:36:08.5 (14230275)|METHOD_EXIT|[2]|SetAccountNameTest
+20:36:08.5 (14303727)|SYSTEM_MODE_ENTER|false
+20:36:08.5 (14313731)|HEAP_ALLOCATE|[7]|Bytes:5
+20:36:08.5 (14320656)|STATEMENT_EXECUTE|[5]
+20:36:08.5 (14323514)|STATEMENT_EXECUTE|[7]
+20:36:08.5 (14369297)|HEAP_ALLOCATE|[7]|Bytes:94
+20:36:08.5 (14384400)|SYSTEM_METHOD_ENTRY|[1]|Test.Test()
+20:36:08.5 (14391389)|STATEMENT_EXECUTE|[1]
+20:36:08.5 (14398181)|SYSTEM_METHOD_EXIT|[1]|Test
+20:36:08.5 (14428642)|METHOD_ENTRY|[7]||System.Test.startTest()
+20:36:08.5 (15280609)|METHOD_EXIT|[7]||System.Test.startTest()
+20:36:08.5 (15300822)|STATEMENT_EXECUTE|[9]
+20:36:08.5 (15313825)|METHOD_ENTRY|[9]||System.Test.stopTest()
+20:36:08.5 (15430982)|METHOD_EXIT|[9]||System.Test.stopTest()
+20:36:08.5 (15445142)|SYSTEM_MODE_EXIT|false
+20:36:08.15 (15469956)|CUMULATIVE_LIMIT_USAGE
+20:36:08.15 (15469956)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 0 out of 100
+  Number of query rows: 0 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+20:36:08.15 (15469956)|TESTING_LIMITS
+20:36:08.15 (15469956)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 0 out of 100
+  Number of query rows: 0 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+20:36:08.15 (15469956)|CUMULATIVE_LIMIT_USAGE_END
+
+20:36:08.5 (15657232)|CODE_UNIT_FINISHED|SetAccountNameTest.itShouldSetTheAccountNameWhenCommanded()
+20:36:08.5 (15666336)|EXECUTION_FINISHED
