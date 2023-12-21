@@ -337,46 +337,76 @@ export async function createServerSideApexLogTree(params: {
     });
 
     treeView.onDidChangeSelection(async (e) => {
+        await params.ide.withProgress(async (progressToken) => {
+            if (e.selection.length === 0) {
+                return;
+            }
 
-        if (e.selection.length === 0) {
-            return;
-        }
+            const selection = e.selection[0];
+            if (!selection.treeNode.value) {
+                return;
+            }
 
-        const selection = e.selection[0];
-        if (!selection.value) {
-            return;
-        }
+            const id = selection.treeNode.value.getId();
 
-        const id = selection.value.getId();
+            const hasFile = async () => {
+                const uri = await params.ide.findFile(`**/${id.toString()}.log`);
+                return !!uri;
+            };
 
-        const hasFile = async () => {
-            const uri = await params.ide.findFile(`**/${id.toString()}.log`);
-            return !!uri;
-        };
-
-        if (!(await hasFile())) {
-            await params.cli.apexGetLog({
-                targetOrg: defaultOrg,
-                logDir: params.logDir,
-                logId: id,
-                numLogs: undefined
+            progressToken.report({
+                progress: 25,
+                title: 'Checking if file exists'
             });
-        }
+            if (!(await hasFile())) {
+                progressToken.report({
+                    progress: 50,
+                    title: `Getting log file ${id.toString()}`
+                });
+                await params.cli.apexGetLog({
+                    targetOrg: defaultOrg,
+                    logDir: params.logDir,
+                    logId: id,
+                    numLogs: undefined
+                });
+            }
 
-        const uri = await params.ide.findFile(`**/${id.toString()}.log`);
-        if (!uri) {
-            params.ide.showWarningMessage(`Could not find log matching ${id.toString()}.`);
-            return;
-        }
+            progressToken.report({
+                progress: 75,
+                title: `Opening log file ${id.toString()}`
+            });
+            const uri = await params.ide.findFile(`**/${id.toString()}.log`);
+            if (!uri) {
+                params.ide.showWarningMessage(`Could not find log matching ${id.toString()}.`);
+                return;
+            }
 
-        const uriMapper = new UriMapper();
-        const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
-        const document = await vscode.workspace.openTextDocument(vscodeUri);
-        vscode.window.showTextDocument(document);
+            const uriMapper = new UriMapper();
+            const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
+            const document = await vscode.workspace.openTextDocument(vscodeUri);
+            vscode.window.showTextDocument(document);
+        }, {
+            title: 'Opening Log File'
+        });
+
+
     });
 }
 
-export class ServerSideApexLogTreeProvider implements vscode.TreeDataProvider<TreeNode<ApexLog>> {
+class ServerSideApexLogTreeNode extends vscode.TreeItem {
+
+    public readonly treeNode : TreeNode<ApexLog>;
+
+    public constructor(params: {
+        treeNode: TreeNode<ApexLog>
+    }) {
+        super(params.treeNode.label, params.treeNode.value ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded);
+        this.treeNode = params.treeNode;
+    }
+}
+
+
+export class ServerSideApexLogTreeProvider implements vscode.TreeDataProvider<ServerSideApexLogTreeNode> {
 
     private root: TreeNode<ApexLog>;
 
@@ -385,29 +415,33 @@ export class ServerSideApexLogTreeProvider implements vscode.TreeDataProvider<Tr
     }) {
         this.root = params.root;
     }
+    onDidChangeTreeData?: vscode.Event<void | ServerSideApexLogTreeNode | ServerSideApexLogTreeNode[] | null | undefined> | undefined;
+
+    getTreeItem(element: ServerSideApexLogTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
+        return element;
+    }
+    getChildren(element?: ServerSideApexLogTreeNode | undefined): vscode.ProviderResult<ServerSideApexLogTreeNode[]> {
+        if (element) {
+            return element.treeNode.children.map(treeNode => new ServerSideApexLogTreeNode({
+                treeNode 
+            }));
+        } else {
+            return [
+                new ServerSideApexLogTreeNode({
+                    treeNode : this.root
+                })
+            ];
+        }
+    }
+    getParent?(element: ServerSideApexLogTreeNode): vscode.ProviderResult<ServerSideApexLogTreeNode> {
+        return null;
+    }
+    resolveTreeItem?(item: vscode.TreeItem, element: ServerSideApexLogTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
+        return item;
+    }
 
     public refresh(root: TreeNode<ApexLog>) {
 
-    }
-
-    public onDidChangeTreeData?: vscode.Event<void | TreeNode<ApexLog> | TreeNode<ApexLog>[] | null | undefined> | undefined;
-
-    public getTreeItem(element: TreeNode<ApexLog>): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        return element;
-    }
-    public getChildren(element?: TreeNode<ApexLog> | undefined): vscode.ProviderResult<TreeNode<ApexLog>[]> {
-        if (element) {
-            return element.children;
-        }
-        else {
-            return this.root.children;
-        }
-    }
-    public getParent?(element: TreeNode<ApexLog>): vscode.ProviderResult<TreeNode<ApexLog>> {
-        return null;
-    }
-    public resolveTreeItem?(item: vscode.TreeItem, element: TreeNode<ApexLog>, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
-        return element;
     }
 }
 
