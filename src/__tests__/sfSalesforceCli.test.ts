@@ -691,8 +691,25 @@ describe('sf salesforce cli', () => {
             expect(log.getStatus()).toBe("Success");
         });
 
-        // it('should return empty logs and log error message if result is missing', () => {
+        it('should return empty logs and log error message if result is missing', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
 
-        // });
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf apex list log --target-org cso --json": getWithoutResultArray()
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const apexListLogResult = await cli.apexListLog({
+                targetOrg
+            });
+
+            const logs = apexListLogResult.getLogs();
+            expect(logs.length).toBe(0);
+        });
     });
 });

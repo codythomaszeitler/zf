@@ -547,6 +547,12 @@ export class SfSalesforceCli extends SalesforceCli {
             throw new Error(stdout.message);
         }
 
+        if (!stdout.result) {
+            return new ApexListLogResult({
+                logs: []
+            });
+        }
+
         const apexLogs: ApexLog[] = stdout.result.map((apexLog: any) => {
             return new ApexLog({
                 id: SalesforceId.get(apexLog.Id),
