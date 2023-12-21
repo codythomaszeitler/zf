@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { VsCode, cleanLocalApexLogs, createTreeView } from "./vscode";
+import { VsCode, cleanLocalApexLogs, createServerSideApexLogTree, createTreeView } from "./vscode";
 import { projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
@@ -118,7 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function runCleanLocalApexLogs() {
-		await cleanLocalApexLogs(ide, zfLogDir);	
+		await cleanLocalApexLogs(ide, zfLogDir);
 	}
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
@@ -128,6 +128,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.enableDebugLogForCurrentUser', runEnableDebugLogForCurrentUser));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
+
+	createServerSideApexLogTree({
+		ide: ide,
+		cli: salesforceCli,
+		logDir : zfLogDir
+	});
 
 	createTreeView({
 		cli: salesforceCli,

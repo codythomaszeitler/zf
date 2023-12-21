@@ -291,7 +291,7 @@ export class MockSalesforceCli extends SalesforceCli {
         }
     }
 
-    apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number; logDir: string; }): Promise<ApexGetLogResult> {
+    apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: string; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
         throw new Error("Method not implemented.");
     }
 

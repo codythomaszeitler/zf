@@ -22,14 +22,20 @@ export class ServerSideApexLogTreeGenerateCommand extends Command {
 		const asTreeNodes: TreeNode<ApexLog>[] = apexListLogResult.getLogs().map((apexLog: ApexLog) => {
 			return {
 				label: apexLog.getTreeViewString(),
-				children: []
+				children: [],
+				value : apexLog
 			};
 		});
 
 		const root: TreeNode<ApexLog> = {
 			label: params.targetOrg.getAlias(),
-			children: asTreeNodes
+			children: asTreeNodes,
+			value : null
 		};
 		return root;
 	}
 } 
+
+export function onSelectServerSideApexLog(e) {
+
+}

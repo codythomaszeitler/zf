@@ -504,22 +504,43 @@ export class SfSalesforceCli extends SalesforceCli {
         });
     }
 
-    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number; logDir: string; }): Promise<ApexGetLogResult> {
-        const command: ExecutorCommand = {
-            command: 'sf',
-            args: [
-                'apex',
-                'get',
-                'log',
-                '--output-dir',
-                `${params.logDir}`,
-                '--number',
-                `${params.numLogs}`,
-                '--target-org',
-                params.targetOrg.getAlias(),
-                '--json'
-            ]
-        };
+    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: string; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
+        let command: ExecutorCommand;
+        if (params.numLogs) {
+            command = {
+                command: 'sf',
+                args: [
+                    'apex',
+                    'get',
+                    'log',
+                    '--output-dir',
+                    `${params.logDir}`,
+                    '--number',
+                    `${params.numLogs}`,
+                    '--target-org',
+                    params.targetOrg.getAlias(),
+                    '--json'
+                ]
+            };
+        } else if (params.logId) {
+            command = {
+                command: 'sf',
+                args: [
+                    'apex',
+                    'get',
+                    'log',
+                    '--output-dir',
+                    `${params.logDir}`,
+                    '--log-id',
+                    `${params.logId}`,
+                    '--target-org',
+                    params.targetOrg.getAlias(),
+                    '--json'
+                ]
+            };
+        } else {
+            throw new Error('Must provide either logId or numLogs.');
+        }
 
         const { stdout } = await this.exec(command);
         if (stdout.status) {
