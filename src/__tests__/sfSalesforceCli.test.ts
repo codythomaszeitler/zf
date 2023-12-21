@@ -14,6 +14,8 @@ import { Logger } from '../logger';
 import { TestLogger } from './logger.test';
 import { getDebugLevelWithDeveloperName, getDebugLogWithDeveloperNameFilter, getNoRecordsFound, getNoRecordsVariableFound } from './data/dataQueryOutput';
 import { DEBUG_LEVEL_SOBJECT_NAME } from '../debugLevelSObject';
+import { getApexListLogNominalResponse } from './data/apexListLogOutput';
+import { SalesforceId } from '../salesforceId';
 
 describe('sf salesforce cli', () => {
 
@@ -652,5 +654,45 @@ describe('sf salesforce cli', () => {
 
             expect(caughtException?.message).toBe('Cannot run data query with empty from table.');
         });
+    });
+
+    describe('sf salesforce cli - apex list log', () => {
+        it('should be able to convert a nominal response to apex logs', async () => {
+            const targetOrg: SalesforceOrg = new SalesforceOrg({
+                alias: 'cso',
+                isActive: true
+            });
+
+            const mockExecutor = genMockExecutor({
+                "sf org list --json": get(),
+                "sf apex list log --target-org cso --json": getApexListLogNominalResponse()
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+
+            const apexListLogResult = await cli.apexListLog({
+                targetOrg
+            });
+
+            const logs = apexListLogResult.getLogs();
+            expect(logs.length).not.toBe(0);
+            expect(logs.length).toBe(3);
+
+            const log = logs[0];
+
+            expect(log.getApplication()).toBe("Unknown");
+            expect(log.getDuration()).toBe(89);
+            expect(log.getId()).toBe(SalesforceId.get("07L7i00000MYv6qEAD"));
+            expect(log.getLogLength()).toBe(2680);
+            expect(log.getOperation()).toBe("Api");
+
+            const expectedStartTime = new Date(Date.parse("2023-12-20T07:04:17+0000"));
+            expect(log.getStartTime().getTime()).toBe(expectedStartTime.getTime());
+            expect(log.getStatus()).toBe("Success");
+        });
+
+        // it('should return empty logs and log error message if result is missing', () => {
+
+        // });
     });
 });
