@@ -16,6 +16,7 @@ import { SoqlQuery } from "./soqlQuery";
 import { DataQueryResult } from "./dataQueryResult";
 import { ApexGetLogResult } from "./apexGetLogResult";
 import { ApexListLogResult } from "./apexListLogResult";
+import { SalesforceId } from "./salesforceId";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -65,7 +66,8 @@ export abstract class SalesforceCli {
 
     abstract apexGetLog(params: {
         targetOrg: SalesforceOrg,
-        numLogs: number,
+        numLogs: number | undefined,
+        logId: SalesforceId | undefined,
         logDir: string
     }): Promise<ApexGetLogResult>;
 
