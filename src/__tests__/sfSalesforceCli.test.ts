@@ -710,6 +710,9 @@ describe('sf salesforce cli', () => {
 
             const logs = apexListLogResult.getLogs();
             expect(logs.length).toBe(0);
+
+            const re = /.*Missing result in apex list logs\. Returning empty log list\..*/;
+            expect(testLogger.contains(re)).toBeTruthy();
         });
     });
 });
