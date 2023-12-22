@@ -19,7 +19,7 @@ export class ApexCleanLogsCommand extends Command {
 				progress: 0,
 				title: 'Finding local log files...'
 			});
-			const uris = await this.getIde().findFiles(`**\\${params.logDir}\\*`);
+			const uris = await this.getIde().findFiles(`**\\${params.logDir}\\**\\*.log`);
 			const numFiles = uris.length;
 
 			progressTokens.report({
