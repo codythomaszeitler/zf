@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { VsCode, cleanLocalApexLogs, createServerSideApexLogTree, createTreeView } from "./vscode";
+import { VsCode } from "./vscode";
+import { ApexLogTreeView } from "./apexLogTreeView";
 import { projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
@@ -10,6 +11,7 @@ import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
 import * as path from 'path';
+import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
 
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
@@ -118,8 +120,34 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function runCleanLocalApexLogs() {
-		await cleanLocalApexLogs(ide, zfLogDir);
+		try {
+			const apexCleanLogsCommand = new ApexCleanLogsCommand({
+				cli: salesforceCli,
+				ide: ide,
+			});
+
+			await apexCleanLogsCommand.execute({
+				logDir: zfLogDir
+			});
+		} catch (e: any) {
+			ide.showErrorMessage(e.message);
+		}
 	}
+
+	const apexLogTreeView = new ApexLogTreeView({
+		cli: salesforceCli,
+		ide: ide,
+		logDir: zfLogDir
+	});
+
+	salesforceCli.getDefaultOrg().then((defaultOrg) => {
+		if (defaultOrg) {
+			ide.registerTreeView({
+				treeView: apexLogTreeView,
+				targetOrg: defaultOrg
+			});
+		}
+	});
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
@@ -128,18 +156,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.enableDebugLogForCurrentUser', runEnableDebugLogForCurrentUser));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
-
-	createServerSideApexLogTree({
-		ide: ide,
-		cli: salesforceCli,
-		logDir : zfLogDir
-	});
-
-	createTreeView({
-		cli: salesforceCli,
-		ide: ide,
-		logDir: zfLogDir
-	});
 }
 
 // this method is called when your extension is deactivated

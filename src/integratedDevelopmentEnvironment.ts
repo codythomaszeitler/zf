@@ -1,11 +1,14 @@
 import { ProgressToken } from "./progressToken";
 import { Range } from "./range";
 import * as path from 'path';
+import { TreeView } from "./treeView";
+import { SalesforceOrg } from "./salesforceOrg";
 
 export abstract class IntegratedDevelopmentEnvironment {
     abstract showQuickPick(items: string[]): Thenable<string>;
     abstract showErrorMessage(message: string): Promise<void>;
     abstract showTextDocument(uri: Uri): Promise<void>;
+    abstract deleteTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
     abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string }): Promise<T>;
     abstract findFile(glob: string): Promise<Uri | null>;
@@ -22,6 +25,7 @@ export abstract class IntegratedDevelopmentEnvironment {
         show: true;
     }): Promise<void>;
     abstract getHighlightedText(): Promise<string>;
+    abstract registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg }): Promise<void>;
 }
 
 export interface Command {

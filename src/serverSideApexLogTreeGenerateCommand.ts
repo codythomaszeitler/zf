@@ -35,7 +35,3 @@ export class ServerSideApexLogTreeGenerateCommand extends Command {
 		return root;
 	}
 } 
-
-export function onSelectServerSideApexLog(e) {
-
-}

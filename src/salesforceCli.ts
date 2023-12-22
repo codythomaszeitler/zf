@@ -66,8 +66,8 @@ export abstract class SalesforceCli {
 
     abstract apexGetLog(params: {
         targetOrg: SalesforceOrg,
-        numLogs: number | undefined,
-        logId: SalesforceId | undefined,
+        numLogs?: number | undefined,
+        logId?: SalesforceId | undefined,
         logDir: string
     }): Promise<ApexGetLogResult>;
 
