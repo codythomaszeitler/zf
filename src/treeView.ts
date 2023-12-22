@@ -10,6 +10,6 @@ export interface TreeView<T> {
 	getRootNode(params: { targetOrg: SalesforceOrg }): Promise<TreeNode<T>>;
 	refresh(params: { targetOrg: SalesforceOrg }): Promise<void>;
 	onSelect(e: { value: T }): Promise<void>;
-	registerOnRefreshListener(listener: RefreshListener<T>): Promise<void>;
-	unregisterOnRefreshListener(listener: RefreshListener<T>): Promise<void>;
+	registerOnRefreshListener(listener: RefreshListener<TreeNode<T>>): Promise<void>;
+	unregisterOnRefreshListener(listener: RefreshListener<TreeNode<T>>): Promise<void>;
 }

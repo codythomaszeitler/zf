@@ -17,7 +17,7 @@ export class ApexLogTreeView implements TreeView<ApexLog> {
 	private readonly ide: IntegratedDevelopmentEnvironment;
 	private readonly logDir: string;
 
-	private listeners: RefreshListener<ApexLog>[];
+	private listeners: RefreshListener<TreeNode<ApexLog>>[];
 
 	public constructor(params: {
 		cli: SalesforceCli,
@@ -49,10 +49,9 @@ export class ApexLogTreeView implements TreeView<ApexLog> {
 		});
 
 		this.listeners.forEach(listener => {
-			const root = rootNode.value;
-			if (root) {
+			if (rootNode) {
 				listener.onTreeViewRefresh({
-					root
+					root: rootNode
 				});
 			}
 		});
@@ -78,11 +77,11 @@ export class ApexLogTreeView implements TreeView<ApexLog> {
 		}
 	}
 
-	public async registerOnRefreshListener<T extends ApexLog>(listener: RefreshListener<T>): Promise<void> {
+	public async registerOnRefreshListener<T extends TreeNode<ApexLog>>(listener: RefreshListener<T>): Promise<void> {
 		this.listeners.push(listener);
 	}
 
-	public async unregisterOnRefreshListener<T extends ApexLog>(listener: RefreshListener<T>): Promise<void> {
+	public async unregisterOnRefreshListener<T extends TreeNode<ApexLog>>(listener: RefreshListener<T>): Promise<void> {
 		this.listeners = this.listeners.filter(_listener => _listener !== listener);
 	}
 }

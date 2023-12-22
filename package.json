@@ -43,6 +43,10 @@
       {
         "command": "sf.zsi.cleanLocalApexLogs",
         "title": "SF ZSI: Clean Local Apex Logs"
+      },
+      {
+        "command": "sf.zsi.refreshApexLogs",
+        "title": "SF ZSI: Refresh Apex Logs"
       }
     ],
     "views": {

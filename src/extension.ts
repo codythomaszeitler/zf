@@ -149,6 +149,21 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	async function runRefreshApexLogs() {
+		try {
+			const defaultOrg = await salesforceCli.getDefaultOrg();
+			if (defaultOrg) {
+				await apexLogTreeView.refresh({
+					targetOrg: defaultOrg
+				});
+			} else {
+				ide.showWarningMessage('No default org set. Cannot refresh apex logs.');
+			}
+		} catch (e: any) {
+			ide.showErrorMessage(e.message);
+		}
+	}
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
@@ -156,6 +171,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.enableDebugLogForCurrentUser', runEnableDebugLogForCurrentUser));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.refreshApexLogs', runRefreshApexLogs));
 }
 
 // this method is called when your extension is deactivated
