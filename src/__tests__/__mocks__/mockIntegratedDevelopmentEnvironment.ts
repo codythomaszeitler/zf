@@ -1,12 +1,23 @@
 import { Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
+import { SalesforceOrg } from "../../salesforceOrg";
+import { TreeView } from "../../treeView";
 
 function nonStartedQuickPick(item: string): void {
     throw new Error('Show Quick is not being shown.');
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
+    deleteTextDocument(uri: Uri): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    showTextDocument(uri: Uri): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg; }): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
     selectQuickPickItem: (item: string) => void;
 
     private _waitForShowQuickPickResolve: (value: unknown) => void;
