@@ -7,11 +7,11 @@ import { Logger } from "./logger";
 import * as path from 'path';
 import { ApexLog } from "./apexLog";
 import { TreeNode } from "./treeNode";
-import { TreeView } from "./treeView";
+import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-    
+
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
@@ -231,6 +231,8 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
             root
         });
 
+        params.treeView.registerOnRefreshListener(apexServerSideLogTreeProvider as RefreshListener<TreeNode<T>>);
+
         const treeView = vscode.window.createTreeView(params.treeView.uniqueName, {
             treeDataProvider: apexServerSideLogTreeProvider
         });
@@ -338,20 +340,26 @@ class ServerSideApexLogTreeNode extends vscode.TreeItem {
     };
 }
 
-class ServerSideApexLogTreeProvider implements vscode.TreeDataProvider<ServerSideApexLogTreeNode> {
+class ServerSideApexLogTreeProvider implements vscode.TreeDataProvider<ServerSideApexLogTreeNode>, RefreshListener<TreeNode<ApexLog>> {
 
     private root: TreeNode<ApexLog>;
+
+    private readonly eventEmitter: vscode.EventEmitter<ServerSideApexLogTreeNode | undefined>;
 
     public constructor(params: {
         root: TreeNode<ApexLog>
     }) {
         this.root = params.root;
+        this.eventEmitter = new vscode.EventEmitter<ServerSideApexLogTreeNode | undefined>();
+        this.onDidChangeTreeData = this.eventEmitter.event;
     }
+
     onDidChangeTreeData?: vscode.Event<void | ServerSideApexLogTreeNode | ServerSideApexLogTreeNode[] | null | undefined> | undefined;
 
     getTreeItem(element: ServerSideApexLogTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
+
     getChildren(element?: ServerSideApexLogTreeNode | undefined): vscode.ProviderResult<ServerSideApexLogTreeNode[]> {
         if (element) {
             return element.treeNode.children.map(treeNode => new ServerSideApexLogTreeNode({
@@ -365,10 +373,17 @@ class ServerSideApexLogTreeProvider implements vscode.TreeDataProvider<ServerSid
             ];
         }
     }
+
     getParent?(element: ServerSideApexLogTreeNode): vscode.ProviderResult<ServerSideApexLogTreeNode> {
         return null;
     }
+
     resolveTreeItem?(item: vscode.TreeItem, element: ServerSideApexLogTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
         return item;
+    }
+
+    async onTreeViewRefresh(e: { root: TreeNode<ApexLog>; }): Promise<void> {
+        this.root = e.root;
+        this.eventEmitter.fire(undefined);
     }
 }
