@@ -5,7 +5,7 @@ import { SalesforceOrg } from "../salesforceOrg";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { TreeNode } from "../treeNode";
 import { describe, expect, beforeEach } from '@jest/globals';
-import { ServerSideApexLogTreeGenerateCommand } from "../apexLogTreeGenerateCommand";
+import { ApexLogTreeGenerateCommand } from "../apexLogTreeGenerateCommand";
 
 describe('parse server side apex tree - return 1 file', () => {
 
@@ -13,7 +13,7 @@ describe('parse server side apex tree - return 1 file', () => {
 	let ide: MockIDE;
 	let org: SalesforceOrg;
 
-	let firstLog : ApexLog;
+	let firstLog: ApexLog;
 
 	beforeEach(() => {
 		cli = new MockSalesforceCli();
@@ -40,7 +40,7 @@ describe('parse server side apex tree - return 1 file', () => {
 	});
 
 	it('should be able to parse a tree from a apex list log (only one file returned)', async () => {
-		const testObject = new ServerSideApexLogTreeGenerateCommand({
+		const testObject = new ApexLogTreeGenerateCommand({
 			ide,
 			cli
 		});
