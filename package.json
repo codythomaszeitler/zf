@@ -47,6 +47,10 @@
       {
         "command": "sf.zsi.refreshApexLogs",
         "title": "SF ZSI: Refresh Apex Logs"
+      },
+      {
+        "command": "sf.zsi.runTestUnderCursor",
+        "title": "SF ZSI: Run Test Under Cursor"
       }
     ],
     "views": {

@@ -11,6 +11,7 @@ import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
+
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -258,6 +259,19 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         return vscode.workspace.fs.delete(vscodeUri, {
             recursive: true
         });
+    }
+
+    public async getActiveTextEditor(): Promise<{ uri: Uri; } | null> {
+        if (vscode.window.activeTextEditor) {
+            const uriMapper = new UriMapper();
+            const vscodeUri = vscode.window.activeTextEditor.document.uri;
+
+            return {
+                uri: uriMapper.intoDomainRepresentation(vscodeUri)
+            };
+        } else {
+            return null;
+        }
     }
 }
 

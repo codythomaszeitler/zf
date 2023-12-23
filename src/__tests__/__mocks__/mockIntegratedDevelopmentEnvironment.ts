@@ -1,4 +1,4 @@
-import { Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
 import { SalesforceOrg } from "../../salesforceOrg";
@@ -31,6 +31,8 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     private shownTextDocuments: Uri[];
 
+    private activeTextEditor: ActiveTextEditor | null;
+
     constructor(params?: {
         filesystem?: MockFileSystem
     }) {
@@ -52,6 +54,15 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this._didFocusProblemsTab = false;
         this.currentProgressToken = null;
         this.shownTextDocuments = [];
+        this.activeTextEditor = null;
+    }
+
+    public setActiveTextEditor(activeTextEditor: ActiveTextEditor | null): void {
+        this.activeTextEditor = activeTextEditor;
+    }
+
+    public async getActiveTextEditor(): Promise<{ uri: Uri; } | null> {
+        return this.activeTextEditor;
     }
 
     async withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; }): Promise<T> {

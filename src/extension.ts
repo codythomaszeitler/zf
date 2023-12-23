@@ -12,6 +12,7 @@ import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
 import * as path from 'path';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
+import { RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
 
 function getZfLogDir() {
 	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -173,6 +174,26 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
+	async function runTestUnderCursor() {
+		try {
+			const defaultOrg = await salesforceCli.getDefaultOrg();
+			if (defaultOrg) {
+				const runTestUnderCursorCommand = new RunTestUnderCursorCommand({
+					ide: ide,
+					cli: salesforceCli
+				});
+
+				await runTestUnderCursorCommand.execute({
+					targetOrg: defaultOrg
+				});
+			} else {
+				ide.showWarningMessage('No default org set. Cannot refresh apex logs.');
+			}
+		} catch (e: any) {
+			ide.showErrorMessage(e.message);
+		}
+	}
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
@@ -181,6 +202,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.refreshApexLogs', runRefreshApexLogs));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runTestUnderCursor', runTestUnderCursor));
 }
 
 // this method is called when your extension is deactivated

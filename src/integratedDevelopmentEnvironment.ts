@@ -11,6 +11,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract deleteTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
     abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string }): Promise<T>;
+    abstract getActiveTextEditor(): Promise<ActiveTextEditor | null>;
     abstract findFile(glob: string): Promise<Uri | null>;
     abstract findFiles(glob: string): Promise<Uri[]>;
     abstract readLineAt(params: { uri: Uri, line: number }): Promise<TextLine>;
@@ -31,6 +32,10 @@ export abstract class IntegratedDevelopmentEnvironment {
         const file = await this.findFile(uri.getValue());
         return !!file;
     }
+}
+
+export interface ActiveTextEditor {
+    uri: Uri;
 }
 
 export interface Command {
@@ -58,6 +63,10 @@ export class Uri {
 
     public getBaseName(): string {
         return path.basename(this.value);
+    }
+
+    public isApexClass(): boolean {
+        return this.value.endsWith('.cls');
     }
 }
 

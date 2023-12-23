@@ -25,6 +25,7 @@ import { ApexListLogResult } from "../../apexListLogResult";
 import { ApexLog } from "../../apexLog";
 import { MockFileSystem } from "./mockFileSystem";
 import { getLogFileUri } from "../../showApexLogCommand";
+import { ApexTestRunResult, ApexTestGetResult } from "../../apexTestRunResult";
 
 export class MockSalesforceCli extends SalesforceCli {
 
@@ -72,6 +73,14 @@ export class MockSalesforceCli extends SalesforceCli {
         } else {
             this.filesystem = params.filesystem;
         }
+    }
+
+    apexTestRun(params: { targetOrg: SalesforceOrg; tests: string[]; }): Promise<ApexTestRunResult> {
+        throw new Error("Method not implemented.");
+    }
+
+    apexTestGet(params: { targetOrg: SalesforceOrg; testRunId: SalesforceId; }): Promise<ApexTestGetResult> {
+        throw new Error("Method not implemented.");
     }
 
     getDeploymentJobId(): JobId | null {
