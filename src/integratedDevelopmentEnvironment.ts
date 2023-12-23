@@ -27,7 +27,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract getHighlightedText(): Promise<string>;
     abstract registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg }): Promise<void>;
 
-    public async hasFile(uri: Uri) : Promise<boolean> {
+    public async hasFile(uri: Uri): Promise<boolean> {
         const file = await this.findFile(uri.getValue());
         return !!file;
     }

@@ -225,7 +225,7 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
 
         const root: TreeNode<ApexLog> = rootNode as TreeNode<ApexLog>;
-        const apexServerSideLogTreeProvider = new ServerSideApexLogTreeProvider({
+        const apexServerSideLogTreeProvider = new ApexLogTreeProvider({
             root
         });
 
@@ -321,7 +321,7 @@ class DiagnosticSeverityMapper {
     }
 }
 
-class ServerSideApexLogTreeNode extends vscode.TreeItem {
+class ApexLogTreeNode extends vscode.TreeItem {
 
     public readonly treeNode: TreeNode<ApexLog>;
 
@@ -338,45 +338,45 @@ class ServerSideApexLogTreeNode extends vscode.TreeItem {
     };
 }
 
-class ServerSideApexLogTreeProvider implements vscode.TreeDataProvider<ServerSideApexLogTreeNode>, RefreshListener<TreeNode<ApexLog>> {
+class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, RefreshListener<TreeNode<ApexLog>> {
 
     private root: TreeNode<ApexLog>;
 
-    private readonly eventEmitter: vscode.EventEmitter<ServerSideApexLogTreeNode | undefined>;
+    private readonly eventEmitter: vscode.EventEmitter<ApexLogTreeNode | undefined>;
 
     public constructor(params: {
         root: TreeNode<ApexLog>
     }) {
         this.root = params.root;
-        this.eventEmitter = new vscode.EventEmitter<ServerSideApexLogTreeNode | undefined>();
+        this.eventEmitter = new vscode.EventEmitter<ApexLogTreeNode | undefined>();
         this.onDidChangeTreeData = this.eventEmitter.event;
     }
 
-    onDidChangeTreeData?: vscode.Event<void | ServerSideApexLogTreeNode | ServerSideApexLogTreeNode[] | null | undefined> | undefined;
+    onDidChangeTreeData?: vscode.Event<void | ApexLogTreeNode | ApexLogTreeNode[] | null | undefined> | undefined;
 
-    getTreeItem(element: ServerSideApexLogTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    getTreeItem(element: ApexLogTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
 
-    getChildren(element?: ServerSideApexLogTreeNode | undefined): vscode.ProviderResult<ServerSideApexLogTreeNode[]> {
+    getChildren(element?: ApexLogTreeNode | undefined): vscode.ProviderResult<ApexLogTreeNode[]> {
         if (element) {
-            return element.treeNode.children.map(treeNode => new ServerSideApexLogTreeNode({
+            return element.treeNode.children.map(treeNode => new ApexLogTreeNode({
                 treeNode
             }));
         } else {
             return [
-                new ServerSideApexLogTreeNode({
+                new ApexLogTreeNode({
                     treeNode: this.root
                 })
             ];
         }
     }
 
-    getParent?(element: ServerSideApexLogTreeNode): vscode.ProviderResult<ServerSideApexLogTreeNode> {
+    getParent?(element: ApexLogTreeNode): vscode.ProviderResult<ApexLogTreeNode> {
         return null;
     }
 
-    resolveTreeItem?(item: vscode.TreeItem, element: ServerSideApexLogTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
+    resolveTreeItem?(item: vscode.TreeItem, element: ApexLogTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
         return item;
     }
 
