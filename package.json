@@ -53,14 +53,8 @@
       "test": [
         {
           "title": "Apex Logs",
-          "id": "apex-logs",
-          "name": "Apex Logs",
-          "icon": "media/dep.svg"
-        },
-        {
-          "title": "Server Side Apex Logs",
           "id": "server-side-apex-logs",
-          "name": "Server Side Apex Logs",
+          "name": "Apex Logs",
           "icon": "media/dep.svg"
         }
       ]

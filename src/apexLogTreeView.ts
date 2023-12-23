@@ -58,7 +58,11 @@ export class ApexLogTreeView implements TreeView<ApexLog> {
 	}
 
 	public async onSelect<T extends ApexLog>(e: { value: T }): Promise<void> {
-		const defaultOrg = await this.cli.getDefaultOrg();
+		const defaultOrg = await this.ide.withProgress(async (progressToken) => {
+			return await this.cli.getDefaultOrg();
+		}, {
+			title: 'Opening log file'
+		});
 		const logId = e.value.getId();
 
 		const showApexLogCommand = new ShowApexLogCommand({
