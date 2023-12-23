@@ -5,7 +5,7 @@ import { SalesforceOrg } from "../salesforceOrg";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { TreeNode } from "../treeNode";
 import { describe, expect, beforeEach } from '@jest/globals';
-import { ServerSideApexLogTreeGenerateCommand } from "../serverSideApexLogTreeGenerateCommand";
+import { ServerSideApexLogTreeGenerateCommand } from "../apexLogTreeGenerateCommand";
 
 describe('parse server side apex tree - return 1 file', () => {
 

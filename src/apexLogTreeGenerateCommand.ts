@@ -5,7 +5,7 @@ import { SalesforceCli } from "./salesforceCli";
 import { SalesforceOrg } from "./salesforceOrg";
 import { TreeNode } from "./treeNode";
 
-export class ServerSideApexLogTreeGenerateCommand extends Command {
+export class ApexLogTreeGenerateCommand extends Command {
 
 	public constructor(params: {
 		cli: SalesforceCli,

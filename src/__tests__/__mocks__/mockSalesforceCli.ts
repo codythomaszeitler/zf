@@ -42,6 +42,7 @@ export class MockSalesforceCli extends SalesforceCli {
     private wasProjectDeployResumeCalled: boolean;
     private waitForDeploymentToStart: (value: unknown) => void;
     private noComponentsToDeploy: boolean;
+    private defaultOrg: SalesforceOrg | undefined;
 
     private readonly sObjects: RecordIdToSObject;
     private readonly validations: DatabaseValidation[];
@@ -64,6 +65,7 @@ export class MockSalesforceCli extends SalesforceCli {
         this.sObjects = new RecordIdToSObject();
         this.validations = [new DebugLevelDatabaseValidation({ sObjectApiName: DEBUG_LEVEL_SOBJECT_NAME })];
         this.orgsWithApexLogs = [];
+        this.defaultOrg = undefined;
 
         if (!params || !params.filesystem) {
             this.filesystem = new MockFileSystem();
@@ -74,6 +76,11 @@ export class MockSalesforceCli extends SalesforceCli {
 
     getDeploymentJobId(): JobId | null {
         return this.deploymentJobId;
+    }
+
+    public setDefaultOrg(org: SalesforceOrg) {
+        this.defaultOrg = org;
+        this.add(org);
     }
 
     add(org: SalesforceOrg) {
@@ -194,8 +201,8 @@ export class MockSalesforceCli extends SalesforceCli {
         return this.wasProjectDeployResumeCalled;
     }
 
-    getDefaultOrg(): Promise<SalesforceOrg | null> {
-        throw new Error("Method not implemented.");
+    async getDefaultOrg(): Promise<SalesforceOrg | null> {
+        return this.defaultOrg || null;
     }
 
     setNoComponentsToDeploy(noComponentsToDeploy: boolean) {
