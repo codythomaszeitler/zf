@@ -11,8 +11,6 @@ import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-
-
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 

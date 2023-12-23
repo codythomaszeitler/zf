@@ -1,8 +1,19 @@
 import { Command } from "./command";
-import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
+import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
+import * as path from 'path';
+
+export function getLogFileUri(params: {
+	targetOrg: SalesforceOrg,
+	logDir: string,
+	logId: SalesforceId
+}) {
+	const joinedPath = path.join('testLogDir', params.targetOrg.getAlias(), `${params.logId.toString()}.log`);
+	const uri = Uri.get(joinedPath);
+	return uri;
+}
 
 export class ShowApexLogCommand extends Command {
 	public constructor(params: {
@@ -17,17 +28,19 @@ export class ShowApexLogCommand extends Command {
 		logId: SalesforceId,
 		logDir: string
 	}) {
-		await this.getIde().withProgress(async (progressToken) => {
-			const hasFile = async () => {
-				const uri = await this.getIde().findFile(`**/${params.logId.toString()}.log`);
-				return !!uri;
-			};
+		const logFileUri = getLogFileUri({
+			targetOrg: params.targetOrg,
+			logDir: params.logDir,
+			logId: params.logId
+		});
 
+		await this.getIde().withProgress(async (progressToken) => {
 			progressToken.report({
 				progress: 25,
 				title: 'Checking if file exists'
 			});
-			if (!(await hasFile())) {
+			const hasFile = await this.getIde().hasFile(logFileUri);
+			if (!hasFile) {
 				progressToken.report({
 					progress: 50,
 					title: `Getting log file ${params.logId.toString()}`
@@ -43,12 +56,7 @@ export class ShowApexLogCommand extends Command {
 				progress: 75,
 				title: `Opening log file ${params.logId.toString()}`
 			});
-			const uri = await this.getIde().findFile(`**/${params.logId.toString()}.log`);
-			if (!uri) {
-				this.getIde().showWarningMessage(`Could not find log matching ${params.logId.toString()}.`);
-				return;
-			}
-			await this.getIde().showTextDocument(uri);
+			await this.getIde().showTextDocument(logFileUri);
 		}, {
 			title: 'Opening Log File'
 		});

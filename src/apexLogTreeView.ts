@@ -3,7 +3,7 @@ import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnviron
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceOrg } from "./salesforceOrg";
 import { ServerSideApexLogTreeGenerateCommand } from "./serverSideApexLogTreeGenerateCommand";
-import { ShowApexLogCommand } from "./showApeLogCommand";
+import { ShowApexLogCommand } from "./showApexLogCommand";
 import { TreeNode } from "./treeNode";
 import { RefreshListener, TreeView } from "./treeView";
 

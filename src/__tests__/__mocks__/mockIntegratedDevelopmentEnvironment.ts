@@ -3,6 +3,7 @@ import { ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
 import { SalesforceOrg } from "../../salesforceOrg";
 import { TreeView } from "../../treeView";
+import { MockFileSystem } from "./mockFileSystem";
 
 function nonStartedQuickPick(item: string): void {
     throw new Error('Show Quick is not being shown.');
@@ -12,9 +13,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
-    showTextDocument(uri: Uri): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
+
     registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg; }): Promise<void> {
         throw new Error("Method not implemented.");
     }
@@ -26,11 +25,15 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     private shownWindowLoadingMessages: string[];
     private diagnostics: Map<Uri, Diagnostic[]>;
     private config: Map<string, any>;
-    private filesystem: Map<string, Uri>;
+    private filesystem: MockFileSystem;
     private _didFocusProblemsTab: boolean;
     private currentProgressToken: MockProgressToken | null;
 
-    constructor() {
+    private shownTextDocuments: Uri[];
+
+    constructor(params?: {
+        filesystem?: MockFileSystem
+    }) {
         super();
         this.selectQuickPickItem = nonStartedQuickPick;
         this._waitForShowQuickPickResolve = () => { };
@@ -39,9 +42,16 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this.shownWindowLoadingMessages = [];
         this.diagnostics = new Map<Uri, Diagnostic[]>();
         this.config = new Map<string, any>();
-        this.filesystem = new Map<string, Uri>();
+
+        if (!params || !params.filesystem) {
+            this.filesystem = new MockFileSystem();
+        } else {
+            this.filesystem = params.filesystem;
+        }
+
         this._didFocusProblemsTab = false;
         this.currentProgressToken = null;
+        this.shownTextDocuments = [];
     }
 
     async withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; }): Promise<T> {
@@ -103,22 +113,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 
     async findFile(glob: string): Promise<Uri | null> {
-        const regexed = glob.replace('*', '\\*').replace('/', '\\/');
-        const re = new RegExp(regexed);
-
-        const filePaths = this.filesystem.keys();
-
-        let foundFile = null;
-        for (const filePath of filePaths) {
-            if (re.test(filePath)) {
-                if (foundFile) {
-                    throw new Error(`Found more than one file matching ${glob}.`);
-                }
-
-                foundFile = this.filesystem.get(filePath) || null;
-            }
-        }
-        return foundFile;
+        return this.filesystem.findFile(glob);
     }
 
     findFiles(glob: string): Promise<Uri[]> {
@@ -126,7 +121,9 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 
     addFile(uri: Uri) {
-        this.filesystem.set(uri.getValue(), uri);
+        this.filesystem.create({
+            uri: uri
+        });
     }
 
     getConfig<T>(property: string, defaultValue: T): T {
@@ -199,6 +196,18 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     getText(params: { uri: Uri; range: Range; }): Promise<TextLine> {
         throw new Error("Method not implemented.");
+    }
+
+    async showTextDocument(uri: Uri): Promise<void> {
+        const hasFile = await this.hasFile(uri);
+        if (!hasFile) {
+            throw new Error(`Could not find file at ${uri.getValue()}`);
+        }
+        this.shownTextDocuments.push(uri);
+    }
+
+    toHaveShownTextDocument(uri: Uri): boolean {
+        return !!this.shownTextDocuments.find((_uri) => _uri.getValue() === uri.getValue());
     }
 }
 
