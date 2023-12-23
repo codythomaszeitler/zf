@@ -1,5 +1,5 @@
 import { Command } from "./command";
-import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
+import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
 import { SalesforceCli } from "./salesforceCli";
 
 export class ApexCleanLogsCommand extends Command {
@@ -15,33 +15,8 @@ export class ApexCleanLogsCommand extends Command {
 		logDir: string
 	}) {
 		await this.getIde().withProgress(async (progressTokens) => {
-			progressTokens.report({
-				progress: 0,
-				title: 'Finding local log files...'
-			});
-			const uris = await this.getIde().findFiles(`**\\${params.logDir}\\**\\*.log`);
-			const numFiles = uris.length;
-
-			progressTokens.report({
-				progress: 0,
-				title: `Removing ${numFiles} log files.`
-			});
-
-			const promises = [];
-			let completed = 0;
-			for (let i = 0; i < uris.length; i++) {
-				const promise = this.getIde().deleteTextDocument(uris[i]);
-				promise.then(() => {
-					completed++;
-					progressTokens.report({
-						progress: (completed / numFiles) * 100,
-					});
-				});
-
-				promises.push(promise);
-			}
-
-			await Promise.all(promises);
+			const uri = Uri.get(params.logDir);
+			await this.getIde().deleteTextDocument(uri);
 		}, {
 			title: 'Cleaning Local Apex Logs'
 		});

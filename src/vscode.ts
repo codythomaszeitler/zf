@@ -255,7 +255,9 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         const uriMapper = new UriMapper();
         const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
 
-        return vscode.workspace.fs.delete(vscodeUri);
+        return vscode.workspace.fs.delete(vscodeUri, {
+            recursive: true
+        });
     }
 }
 
