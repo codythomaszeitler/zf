@@ -2,7 +2,7 @@ import { ApexLog } from "./apexLog";
 import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceOrg } from "./salesforceOrg";
-import { ServerSideApexLogTreeGenerateCommand } from "./serverSideApexLogTreeGenerateCommand";
+import { ApexLogTreeGenerateCommand } from "./apexLogTreeGenerateCommand";
 import { ShowApexLogCommand } from "./showApexLogCommand";
 import { TreeNode } from "./treeNode";
 import { RefreshListener, TreeView } from "./treeView";
@@ -32,12 +32,12 @@ export class ApexLogTreeView implements TreeView<ApexLog> {
 	}
 
 	public async getRootNode(params: { targetOrg: SalesforceOrg; }): Promise<TreeNode<ApexLog>> {
-		const serverSideApexLogTreeGenerateCommand = new ServerSideApexLogTreeGenerateCommand({
+		const apexLogTreeGenerateCommand = new ApexLogTreeGenerateCommand({
 			cli: this.cli,
 			ide: this.ide
 		});
 
-		const treeNode = await serverSideApexLogTreeGenerateCommand.execute({
+		const treeNode = await apexLogTreeGenerateCommand.execute({
 			targetOrg: params.targetOrg
 		});
 		return treeNode;
