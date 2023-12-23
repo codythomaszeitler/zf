@@ -10,7 +10,7 @@ export function getLogFileUri(params: {
 	logDir: string,
 	logId: SalesforceId
 }) {
-	const joinedPath = path.join('testLogDir', params.targetOrg.getAlias(), `${params.logId.toString()}.log`);
+	const joinedPath = path.join(params.logDir, params.targetOrg.getAlias(), `${params.logId.toString()}.log`);
 	const uri = Uri.get(joinedPath);
 	return uri;
 }

@@ -13,6 +13,15 @@ import { getRecentApexLogs } from './getRecentApexLogs';
 import * as path from 'path';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
 
+function getZfLogDir() {
+	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+		return path.join(vscode.workspace.workspaceFolders[0].uri.path, '.zf', 'logs');
+	}
+	else {
+		return path.join('.zf', 'logs');
+	}
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	const ide = new VsCode();
 	const logger = ide.generateLogger();
@@ -97,7 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
-	const zfLogDir = path.join('.zf', 'logs');
+	const zfLogDir = getZfLogDir();
 
 	async function runGetRecentApexLogs() {
 		await ide.withProgress(async (progressToken) => {
