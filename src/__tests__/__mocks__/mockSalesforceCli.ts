@@ -23,6 +23,8 @@ import { DEBUG_LEVEL_SOBJECT_NAME } from "../../debugLevelSObject";
 import { ApexGetLogResult } from "../../apexGetLogResult";
 import { ApexListLogResult } from "../../apexListLogResult";
 import { ApexLog } from "../../apexLog";
+import { MockFileSystem } from "./mockFileSystem";
+import { getLogFileUri } from "../../showApexLogCommand";
 
 export class MockSalesforceCli extends SalesforceCli {
 
@@ -32,6 +34,8 @@ export class MockSalesforceCli extends SalesforceCli {
     public toThrowOnProjectDeployCancel: Error | undefined;
     public toThrowOnGetOrgList: Error | undefined;
 
+    public toThrowOnApexGetLog: Error | undefined;
+
     private deploymentJobId: JobId | null;
     private deploymentStatus: string;
     private failures: ComponentFailure[];
@@ -40,12 +44,13 @@ export class MockSalesforceCli extends SalesforceCli {
     private noComponentsToDeploy: boolean;
 
     private readonly sObjects: RecordIdToSObject;
-
     private readonly validations: DatabaseValidation[];
-
     private readonly orgsWithApexLogs: { org: SalesforceOrg; logs: ApexLog[] }[];
+    private readonly filesystem: MockFileSystem;
 
-    constructor() {
+    constructor(params?: {
+        filesystem?: MockFileSystem
+    }) {
         super(async (command: ExecutorCommand) => { return { stdout: '' }; });
         this.orgs = [];
         this.openedOrgs = [];
@@ -59,6 +64,12 @@ export class MockSalesforceCli extends SalesforceCli {
         this.sObjects = new RecordIdToSObject();
         this.validations = [new DebugLevelDatabaseValidation({ sObjectApiName: DEBUG_LEVEL_SOBJECT_NAME })];
         this.orgsWithApexLogs = [];
+
+        if (!params || !params.filesystem) {
+            this.filesystem = new MockFileSystem();
+        } else {
+            this.filesystem = params.filesystem;
+        }
     }
 
     getDeploymentJobId(): JobId | null {
@@ -230,8 +241,8 @@ export class MockSalesforceCli extends SalesforceCli {
         });
 
         const integrityCheckResults = await Promise.all(integrityCheckPromises);
-        for (let i = 0; i < integrityCheckResults.length; i++) {
-            const integrityCheckResult = integrityCheckResults[i];
+        for (const element of integrityCheckResults) {
+            const integrityCheckResult = element;
             if (!integrityCheckResult.passed) {
                 throw new Error(`Mock Database Failed : ${integrityCheckResult.message}`);
             }
@@ -291,8 +302,24 @@ export class MockSalesforceCli extends SalesforceCli {
         }
     }
 
-    apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: string; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
-        throw new Error("Method not implemented.");
+    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: string; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
+        if (this.toThrowOnApexGetLog) {
+            throw this.toThrowOnApexGetLog;
+        }
+
+        if (params.logId) {
+            const uri = getLogFileUri({
+                targetOrg: params.targetOrg,
+                logDir: params.logDir,
+                logId: params.logId
+            });
+
+            this.filesystem.create({
+                uri: uri
+            });
+        }
+
+        return new ApexGetLogResult();
     }
 
     async apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
