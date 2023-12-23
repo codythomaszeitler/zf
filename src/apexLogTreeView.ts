@@ -73,7 +73,7 @@ export class ApexLogTreeView implements TreeView<ApexLog> {
 				logDir: this.logDir
 			});
 		} else {
-			this.ide.showWarningMessage('No default org set, cannot show apex log.');
+			await this.ide.showWarningMessage('No default org set, cannot refresh apex logs.');
 		}
 	}
 
