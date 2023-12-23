@@ -17,6 +17,7 @@ import { DataQueryResult } from "./dataQueryResult";
 import { ApexGetLogResult } from "./apexGetLogResult";
 import { ApexListLogResult } from "./apexListLogResult";
 import { SalesforceId } from "./salesforceId";
+import { ApexTestGetResult, ApexTestRunResult } from "./apexTestRunResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -74,6 +75,15 @@ export abstract class SalesforceCli {
     abstract apexListLog(params: {
         targetOrg: SalesforceOrg
     }): Promise<ApexListLogResult>;
+
+    abstract apexTestRun(params: {
+        targetOrg: SalesforceOrg;
+        tests: string[]
+    }): Promise<ApexTestRunResult>;
+
+    abstract apexTestGet(params: {
+        targetOrg: SalesforceOrg; testRunId: SalesforceId
+    }): Promise<ApexTestGetResult>;
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
         command.env = this.env;

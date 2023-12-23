@@ -2,6 +2,7 @@ import { ApexGetLogResult } from "./apexGetLogResult";
 import { ApexListLogResult } from "./apexListLogResult";
 import { ApexLog } from "./apexLog";
 import { ApexRunResult } from "./apexRunResult";
+import { ApexTestGetResult, ApexTestResult, ApexTestRunResult } from "./apexTestRunResult";
 import { CreateableSObject } from "./createableSObject";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
 import { DataQueryResult } from "./dataQueryResult";
@@ -592,5 +593,77 @@ export class SfSalesforceCli extends SalesforceCli {
         return new ApexListLogResult({
             logs: apexLogs
         });
+    }
+
+    async apexTestRun(params: { targetOrg: SalesforceOrg; tests: string[] }): Promise<ApexTestRunResult> {
+        const asTests = () => {
+            const tests: string[] = [];
+
+            params.tests.forEach(test => {
+                tests.push('--tests');
+                tests.push(test);
+            });
+
+            return tests;
+        };
+
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'apex',
+                'test',
+                'run',
+                ...asTests(),
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+        if (stdout.status) {
+            throw new Error(stdout.message);
+        }
+
+        const apexTestRunResult = new ApexTestRunResult({
+            testRunId: SalesforceId.get(stdout.result.testRunId)
+        });
+
+        return apexTestRunResult;
+    }
+
+
+    async apexTestGet(params: { targetOrg: SalesforceOrg; testRunId: SalesforceId }): Promise<ApexTestGetResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'apex',
+                'test',
+                'get',
+                '--test-run-id',
+                `${params.testRunId.toString()}`,
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const { stdout } = await this.exec(command);
+
+        const apexTestResults: ApexTestResult[] = stdout.result.tests.map((test: any) => {
+            return new ApexTestResult({
+                fullName: test.FullName,
+                outcome: test.Outcome
+            });
+        });
+
+        const apexTestGetResult = new ApexTestGetResult({
+            tests: apexTestResults,
+            failing: stdout.result.summary.failing,
+            passing: stdout.result.summary.passing,
+            testsRan: stdout.result.summary.testsRan
+        });
+
+        return apexTestGetResult;
     }
 }
