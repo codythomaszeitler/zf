@@ -8,6 +8,7 @@ import { Uri } from '../integratedDevelopmentEnvironment';
 import { genRandomId } from './salesforceId.test';
 import { ApexTestGetResult, ApexTestResult, ApexTestRunResult } from '../apexTestRunResult';
 import { SalesforceId } from '../salesforceId';
+import { Position } from '../position';
 
 describe('run test under cursor command', () => {
 
@@ -84,11 +85,23 @@ describe('run test under cursor command', () => {
 					tests: [
 						new ApexTestResult({
 							outcome: 'Pass',
-							fullName: testName + '.test1'
+							fullName: testName + '.test1',
+							message: 'Test Failure Message',
+							location: {
+								className: 'SetAccountName',
+								methodName: '.test1',
+								position: new Position(0, 0)
+							}
 						}),
 						new ApexTestResult({
 							outcome: 'Pending',
-							fullName: testName + '.test2'
+							fullName: testName + '.test2',
+							message: 'Test Failure Message',
+							location: {
+								className: 'SetAccountName',
+								methodName: '.test2',
+								position: new Position(1, 1)
+							}
 						})
 					]
 				});
@@ -100,11 +113,23 @@ describe('run test under cursor command', () => {
 					tests: [
 						new ApexTestResult({
 							outcome: 'Pass',
-							fullName: testName + '.test1'
+							fullName: testName + '.test1',
+							message: 'Test Failure Message',
+							location: {
+								className: 'SetAccountName',
+								methodName: '.test1',
+								position: new Position(0, 0)
+							}
 						}),
 						new ApexTestResult({
 							outcome: 'Pass',
-							fullName: testName + '.test2'
+							fullName: testName + '.test2',
+							message: 'Test Failure Message',
+							location: {
+								className: 'SetAccountName',
+								methodName: '.test2',
+								position: new Position(1, 1)
+							}
 						})
 					]
 				});
