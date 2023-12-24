@@ -1,4 +1,4 @@
-import { Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, TextLine, Uri } from "./integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, TextLine, Uri } from "./integratedDevelopmentEnvironment";
 import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
@@ -261,10 +261,11 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
     }
 
-    public async getActiveTextEditor(): Promise<{ uri: Uri; } | null> {
-        if (vscode.window.activeTextEditor) {
+    public async getActiveTextEditor(): Promise<ActiveTextEditor | null> {
+        const activeTextEditor = vscode.window.activeTextEditor;
+        if (activeTextEditor) {
             const uriMapper = new UriMapper();
-            const vscodeUri = vscode.window.activeTextEditor.document.uri;
+            const vscodeUri = activeTextEditor.document.uri;
 
             return {
                 uri: uriMapper.intoDomainRepresentation(vscodeUri)

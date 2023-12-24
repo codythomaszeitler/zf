@@ -1,5 +1,6 @@
 import { Command } from "./command";
-import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
+import { Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
+import { Range } from "./range";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceOrg } from "./salesforceOrg";
 
@@ -53,6 +54,19 @@ export class RunTestUnderCursorCommand extends Command {
 						targetOrg: params.targetOrg,
 						testRunId
 					});
+				}
+
+				if (apexTestGetResult.hasFailingTests()) {
+					const diagnostics: Diagnostic[] = [];
+					apexTestGetResult.getFailingTests().forEach(test => {
+						const location = test.getLocation();
+						if (location) {
+							const diagnostic = new Diagnostic(new Range(location.position), test.getFailureMessage(), DiagnosticSeverity.error);
+							diagnostics.push(diagnostic);
+						}
+					});
+					this.getIde().setDiagnostics(uri, diagnostics);
+					this.getIde().focusProblemsTab();
 				}
 			}
 		}, {

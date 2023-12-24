@@ -2,7 +2,7 @@ import { ApexGetLogResult } from "./apexGetLogResult";
 import { ApexListLogResult } from "./apexListLogResult";
 import { ApexLog } from "./apexLog";
 import { ApexRunResult } from "./apexRunResult";
-import { ApexTestGetResult, ApexTestResult, ApexTestRunResult } from "./apexTestRunResult";
+import { ApexTestGetResult, ApexTestResult, ApexTestRunResult, parseStackTrace } from "./apexTestRunResult";
 import { CreateableSObject } from "./createableSObject";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
 import { DataQueryResult } from "./dataQueryResult";
@@ -10,6 +10,7 @@ import { Executor, ExecutorCommand, intoCliCommandString } from "./executor";
 import { JobId } from "./jobId";
 import { Logger } from "./logger";
 import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
+import { Position } from "./position";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
@@ -651,9 +652,15 @@ export class SfSalesforceCli extends SalesforceCli {
         const { stdout } = await this.exec(command);
 
         const apexTestResults: ApexTestResult[] = stdout.result.tests.map((test: any) => {
+            let location = undefined;
+            if (test.StackTrace) {
+                location = parseStackTrace(test.StackTrace);
+            }
             return new ApexTestResult({
                 fullName: test.FullName,
-                outcome: test.Outcome
+                message: test.Message || "",
+                outcome: test.Outcome,
+                location: location
             });
         });
 
