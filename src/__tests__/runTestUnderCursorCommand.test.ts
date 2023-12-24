@@ -151,4 +151,55 @@ describe('run test under cursor command', () => {
 		expect(wasApexTestRunCalled).toBe(true);
 		expect(apexTestGetCounter).toBe(2);
 	});
+
+	it('should should show failure diagnostic when test has failure', async () => {
+		const testName = 'SetAccountNameTest.cls';
+		ide.setActiveTextEditor({
+			uri: Uri.get(`force-app/main/default/class/${testName}`)
+		});
+
+		const testRunId = genRandomId('TestRun');
+
+		let apexTestGetCounter = 0;
+		cli.apexTestGet = async function (params: { targetOrg: SalesforceOrg; testRunId: SalesforceId }) {
+			expect(params.testRunId).toBe(testRunId);
+			expect(params.targetOrg.getAlias()).toBe(org.getAlias());
+
+			apexTestGetCounter++;
+			return new ApexTestGetResult({
+				failing: 1,
+				passing: 0,
+				testsRan: 1,
+				tests: [
+					new ApexTestResult({
+						outcome: 'Fail',
+						fullName: testName + '.test2',
+						message: 'Test Failure Message',
+						location: {
+							className: 'SetAccountName',
+							methodName: 'test2',
+							position: new Position(1, 1)
+						}
+					})
+				]
+			});
+		}.bind(cli);
+
+		let wasApexTestRunCalled = false;
+		cli.apexTestRun = async function (params: { targetOrg: SalesforceOrg; tests: string[] }) {
+			wasApexTestRunCalled = true;
+			return new ApexTestRunResult({
+				testRunId
+			});
+		};
+
+		await testObject.execute({
+			targetOrg: org
+		});
+
+		expect(wasApexTestRunCalled).toBe(true);
+		expect(apexTestGetCounter).toBe(1);
+
+		expect(ide.didSetAnyDiagnostics()).toBe(true);
+	});
 });
