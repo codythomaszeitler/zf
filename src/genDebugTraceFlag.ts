@@ -115,7 +115,7 @@ export class DebugTraceFlagGenerateCommand extends Command {
 			title: `Generating trace flag for ${currentUser.userId} with debug level ${debugLogLevel.id}`
 		});
 
-		await this.getCli().dataCreateRecord({
+		await this.getCli().dataUpsertRecord({
 			targetOrg: params.targetOrg,
 			sObject: traceFlagSObjectBuilder.build()
 		});
@@ -147,7 +147,7 @@ export class DebugLogLevelGetOrCreateCommand extends Command {
 		debugLogLevelBuilder.withApexCode(SalesforceLogLevel.debug);
 
 		const newDebugLogLevel = debugLogLevelBuilder.build();
-		await this.getCli().dataCreateRecord({
+		await this.getCli().dataUpsertRecord({
 			targetOrg: params.targetOrg,
 			sObject: newDebugLogLevel
 		});

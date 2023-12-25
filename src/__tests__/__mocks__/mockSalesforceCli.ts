@@ -10,7 +10,7 @@ import { SObjectListResult } from "../../sObjectListResult";
 import { SObjectApiName } from "../../sObjectApiName";
 import { SObjectDescribeResult } from "../../sObjectDescribeResult";
 import { ApexRunResult } from "../../apexRunResult";
-import { CreateableSObject } from "../../createableSObject";
+import { UpsertableSObject } from "../../upsertableSObject";
 import { DataCreateRecordResult } from "../../dataCreateRecordResult";
 import { OrgListUsersResult } from "../../orgListUsersResult";
 import { SalesforceId } from "../../salesforceId";
@@ -232,7 +232,7 @@ export class MockSalesforceCli extends SalesforceCli {
         throw new Error("Method not implemented.");
     }
 
-    async dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
+    async dataUpsertRecord(params: { targetOrg: SalesforceOrg; sObject: UpsertableSObject; }): Promise<DataCreateRecordResult> {
         const recordId = genRandomId(params.sObject.getSObjectName());
         const newSObject = generateSObject(params.sObject, recordId);
 
@@ -358,7 +358,7 @@ interface OrgWithListsUsersResult {
 }
 
 
-function generateSObject(createableSObject: CreateableSObject, recordId: SalesforceId | undefined): SObject {
+function generateSObject(createableSObject: UpsertableSObject, recordId: SalesforceId | undefined): SObject {
     const keyValuePairsString = createableSObject.intoKeyValueString();
     const keyValuePairs = keyValuePairsString.split(" ");
 

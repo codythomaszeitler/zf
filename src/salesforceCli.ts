@@ -9,8 +9,8 @@ import { SObjectListResult } from "./sObjectListResult";
 import { SObjectDescribeResult } from "./sObjectDescribeResult";
 import { SObjectApiName } from "./sObjectApiName";
 import { ApexRunResult } from "./apexRunResult";
-import { DataCreateRecordResult } from "./dataCreateRecordResult";
-import { CreateableSObject } from "./createableSObject";
+import { DataCreateRecordResult as DataUpsertRecordResult } from "./dataCreateRecordResult";
+import { UpsertableSObject as UpsertableSObject } from "./upsertableSObject";
 import { OrgListUsersResult } from "./orgListUsersResult";
 import { SoqlQuery } from "./soqlQuery";
 import { DataQueryResult } from "./dataQueryResult";
@@ -54,10 +54,10 @@ export abstract class SalesforceCli {
         apexCode: string;
     }): Promise<ApexRunResult>;
 
-    abstract dataCreateRecord(params: {
+    abstract dataUpsertRecord(params: {
         targetOrg: SalesforceOrg,
-        sObject: CreateableSObject;
-    }): Promise<DataCreateRecordResult>;
+        sObject: UpsertableSObject;
+    }): Promise<DataUpsertRecordResult>;
 
     abstract dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery }): Promise<DataQueryResult>;
 

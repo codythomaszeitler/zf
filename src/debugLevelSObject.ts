@@ -1,10 +1,10 @@
-import { CreateableSObject } from "./createableSObject";
+import { UpsertableSObject } from "./upsertableSObject";
 import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { SalesforceLogLevel } from "./salesforceLogLevel";
 
 export const DEBUG_LEVEL_SOBJECT_NAME = 'DebugLevel';
 
-export interface DebugLevel extends CreateableSObject {
+export interface DebugLevel extends UpsertableSObject {
 	developerName: string;
 	language: SalesforceLogLevel;
 	apexCode: SalesforceLogLevel;
