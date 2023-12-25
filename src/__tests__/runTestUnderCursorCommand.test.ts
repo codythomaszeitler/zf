@@ -9,6 +9,9 @@ import { genRandomId } from './salesforceId.test';
 import { ApexTestGetResult, ApexTestResult, ApexTestRunResult } from '../apexTestRunResult';
 import { SalesforceId } from '../salesforceId';
 import { Position } from '../position';
+import { genApexQueueItem } from './genApexQueueItemTestUtil';
+import { ApexTestQueueItemSelector } from '../apexTestQueueItemSelector';
+import { ApexTestQueueStatus } from '../apexTestQueueItem';
 
 describe('run test under cursor command', () => {
 
@@ -201,5 +204,36 @@ describe('run test under cursor command', () => {
 		expect(apexTestGetCounter).toBe(1);
 
 		expect(ide.didSetAnyDiagnostics()).toBe(true);
+	});
+
+	it('should be able to cancel when commanded', async () => {
+		const testRunId = genRandomId('AsyncApexJob');
+
+		await genApexQueueItem({
+			cli,
+			parentJobId: testRunId,
+			status: 'Queued',
+			targetOrg: org
+		});
+
+		await testObject.cancel({
+			parentJobId: testRunId,
+			targetOrg: org
+		});
+
+		const apexTestQueueItemSelector = new ApexTestQueueItemSelector({
+			cli
+		});
+
+		const apexTestQueueItems = await apexTestQueueItemSelector.queryByParentJobId({
+			parentJobId: testRunId,
+			targetOrg: org
+		});
+
+		expect(apexTestQueueItems).toHaveLength(1);
+		apexTestQueueItems.forEach(apexTestQueueItem => {
+			const expectedStatus = "Aborted" as ApexTestQueueStatus;
+			expect(apexTestQueueItem.status).toBe(expectedStatus);
+		});
 	});
 });
