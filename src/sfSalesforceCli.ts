@@ -3,7 +3,7 @@ import { ApexListLogResult } from "./apexListLogResult";
 import { ApexLog } from "./apexLog";
 import { ApexRunResult } from "./apexRunResult";
 import { ApexTestGetResult, ApexTestResult, ApexTestRunResult, parseStackTrace } from "./apexTestRunResult";
-import { CreateableSObject } from "./createableSObject";
+import { UpsertableSObject } from "./upsertableSObject";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
 import { DataQueryResult } from "./dataQueryResult";
 import { Executor, ExecutorCommand, intoCliCommandString } from "./executor";
@@ -349,7 +349,7 @@ export class SfSalesforceCli extends SalesforceCli {
         });
     }
 
-    async dataCreateRecord(params: { targetOrg: SalesforceOrg; sObject: CreateableSObject; }): Promise<DataCreateRecordResult> {
+    async dataUpsertRecord(params: { targetOrg: SalesforceOrg; sObject: UpsertableSObject; }): Promise<DataCreateRecordResult> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
