@@ -51,12 +51,12 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         return new VsCodeLogger();
     }
 
-    withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; }): Promise<T> {
+    withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; isCancellable?: boolean }): Promise<T> {
         return new Promise((resolve, reject) => {
             vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: options.title,
-                cancellable: true
+                cancellable: options.isCancellable === undefined ? true : options.isCancellable
             }, async (progress, cancelToken) => {
                 try {
                     let currentProgress = 0;

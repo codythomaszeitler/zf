@@ -98,30 +98,35 @@ export class RunTestUnderCursorCommand extends Command {
 		});
 	}
 
-	private async cancel(params: {
+	public async cancel(params: {
 		parentJobId: SalesforceId,
 		targetOrg: SalesforceOrg
 	}) {
-		const selector = new ApexTestQueueItemSelector({
-			cli: this.getCli()
-		});
+		await this.getIde().withProgress(async (progressToken) => {
+			const selector = new ApexTestQueueItemSelector({
+				cli: this.getCli()
+			});
 
-		const apexTestQueueItems = await selector.queryByParentJobId({
-			parentJobId: params.parentJobId,
-			targetOrg: params.targetOrg
-		});
-
-		apexTestQueueItems.forEach(apexTestQueueItem => {
-			apexTestQueueItem.status = 'Aborted';
-		});
-
-		const promises = apexTestQueueItems.map(apexTestQueueItem => {
-			return this.getCli().dataUpsertRecord({
-				sObject: apexTestQueueItem,
+			const apexTestQueueItems = await selector.queryByParentJobId({
+				parentJobId: params.parentJobId,
 				targetOrg: params.targetOrg
 			});
-		});
 
-		return Promise.all(promises);
+			apexTestQueueItems.forEach(apexTestQueueItem => {
+				apexTestQueueItem.status = 'Aborted';
+			});
+
+			const promises = apexTestQueueItems.map(apexTestQueueItem => {
+				return this.getCli().dataUpsertRecord({
+					sObject: apexTestQueueItem,
+					targetOrg: params.targetOrg
+				});
+			});
+
+			return Promise.all(promises);
+		}, {
+			title: `Cancelling ${params.parentJobId.toString()}`,
+			isCancellable: false
+		});
 	}
 }

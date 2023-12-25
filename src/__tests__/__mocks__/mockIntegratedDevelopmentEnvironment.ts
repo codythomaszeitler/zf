@@ -65,7 +65,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return this.activeTextEditor;
     }
 
-    async withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; }): Promise<T> {
+    async withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; isCancellable: boolean }): Promise<T> {
         this.shownWindowLoadingMessages.push(options.title);
 
         this.currentProgressToken = {
