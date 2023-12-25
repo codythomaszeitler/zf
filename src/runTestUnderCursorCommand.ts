@@ -1,7 +1,9 @@
+import { ApexTestQueueItemSelector } from "./apexTestQueueItemSelector";
 import { Command } from "./command";
 import { Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
 import { Range } from "./range";
 import { SalesforceCli } from "./salesforceCli";
+import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
 
 export class RunTestUnderCursorCommand extends Command {
@@ -36,12 +38,27 @@ export class RunTestUnderCursorCommand extends Command {
 					tests: [testName]
 				});
 
+				if (progressToken.isCancellationRequested) {
+					await this.cancel({
+						parentJobId: apexTestRunResult.getTestRunId(),
+						targetOrg: params.targetOrg
+					});
+					return;
+				}
+
 				const testRunId = apexTestRunResult.getTestRunId();
 
 				let apexTestGetResult = await this.getCli().apexTestGet({
 					targetOrg: params.targetOrg,
 					testRunId
 				});
+				if (progressToken.isCancellationRequested) {
+					await this.cancel({
+						parentJobId: apexTestRunResult.getTestRunId(),
+						targetOrg: params.targetOrg
+					});
+					return;
+				}
 				progressToken.report({
 					progress: apexTestGetResult.getPercentageCompleted()
 				});
@@ -54,6 +71,13 @@ export class RunTestUnderCursorCommand extends Command {
 						targetOrg: params.targetOrg,
 						testRunId
 					});
+					if (progressToken.isCancellationRequested) {
+						await this.cancel({
+							parentJobId: apexTestRunResult.getTestRunId(),
+							targetOrg: params.targetOrg
+						});
+						return;
+					}
 				}
 
 				if (apexTestGetResult.hasFailingTests()) {
@@ -72,5 +96,32 @@ export class RunTestUnderCursorCommand extends Command {
 		}, {
 			title: 'Running Apex Tests'
 		});
+	}
+
+	private async cancel(params: {
+		parentJobId: SalesforceId,
+		targetOrg: SalesforceOrg
+	}) {
+		const selector = new ApexTestQueueItemSelector({
+			cli: this.getCli()
+		});
+
+		const apexTestQueueItems = await selector.queryByParentJobId({
+			parentJobId: params.parentJobId,
+			targetOrg: params.targetOrg
+		});
+
+		apexTestQueueItems.forEach(apexTestQueueItem => {
+			apexTestQueueItem.status = 'Aborted';
+		});
+
+		const promises = apexTestQueueItems.map(apexTestQueueItem => {
+			return this.getCli().dataUpsertRecord({
+				sObject: apexTestQueueItem,
+				targetOrg: params.targetOrg
+			});
+		});
+
+		return Promise.all(promises);
 	}
 }

@@ -9,7 +9,7 @@ export class ApexTestQueueItemSelector extends Selector {
 		const dataQueryResult = await this.getCli().dataQuery({
 			query: {
 				from: APEX_TEST_QUEUE_ITEM_SOBJECT_NAME,
-				fields: ['Status', 'ParentJobId'],
+				fields: ['Status'],
 				where: `ParentJobId = '${params.parentJobId}'`
 			},
 			targetOrg: params.targetOrg
@@ -20,8 +20,7 @@ export class ApexTestQueueItemSelector extends Selector {
 				id: SalesforceId.get(sObject["Id"])
 			});
 			const status = sObject["Status"] as ApexTestQueueStatus;
-			const parentJobId = SalesforceId.get(sObject["ParentJobId"]);
-			return builder.withStatus(status).withParentJobId(parentJobId).build();
+			return builder.withStatus(status).build();
 		});
 
 		return apexTestQueueItems;

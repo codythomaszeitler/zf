@@ -69,7 +69,7 @@ describe('apex test queue item selector', () => {
 		expect(apexTestQueueItems).toHaveLength(1);
 		const apexTestQueueItem = apexTestQueueItems[0];
 
-		expect(apexTestQueueItem.parentJobId).toBe(parentJobId);
+		expect(apexTestQueueItem.status).toBe("Queued");
 	});
 
 	it('should be able to convert when no sobjects are found', async () => {
