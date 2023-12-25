@@ -13,12 +13,13 @@ export interface ApexTestQueueItem extends UpsertableSObject {
 export class ApexTestQueueItemBuilder {
 
 	private id: SalesforceId;
-	private status: ApexTestQueueStatus | undefined;
+	private status: ApexTestQueueStatus;
 
 	public constructor(params: {
 		id: SalesforceId
 	}) {
 		this.id = params.id;
+		this.status = "";
 	}
 
 	public withStatus(status: ApexTestQueueStatus) {
