@@ -37,4 +37,14 @@ describe('stack trace parser', () => {
 
 		expect(caughtException.message).toBe(`Could not parse stack trace apex test location string [${testString}]`);
 	});
+
+	it('should be able to parse exception thrown from body of non-test-method', () => {
+		const testString = '"StackTrace": "Class.SetAccountName.foo: line 14, column 1\nClass.SetAccountNameTest.anotherTestMethod: line 21, column 1';
+		const result = parseStackTrace(testString);
+
+		expect(result.className).toBe('SetAccountNameTest');
+		expect(result.methodName).toBe('anotherTestMethod');
+		expect(result.position.getLineNumber()).toBe(20);
+		expect(result.position.getColumnNumber()).toBe(0);
+	});
 });
