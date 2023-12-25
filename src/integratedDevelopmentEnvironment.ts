@@ -10,7 +10,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract showTextDocument(uri: Uri): Promise<void>;
     abstract deleteTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
-    abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string }): Promise<T>;
+    abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string, isCancellable?: boolean }): Promise<T>;
     abstract getActiveTextEditor(): Promise<ActiveTextEditor | null>;
     abstract findFile(glob: string): Promise<Uri | null>;
     abstract findFiles(glob: string): Promise<Uri[]>;

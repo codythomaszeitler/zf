@@ -3,10 +3,11 @@ import { SalesforceOrg } from "../salesforceOrg";
 import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { MockSalesforceCli } from "./__mocks__/mockSalesforceCli";
-import { APEX_TEST_QUEUE_ITEM_SOBJECT_NAME, ApexTestQueueItemBuilder, ApexTestQueueStatus } from '../apexTestQueueItem';
+import { ApexTestQueueStatus } from '../apexTestQueueItem';
 import { genRandomId } from './salesforceId.test';
 import { SalesforceId } from '../salesforceId';
 import { ApexTestQueueItemSelector } from '../apexTestQueueItemSelector';
+import { genApexQueueItem } from './genApexQueueItemTestUtil';
 
 describe('apex test queue item selector', () => {
 
@@ -39,25 +40,21 @@ describe('apex test queue item selector', () => {
 		});
 	});
 
-	async function genApexQueueItem(params: {
+	async function generateApexQueueItem(params: {
 		status: ApexTestQueueStatus,
 		parentJobId: SalesforceId
 	}) {
-		const randomId = genRandomId(APEX_TEST_QUEUE_ITEM_SOBJECT_NAME);
-		const builder = new ApexTestQueueItemBuilder({
-			id: randomId
-		});
-		const apexTestQueueItem = builder.withStatus(params.status).withParentJobId(params.parentJobId).build();
-
-		await cli.dataUpsertRecord({
-			targetOrg: org,
-			sObject: apexTestQueueItem
+		return genApexQueueItem({
+			cli: cli,
+			parentJobId: params.parentJobId,
+			status: params.status,
+			targetOrg: org
 		});
 	}
 
 	it('should be able to convert generic sobjects from query into ApexTestQueueItems', async () => {
 		const parentJobId = genRandomId('AsyncApexJob');
-		await genApexQueueItem({
+		await generateApexQueueItem({
 			status: "Queued",
 			parentJobId
 		});
