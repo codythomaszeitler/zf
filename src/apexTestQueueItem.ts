@@ -1,5 +1,5 @@
 import { UpsertableSObject } from "./upsertableSObject";
-import { SalesforceId } from "./salesforceId";
+import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 
 export const APEX_TEST_QUEUE_ITEM_SOBJECT_NAME = 'ApexTestQueueItem';
 
@@ -8,17 +8,20 @@ export type ApexTestQueueStatus = typeof statuses[number];
 
 export interface ApexTestQueueItem extends UpsertableSObject {
 	status: ApexTestQueueStatus;
+	parentJobId: SalesforceId;
 }
 
 export class ApexTestQueueItemBuilder {
 
 	private id: SalesforceId;
 	private status: ApexTestQueueStatus;
+	private parentJobId: SalesforceId;
 
 	public constructor(params: {
 		id: SalesforceId
 	}) {
 		this.id = params.id;
+		this.parentJobId = NULL_SF_ID;
 		this.status = "";
 	}
 
@@ -27,12 +30,19 @@ export class ApexTestQueueItemBuilder {
 			throw new Error(`Invalid queue status found: ${status}.`);
 		}
 		this.status = status;
+		return this;
+	}
+
+	public withParentJobId(parentJobId: SalesforceId) {
+		this.parentJobId = parentJobId;
+		return this;
 	}
 
 	public build(): ApexTestQueueItem {
 		return {
 			id: this.id,
 			status: this.status || "",
+			parentJobId: this.parentJobId,
 			getSObjectName() {
 				return APEX_TEST_QUEUE_ITEM_SOBJECT_NAME;
 			},
@@ -49,5 +59,6 @@ export function intoKeyValueStrings(apexTestQueueItem: ApexTestQueueItem): strin
 		keyValueStrings.push(`Status=${apexTestQueueItem.status}`);
 	}
 	keyValueStrings.push(`Id=${apexTestQueueItem.id.toString()}`);
+	keyValueStrings.push(`ParentJobId=${apexTestQueueItem.parentJobId.toString()}`);
 	return keyValueStrings;
 }
