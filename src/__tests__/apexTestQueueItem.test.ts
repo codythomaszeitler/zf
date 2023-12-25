@@ -20,8 +20,6 @@ describe('apex test queue item', () => {
 
 		const keyValueStrings = intoKeyValueStrings(apexTestQueueItem);
 		expect(keyValueStrings).toContain(`Status=${apexTestQueueItem.status}`);
-		expect(keyValueStrings).toContain(`Id=${apexTestQueueItem.id.toString()}`);
-		expect(keyValueStrings).toContain(`ParentJobId=${parentJobId.toString()}`);
 
 		expect(apexTestQueueItem.intoKeyValueString()).not.toHaveLength(0);
 	});
@@ -40,7 +38,6 @@ describe('apex test queue item', () => {
 
 		const keyValueStrings = intoKeyValueStrings(apexTestQueueItem);
 		expect(keyValueStrings).not.toContain(`Status=${apexTestQueueItem.status}`);
-		expect(keyValueStrings).toContain(`Id=${apexTestQueueItem.id.toString()}`);
 	});
 
 	it('should throw exception if invalid status given', () => {

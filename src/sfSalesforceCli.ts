@@ -20,7 +20,7 @@ import { SObjectApiName } from "./sObjectApiName";
 import { SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
 import { SObjectListResult } from "./sObjectListResult";
 import { SalesforceCli } from "./salesforceCli";
-import { SalesforceId } from "./salesforceId";
+import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
 import { SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
 import { SoqlQuery } from "./soqlQuery";
@@ -350,12 +350,20 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async dataUpsertRecord(params: { targetOrg: SalesforceOrg; sObject: UpsertableSObject; }): Promise<DataCreateRecordResult> {
+        const isInsert = params.sObject.id === NULL_SF_ID;
+        const recordIdArgs = [];
+        if (!isInsert) {
+            recordIdArgs.push('--record-id');
+            recordIdArgs.push(params.sObject.id.toString());
+        }
+
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
                 'data',
-                'create',
+                isInsert ? 'create' : 'update',
                 'record',
+                ...recordIdArgs,
                 '--use-tooling-api',
                 '--sobject',
                 params.sObject.getSObjectName(),

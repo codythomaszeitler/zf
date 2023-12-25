@@ -58,7 +58,5 @@ export function intoKeyValueStrings(apexTestQueueItem: ApexTestQueueItem): strin
 	if (apexTestQueueItem.status) {
 		keyValueStrings.push(`Status=${apexTestQueueItem.status}`);
 	}
-	keyValueStrings.push(`Id=${apexTestQueueItem.id.toString()}`);
-	keyValueStrings.push(`ParentJobId=${apexTestQueueItem.parentJobId.toString()}`);
 	return keyValueStrings;
 }
