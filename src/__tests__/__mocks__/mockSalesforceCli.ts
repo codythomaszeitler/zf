@@ -13,7 +13,7 @@ import { ApexRunResult } from "../../apexRunResult";
 import { UpsertableSObject } from "../../upsertableSObject";
 import { DataCreateRecordResult } from "../../dataCreateRecordResult";
 import { OrgListUsersResult } from "../../orgListUsersResult";
-import { SalesforceId } from "../../salesforceId";
+import { NULL_SF_ID, SalesforceId } from "../../salesforceId";
 import { SObject } from "../../sObject";
 import { DataGetRecordResult } from "../../dataGetRecordResult";
 import { SoqlQuery } from "../../soqlQuery";
@@ -233,7 +233,15 @@ export class MockSalesforceCli extends SalesforceCli {
     }
 
     async dataUpsertRecord(params: { targetOrg: SalesforceOrg; sObject: UpsertableSObject; }): Promise<DataCreateRecordResult> {
-        const recordId = genRandomId(params.sObject.getSObjectName());
+        const getSalesforceId = () => {
+            if (params.sObject.id === NULL_SF_ID) {
+                return genRandomId(params.sObject.getSObjectName());
+            } else {
+                return params.sObject.id;
+            }
+        };
+
+        const recordId = getSalesforceId();
         const newSObject = generateSObject(params.sObject, recordId);
 
         await this.runDatabaseValidationsFor({ sObject: newSObject });

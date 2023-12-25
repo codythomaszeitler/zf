@@ -1,7 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { APEX_TEST_QUEUE_ITEM_SOBJECT_NAME, ApexTestQueueItemBuilder, ApexTestQueueStatus, intoKeyValueStrings } from "../apexTestQueueItem";
 import { genRandomId } from "./salesforceId.test";
-import { SalesforceId } from '../salesforceId';
 
 describe('apex test queue item', () => {
 
@@ -61,5 +60,4 @@ describe('apex test queue item', () => {
 
 		expect(caughtException.message).toBe(`Invalid queue status found: ${invalidStatus}.`);
 	});
-
 });
