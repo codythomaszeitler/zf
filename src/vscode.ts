@@ -9,8 +9,10 @@ import { ApexLog } from "./apexLog";
 import { TreeNode } from "./treeNode";
 import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
+import { TextEncoder } from "util";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
+
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
@@ -273,6 +275,14 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         } else {
             return null;
         }
+    }
+
+    public async writeFile(params: { uri: Uri; contents: string; }): Promise<void> {
+        const uriMapper = new UriMapper();
+        const vscodeUri = uriMapper.intoVsCodeRepresentation(params.uri);
+
+        const textEncoding = new TextEncoder();
+        await vscode.workspace.fs.writeFile(vscodeUri, textEncoding.encode(params.contents));
     }
 }
 

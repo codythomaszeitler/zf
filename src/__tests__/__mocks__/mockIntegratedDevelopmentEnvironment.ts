@@ -10,6 +10,7 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
+    
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
@@ -219,6 +220,10 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     toHaveShownTextDocument(uri: Uri): boolean {
         return !!this.shownTextDocuments.find((_uri) => _uri.getValue() === uri.getValue());
+    }
+
+    public async writeFile(params: { uri: Uri; contents: string; }): Promise<void> {
+        await this.filesystem.writeFile(params.uri, params.contents);
     }
 }
 
