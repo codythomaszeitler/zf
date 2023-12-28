@@ -6,7 +6,7 @@ export abstract class Command {
 	private readonly ide: IntegratedDevelopmentEnvironment;
 	private readonly cli: SalesforceCli;
 
-	protected constructor(params: CommandParams) {
+	public constructor(params: CommandParams) {
 		this.ide = params.ide;
 		this.cli = params.cli;
 	}

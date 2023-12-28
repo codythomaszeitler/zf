@@ -15,6 +15,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract findFile(glob: string): Promise<Uri | null>;
     abstract findFiles(glob: string): Promise<Uri[]>;
     abstract readLineAt(params: { uri: Uri, line: number }): Promise<TextLine>;
+    abstract writeFile(params: { uri: Uri, contents: string }): Promise<void>;
     abstract getText(params: { uri: Uri, range: Range }): Promise<TextLine>;
     abstract getConfig<T>(property: string, defaultValue: T): T;
     abstract execute(command: Command): Promise<CommandExecuteResult>;
