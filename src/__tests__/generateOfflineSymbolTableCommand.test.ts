@@ -127,6 +127,34 @@ describe('generate offline symbol table command', () => {
 
 		expect(expected).toBe(contents);
 	});
+
+	it('should be able to generate apex class with only integer public property into test directory', async () => {
+
+		const className = 'OnlyHasPublicIntegerProperty';
+		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
+		const apexClass = new ApexClass({
+			id: recordId,
+			name: className
+		});
+		const uri = getOfflineSymbolTableApexClassUri({
+			targetOrg: org,
+			apexClass,
+			outputDir: testDir
+		});
+
+		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+			= genOnlyHasPublicIntegerPropertyApexClass();
+
+		await testObject.execute({
+			targetOrg: org,
+			outputDir: testDir
+		});
+
+		const contents = await fs.readFile(uri);
+		const expected = `global class ${apexClass.getName()} {\n\tglobal Integer a;}`;
+
+		expect(expected).toBe(contents);
+	});
 });
 
 
@@ -308,6 +336,71 @@ function genOnlyHasPublicVoidMethodApexClass() {
 					}
 				],
 				"totalSize": 6,
+				"done": true
+			},
+			"warnings": []
+		}
+	);
+}
+
+function genOnlyHasPublicIntegerPropertyApexClass() {
+	return JSON.stringify(
+		{
+			"status": 0,
+			"result": {
+				"records": [
+					{
+						"attributes": {
+							"type": "ApexClass",
+							"url": "/services/data/v59.0/tooling/sobjects/ApexClass/01p8F00000Khm25QAB"
+						},
+						"Id": "01p8F00000Khm25QAB",
+						"Name": "OnlyHasPublicIntegerProperty",
+						"SymbolTable": {
+							"constructors": [],
+							"externalReferences": [],
+							"id": "OnlyHasPublicIntegerProperty",
+							"innerClasses": [],
+							"interfaces": [],
+							"key": "OnlyHasPublicIntegerProperty",
+							"methods": [],
+							"name": "OnlyHasPublicIntegerProperty",
+							"namespace": null,
+							"parentClass": "",
+							"properties": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 20,
+										"line": 2
+									},
+									"modifiers": [
+										"public"
+									],
+									"name": "a",
+									"references": [],
+									"type": "Integer"
+								}
+							],
+							"tableDeclaration": {
+								"annotations": [],
+								"location": {
+									"column": 27,
+									"line": 1
+								},
+								"modifiers": [
+									"public",
+									"with sharing"
+								],
+								"name": "OnlyHasPublicIntegerProperty",
+								"references": [],
+								"type": "OnlyHasPublicIntegerProperty"
+							},
+							"variables": []
+						}
+					}
+				],
+				"totalSize": 1,
 				"done": true
 			},
 			"warnings": []
