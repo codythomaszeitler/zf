@@ -77,8 +77,11 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 function apexClassIntoString(params: {
 	apexClass: ApexClass
 }) {
+	const separator = '\n\t';
+
 	const constructors = apexClassConstructorsIntoString();
-	return `global class ${params.apexClass.getName()} {\n\t${constructors}}`;
+	const methods = apexMethodsIntoString();
+	return `global class ${params.apexClass.getName()} {\n\t${constructors}${methods}}`;
 
 	function apexClassConstructorsIntoString() {
 		const publicConstructors = params.apexClass.getPublicConstructors();
@@ -87,6 +90,16 @@ function apexClassIntoString(params: {
 			return `global ${publicConstructor.name}() {}`;
 		});
 
-		return asStrings.join('\n\t');
+		return asStrings.join(separator);
+	}
+
+	function apexMethodsIntoString() {
+		const publicMethods = params.apexClass.getPublicMethods();
+
+		const asStrings = publicMethods.map(publicMethod => {
+			return `global ${publicMethod.returnType} ${publicMethod.name}() {}`;
+		});
+
+		return asStrings.join(separator);
 	}
 }

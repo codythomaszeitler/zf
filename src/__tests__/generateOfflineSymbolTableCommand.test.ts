@@ -69,7 +69,7 @@ describe('generate offline symbol table command', () => {
 		});
 
 		const contents = await fs.readFile(uri);
-		const expected = `global class EmptyApexClass {}`;
+		const expected = `global class ${apexClass.getName()} {\n\t}`;
 
 		expect(expected).toBe(contents);
 	});
@@ -95,7 +95,35 @@ describe('generate offline symbol table command', () => {
 		});
 
 		const contents = await fs.readFile(uri);
-		const expected = `global class OnlyHasEmptyConstructor {\n\tglobal OnlyHasEmptyConstructor() {}}`;
+		const expected = `global class ${apexClass.getName()} {\n\tglobal ${apexClass.getName()}() {}}`;
+
+		expect(expected).toBe(contents);
+	});
+
+	it('should be able to generate apex class with only empty void public method into test directory', async () => {
+
+		const className = 'OnlyHasVoidPublicMethod';
+		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
+		const apexClass = new ApexClass({
+			id: recordId,
+			name: className
+		});
+		const uri = getOfflineSymbolTableApexClassUri({
+			targetOrg: org,
+			apexClass,
+			outputDir: testDir
+		});
+
+		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+			= genOnlyHasPublicVoidMethodApexClass();
+
+		await testObject.execute({
+			targetOrg: org,
+			outputDir: testDir
+		});
+
+		const contents = await fs.readFile(uri);
+		const expected = `global class ${apexClass.getName()} {\n\tglobal void foo() {}}`;
 
 		expect(expected).toBe(contents);
 	});
@@ -220,4 +248,69 @@ function genOnlyEmptyConstructorApexClassDataQuery() {
 	);
 }
 
-function 
+function genOnlyHasPublicVoidMethodApexClass() {
+	return JSON.stringify(
+		{
+			"status": 0,
+			"result": {
+				"records": [
+					{
+						"attributes": {
+							"type": "ApexClass",
+							"url": "/services/data/v59.0/tooling/sobjects/ApexClass/01p8F00000KhjKXQAZ"
+						},
+						"Id": "01p8F00000KhjKXQAZ",
+						"Name": "OnlyHasVoidPublicMethod",
+						"SymbolTable": {
+							"constructors": [],
+							"externalReferences": [],
+							"id": "OnlyHasVoidPublicMethod",
+							"innerClasses": [],
+							"interfaces": [],
+							"key": "OnlyHasVoidPublicMethod",
+							"methods": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 17,
+										"line": 2
+									},
+									"modifiers": [
+										"public"
+									],
+									"name": "foo",
+									"parameters": [],
+									"references": [],
+									"returnType": "void",
+									"type": null
+								}
+							],
+							"name": "OnlyHasVoidPublicMethod",
+							"namespace": null,
+							"parentClass": "",
+							"properties": [],
+							"tableDeclaration": {
+								"annotations": [],
+								"location": {
+									"column": 27,
+									"line": 1
+								},
+								"modifiers": [
+									"public",
+									"with sharing"
+								],
+								"name": "OnlyHasVoidPublicMethod",
+								"references": [],
+								"type": "OnlyHasVoidPublicMethod"
+							},
+							"variables": []
+						}
+					}
+				],
+				"totalSize": 6,
+				"done": true
+			},
+			"warnings": []
+		}
+	);
+}
