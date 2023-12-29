@@ -28,16 +28,26 @@ export class ApexClass {
 		}
 
 		return this.symbolTable.constructors.filter(constructor =>
-			constructor.modifiers.includes('public')
+			this.hasPublicModifier(constructor.modifiers)
 		);
 	}
 
 	public getPublicMethods() {
+		if (!this.symbolTable) {
+			return [];
+		}
 
+		return this.symbolTable.methods.filter(method =>
+			this.hasPublicModifier(method.modifiers)
+		);
 	}
 
 	public getPublicProperties() {
 
+	}
+
+	private hasPublicModifier(modifiers: ApexModifier[]) {
+		return modifiers.includes('public');
 	}
 }
 
@@ -59,6 +69,7 @@ export interface SymbolTable {
 		readonly modifiers: ApexModifier[];
 		readonly name: string;
 		readonly parameters: Parameter[];
+		readonly returnType: string;
 	}[];
 
 	readonly properties: ({
