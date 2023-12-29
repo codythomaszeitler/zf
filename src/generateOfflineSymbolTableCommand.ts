@@ -10,7 +10,7 @@ export function getOfflineSymbolTableApexClassUri(params: {
 	outputDir: string,
 	apexClass: ApexClass
 }) {
-	const joinedPath = path.join(params.outputDir, params.targetOrg.getAlias(), `${params.apexClass.getName()}`);
+	const joinedPath = path.join(params.outputDir, params.targetOrg.getAlias(), `${params.apexClass.getName()}.cls`);
 	const uri = Uri.get(joinedPath);
 	return uri;
 }
