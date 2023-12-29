@@ -20,7 +20,6 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		targetOrg: SalesforceOrg,
 		outputDir: string
 	}) {
-
 		const dataQueryResults = await this.getCli().dataQuery({
 			targetOrg: params.targetOrg,
 			query: {
@@ -81,7 +80,8 @@ function apexClassIntoString(params: {
 
 	const constructors = apexClassConstructorsIntoString();
 	const methods = apexMethodsIntoString();
-	return `global class ${params.apexClass.getName()} {\n\t${constructors}${methods}}`;
+	const properties = apexPropertiesIntoString();
+	return `global class ${params.apexClass.getName()} {\n\t${constructors}${methods}${properties}}`;
 
 	function apexClassConstructorsIntoString() {
 		const publicConstructors = params.apexClass.getPublicConstructors();
@@ -98,6 +98,16 @@ function apexClassIntoString(params: {
 
 		const asStrings = publicMethods.map(publicMethod => {
 			return `global ${publicMethod.returnType} ${publicMethod.name}() {}`;
+		});
+
+		return asStrings.join(separator);
+	}
+
+	function apexPropertiesIntoString() {
+		const publicProperties = params.apexClass.getPublicProperties();
+
+		const asStrings = publicProperties.map(publicProperty => {
+			return `global ${publicProperty.type} ${publicProperty.name};`;
 		});
 
 		return asStrings.join(separator);

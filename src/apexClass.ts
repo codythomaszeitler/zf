@@ -43,7 +43,13 @@ export class ApexClass {
 	}
 
 	public getPublicProperties() {
+		if (!this.symbolTable) {
+			return [];
+		}
 
+		return this.symbolTable.properties.filter(property =>
+			this.hasPublicModifier(property.modifiers)
+		);
 	}
 
 	private hasPublicModifier(modifiers: ApexModifier[]) {
