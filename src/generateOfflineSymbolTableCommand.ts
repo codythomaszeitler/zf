@@ -1,4 +1,3 @@
-import { write } from "fs";
 import { APEX_CLASS_SOBJECT_NAME, ApexClass, SymbolTable } from "./apexClass";
 import { Command } from "./command";
 import { Uri } from "./integratedDevelopmentEnvironment";
@@ -50,7 +49,7 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 
 			const uri = getOfflineSymbolTableApexClassUri({
 				targetOrg: params.targetOrg,
-				apexClass: apexClass,
+				apexClass,
 				outputDir: params.outputDir
 			});
 
@@ -78,5 +77,16 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 function apexClassIntoString(params: {
 	apexClass: ApexClass
 }) {
-	return `global class ${params.apexClass.getName()} {}`;
+	const constructors = apexClassConstructorsIntoString();
+	return `global class ${params.apexClass.getName()} {\n\t${constructors}}`;
+
+	function apexClassConstructorsIntoString() {
+		const publicConstructors = params.apexClass.getPublicConstructors();
+
+		const asStrings = publicConstructors.map(publicConstructor => {
+			return `global ${publicConstructor.name}() {}`;
+		});
+
+		return asStrings.join('\n\t');
+	}
 }

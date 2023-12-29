@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect } from '@jest/globals';
 import { SalesforceOrg } from "../salesforceOrg";
 import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
@@ -73,6 +73,32 @@ describe('generate offline symbol table command', () => {
 
 		expect(expected).toBe(contents);
 	});
+
+	it('should be able to generate apex class with only empty constructor into test directory', async () => {
+		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
+		const apexClass = new ApexClass({
+			id: recordId,
+			name: 'OnlyHasEmptyConstructor'
+		});
+		const uri = getOfflineSymbolTableApexClassUri({
+			targetOrg: org,
+			apexClass,
+			outputDir: testDir
+		});
+
+		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+			= genOnlyEmptyConstructorApexClassDataQuery();
+
+		await testObject.execute({
+			targetOrg: org,
+			outputDir: testDir
+		});
+
+		const contents = await fs.readFile(uri);
+		const expected = `global class OnlyHasEmptyConstructor {\n\tglobal OnlyHasEmptyConstructor() {}}`;
+
+		expect(expected).toBe(contents);
+	});
 });
 
 
@@ -126,3 +152,72 @@ function genEmptyApexClassDataQuery() {
 		}
 	);
 }
+
+function genOnlyEmptyConstructorApexClassDataQuery() {
+	return JSON.stringify(
+		{
+			"status": 0,
+			"result": {
+				"records": [
+					{
+						"attributes": {
+							"type": "ApexClass",
+							"url": "/services/data/v59.0/tooling/sobjects/ApexClass/01p8F00000KhjKSQAZ"
+						},
+						"Id": "01p8F00000KhjKSQAZ",
+						"Name": "OnlyHasEmptyConstructor",
+						"SymbolTable": {
+							"constructors": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 12,
+										"line": 2
+									},
+									"modifiers": [
+										"public"
+									],
+									"name": "OnlyHasEmptyConstructor",
+									"parameters": [],
+									"references": [],
+									"type": null
+								}
+							],
+							"externalReferences": [],
+							"id": "OnlyHasEmptyConstructor",
+							"innerClasses": [],
+							"interfaces": [],
+							"key": "OnlyHasEmptyConstructor",
+							"methods": [],
+							"name": "OnlyHasEmptyConstructor",
+							"namespace": null,
+							"parentClass": "",
+							"properties": [],
+							"tableDeclaration": {
+								"annotations": [],
+								"location": {
+									"column": 27,
+									"line": 1
+								},
+								"modifiers": [
+									"public",
+									"with sharing"
+								],
+								"name": "OnlyHasEmptyConstructor",
+								"references": [],
+								"type": "OnlyHasEmptyConstructor"
+							},
+							"variables": []
+						}
+					}
+				],
+				"totalSize": 5,
+				"done": true
+			},
+			"warnings": []
+		}
+
+	);
+}
+
+function 

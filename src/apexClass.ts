@@ -23,7 +23,13 @@ export class ApexClass {
 	}
 
 	public getPublicConstructors() {
+		if (!this.symbolTable) {
+			return [];
+		}
 
+		return this.symbolTable.constructors.filter(constructor =>
+			constructor.modifiers.includes('public')
+		);
 	}
 
 	public getPublicMethods() {
