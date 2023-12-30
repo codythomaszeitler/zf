@@ -1,4 +1,4 @@
-import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, OnSaveTextDocumentListener, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
 import { SalesforceOrg } from "../../salesforceOrg";
@@ -10,6 +10,9 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
+    onDidSaveTextDocument(listener: OnSaveTextDocumentListener): void {
+        throw new Error("Method not implemented.");
+    }
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }

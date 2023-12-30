@@ -3,7 +3,7 @@ import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
 import { VsCode } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
-import { projectDeploy } from './projectDeploy';
+import { genOnDidSaveTextDocument, projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
@@ -246,6 +246,11 @@ export function activate(context: vscode.ExtensionContext) {
 			title: 'Generating offline symbol table'
 		});
 	}
+
+	ide.onDidSaveTextDocument(genOnDidSaveTextDocument({
+		cli: salesforceCli,
+		ide: ide
+	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
