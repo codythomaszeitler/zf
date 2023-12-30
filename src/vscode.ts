@@ -9,11 +9,9 @@ import { ApexLog } from "./apexLog";
 import { TreeNode } from "./treeNode";
 import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
-import { TextEncoder } from "util";
+import { TextDecoder, TextEncoder } from "util";
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-
-
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -283,6 +281,16 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
 
         const textEncoding = new TextEncoder();
         await vscode.workspace.fs.writeFile(vscodeUri, textEncoding.encode(params.contents));
+    }
+
+    public async readFile(params: { uri: Uri; }): Promise<string> {
+        const uriMapper = new UriMapper();
+        const vscodeUri = uriMapper.intoVsCodeRepresentation(params.uri);
+
+        const file = await vscode.workspace.fs.readFile(vscodeUri);
+
+        const textDecoding = new TextDecoder();
+        return textDecoding.decode(file.buffer);
     }
 }
 

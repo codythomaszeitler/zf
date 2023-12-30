@@ -13,6 +13,15 @@ import { getRecentApexLogs } from './getRecentApexLogs';
 import * as path from 'path';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
 import { RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
+import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
+import { ReadSfdxProjectCommand } from './readSfdxProjectCommand';
+
+function getCurrentDir() {
+	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+		return vscode.workspace.workspaceFolders[0].uri.path;
+	}
+	throw new Error('Cannot use extension without at least one workspace folder.');
+}
 
 function getZfLogDir() {
 	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -20,6 +29,15 @@ function getZfLogDir() {
 	}
 	else {
 		return path.join('.zf', 'logs');
+	}
+}
+
+function getZfOfflineSymbolTableDir() {
+	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+		return path.join(vscode.workspace.workspaceFolders[0].uri.path, '.zf', 'offlineSymbolTable');
+	}
+	else {
+		return path.join('.zf', 'offlineSymbolTable');
 	}
 }
 
@@ -194,6 +212,41 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
+	const zfOfflineSymbolTableDir = getZfOfflineSymbolTableDir();
+	async function runGeneratorOfflineSymbolTable() {
+		ide.withProgress(async (progressToken) => {
+			try {
+				const defaultOrg = await salesforceCli.getDefaultOrg();
+
+				const readSfdxProjectCommand = new ReadSfdxProjectCommand({
+					ide: ide,
+					cli: salesforceCli
+				});
+
+				const sfdxProject = await readSfdxProjectCommand.execute({
+					currentDir: getCurrentDir()
+				});
+
+				if (defaultOrg) {
+					const generateOfflineSymbolTableCommand = new GenerateOfflineSymbolTableCommand({
+						ide,
+						cli: salesforceCli
+					});
+
+					await generateOfflineSymbolTableCommand.execute({
+						targetOrg: defaultOrg,
+						outputDir: zfOfflineSymbolTableDir,
+						sfdxProject
+					});
+				}
+			} catch (e: any) {
+				ide.showErrorMessage(e.message);
+			}
+		}, {
+			title: 'Generating offline symbol table'
+		});
+	}
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
@@ -203,6 +256,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.refreshApexLogs', runRefreshApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runTestUnderCursor', runTestUnderCursor));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateOfflineSymbolTable', runGeneratorOfflineSymbolTable));
 }
 
 // this method is called when your extension is deactivated
