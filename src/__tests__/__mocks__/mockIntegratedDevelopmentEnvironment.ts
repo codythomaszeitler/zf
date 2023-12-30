@@ -226,7 +226,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 
     public async readFile(params: { uri: Uri; }): Promise<string> {
-        throw new Error("Method not implemented.");
+        return this.filesystem.readFile(params.uri);
     }
 }
 
