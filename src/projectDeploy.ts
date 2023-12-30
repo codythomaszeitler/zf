@@ -1,6 +1,6 @@
 import { SalesforceOrg } from "./salesforceOrg";
 import { SalesforceCli } from "./salesforceCli";
-import { Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
+import { Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, TextDocument } from "./integratedDevelopmentEnvironment";
 import { JobId } from "./jobId";
 import { Position } from "./position";
 import { Range } from "./range";
@@ -110,7 +110,7 @@ async function waitForDeploymentToComplete(params: {
         const progress = projectDeployReportResult.getPercentageComplete();
         params.progressToken.report({
             progress,
-            title : 'Project Deploy Report ' + projectDeployReportResult.getTotalDeployedAsString()
+            title: 'Project Deploy Report ' + projectDeployReportResult.getTotalDeployedAsString()
         });
     } while (!projectDeployReportResult.isDeploymentComplete());
 
@@ -164,4 +164,44 @@ function didHaveAnyFailures(projectDeployReportResult: ProjectDeployReportResult
         const componentFailures = projectDeployReportResult.getFailuresForFileName(fileName);
         return componentFailures.length !== 0;
     });
+}
+
+type ProjectDeployState = 'In Progress' | 'Not Started' | 'Queued';
+
+export function genOnDidSaveTextDocument(params: {
+    cli: SalesforceCli,
+    ide: IntegratedDevelopmentEnvironment
+}) {
+    let projectDeployState: ProjectDeployState = 'Not Started';
+    let timerId: any;
+
+    function runProjectDeploy() {
+        projectDeployState = 'In Progress';
+        projectDeploy({
+            ide: params.ide,
+            salesforceCli: params.cli
+        }).then(() => {
+            if (projectDeployState === 'Queued') {
+                runProjectDeploy();
+            } else {
+                projectDeployState = 'Not Started';
+            }
+        });
+    }
+
+    return function onDidSaveTextDocument(e: {
+        textDocument: TextDocument
+    }) {
+        if (projectDeployState === 'Not Started') {
+            const shouldDeployOnSave = params.ide.getConfig("sf.zsi.vscode.deployOnSave", true);
+            if (shouldDeployOnSave) {
+                if (timerId) {
+                    clearTimeout(timerId);
+                }
+                timerId = setTimeout(runProjectDeploy, 10);
+            }
+        } else if (projectDeployState === 'In Progress') {
+            projectDeployState = 'Queued';
+        }
+    };
 }

@@ -75,6 +75,11 @@
           "default": true,
           "description": "It 'Project Deploy' should focus the problems tab when a failure occurs."
         },
+        "sf.zsi.vscode.deployOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Determines if 'project deploy' should run when files are saved."
+        },
         "sf.zsi.vscode.proxy": {
           "type": "object",
           "description": "Proxy settings given to the shell as a JSON object"

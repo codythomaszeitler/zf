@@ -30,10 +30,19 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract getHighlightedText(): Promise<string>;
     abstract registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg }): Promise<void>;
 
+    abstract onDidSaveTextDocument(listener: OnSaveTextDocumentListener): void;
+
     public async hasFile(uri: Uri): Promise<boolean> {
         const file = await this.findFile(uri.getValue());
         return !!file;
     }
+}
+
+export type OnSaveTextDocumentListener = (e: { textDocument: TextDocument }) => void;
+
+export interface TextDocument {
+    languageId: string;
+    uri: Uri;
 }
 
 export interface ActiveTextEditor {

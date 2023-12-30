@@ -1,4 +1,4 @@
-import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, TextLine, Uri } from "./integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, OnSaveTextDocumentListener, TextLine, Uri } from "./integratedDevelopmentEnvironment";
 import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
@@ -14,11 +14,30 @@ import { TextDecoder, TextEncoder } from "util";
 export class VsCode extends IntegratedDevelopmentEnvironment {
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
+    private onDidSaveTextDocumentListeners: OnSaveTextDocumentListener[];
 
     constructor() {
         super();
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('Salesforce Apex Cody');
         this.outputChannel = vscode.window.createOutputChannel('sf-zsi', { log: true });
+        this.onDidSaveTextDocumentListeners = [];
+
+        vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
+            const uriMapper = new UriMapper();
+            const domainUri = uriMapper.intoDomainRepresentation(e.uri);
+            this.onDidSaveTextDocumentListeners.forEach(listener => {
+                listener({
+                    textDocument: {
+                        languageId: e.languageId,
+                        uri: domainUri
+                    }
+                });
+            });
+        });
+    }
+
+    public onDidSaveTextDocument(listener: OnSaveTextDocumentListener): void {
+        this.onDidSaveTextDocumentListeners.push(listener);
     }
 
     async readLineAt(params: {
