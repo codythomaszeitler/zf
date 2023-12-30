@@ -26,16 +26,28 @@ export class MockFileSystem {
 	async findFile(glob: string): Promise<Uri | null> {
 		const re = globToRegExp(glob);
 
-		let foundFile = null;
+		const found = await this.findFiles(glob);
+		if (found.length > 1) {
+			throw new Error(`Found more than one file matching ${glob}.`);
+		}
+
+		if (found.length === 1) {
+			return found[0];
+		} else {
+			return null;
+		}
+	}
+
+	async findFiles(glob: string): Promise<Uri[]> {
+		const re = globToRegExp(glob);
+		const found = [];
+
 		for (const file of this.files) {
 			if (re.test(file.uri.getValue())) {
-				if (foundFile) {
-					throw new Error(`Found more than one file matching ${glob}.`);
-				}
-				foundFile = file.uri;
+				found.push(file.uri);
 			}
 		}
-		return foundFile;
+		return found;
 	}
 
 	public async readFile(uri: Uri): Promise<string> {
@@ -44,6 +56,15 @@ export class MockFileSystem {
 			throw new Error(`Could not find file with uri ${uri.getValue()}`);
 		}
 		return found.contents;
+	}
+
+	public async hasFile(uri: Uri): Promise<boolean> {
+		try {
+			await this.readFile(uri);
+			return true;
+		} catch (e: any) {
+			return false;
+		}
 	}
 
 	public async writeFile(uri: Uri, contents: string): Promise<void> {

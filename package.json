@@ -51,6 +51,10 @@
       {
         "command": "sf.zsi.runTestUnderCursor",
         "title": "SF ZSI: Run Test Under Cursor"
+      },
+      {
+        "command" : "sf.zsi.generateOfflineSymbolTable",
+        "title": "SF ZSI: Generate Apex Offline Symbol Table"
       }
     ],
     "views": {

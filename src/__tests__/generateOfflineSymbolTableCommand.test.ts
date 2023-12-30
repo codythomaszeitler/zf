@@ -10,6 +10,8 @@ import { genMockExecutor } from './__mocks__/mockShell';
 import { SalesforceCli } from '../salesforceCli';
 import { APEX_CLASS_SOBJECT_NAME, ApexClass } from '../apexClass';
 import { genRandomId } from './salesforceId.test';
+import * as path from 'path';
+import { Uri } from '../integratedDevelopmentEnvironment';
 
 describe('generate offline symbol table command', () => {
 
@@ -65,7 +67,15 @@ describe('generate offline symbol table command', () => {
 
 		await testObject.execute({
 			targetOrg: org,
-			outputDir: testDir
+			outputDir: testDir,
+			sfdxProject: {
+				packageDirectories: [
+					{
+						path: 'force-app',
+						default: true
+					}
+				]
+			}
 		});
 
 		const contents = await fs.readFile(uri);
@@ -91,7 +101,15 @@ describe('generate offline symbol table command', () => {
 
 		await testObject.execute({
 			targetOrg: org,
-			outputDir: testDir
+			outputDir: testDir,
+			sfdxProject: {
+				packageDirectories: [
+					{
+						path: 'force-app',
+						default: true
+					}
+				]
+			}
 		});
 
 		const contents = await fs.readFile(uri);
@@ -119,7 +137,15 @@ describe('generate offline symbol table command', () => {
 
 		await testObject.execute({
 			targetOrg: org,
-			outputDir: testDir
+			outputDir: testDir,
+			sfdxProject: {
+				packageDirectories: [
+					{
+						path: 'force-app',
+						default: true
+					}
+				]
+			}
 		});
 
 		const contents = await fs.readFile(uri);
@@ -147,7 +173,15 @@ describe('generate offline symbol table command', () => {
 
 		await testObject.execute({
 			targetOrg: org,
-			outputDir: testDir
+			outputDir: testDir,
+			sfdxProject: {
+				packageDirectories: [
+					{
+						path: 'force-app',
+						default: true
+					}
+				]
+			}
 		});
 
 		const contents = await fs.readFile(uri);
@@ -155,10 +189,50 @@ describe('generate offline symbol table command', () => {
 
 		expect(expected).toBe(contents);
 	});
+
+	it('should not generate apex class that is found within path of packageDirectories', async () => {
+
+		const className = 'IExistInPackageDir';
+		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
+		const apexClass = new ApexClass({
+			id: recordId,
+			name: className
+		});
+		const uri = getOfflineSymbolTableApexClassUri({
+			targetOrg: org,
+			apexClass,
+			outputDir: testDir
+		});
+
+		const inForceAppDirUri = Uri.get(path.join('force-app', 'main', 'default', apexClass.getNameWithExtension()));
+		await fs.writeFile(inForceAppDirUri, `public ${apexClass.getName()} {}`);
+
+		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+			= getEmptyApexClassWith({
+				className: apexClass.getName()
+			});
+
+		await testObject.execute({
+			targetOrg: org,
+			outputDir: testDir,
+			sfdxProject: {
+				packageDirectories: [
+					{
+						path: 'force-app',
+						default: true
+					}
+				]
+			}
+		});
+
+		const hasFile = await fs.hasFile(uri);
+		expect(hasFile).toBe(false);
+	});
 });
 
-
-function genEmptyApexClassDataQuery() {
+function getEmptyApexClassWith(params: {
+	className: string
+}) {
 	return JSON.stringify(
 		{
 			"status": 0,
@@ -170,16 +244,16 @@ function genEmptyApexClassDataQuery() {
 							"url": "/services/data/v59.0/tooling/sobjects/ApexClass/01p8F00000Kh8kjQAB"
 						},
 						"Id": "01p8F00000Kh8kjQAB",
-						"Name": "EmptyApexClass",
+						"Name": params.className,
 						"SymbolTable": {
 							"constructors": [],
 							"externalReferences": [],
-							"id": "EmptyApexClass",
+							"id": params.className,
 							"innerClasses": [],
 							"interfaces": [],
-							"key": "EmptyApexClass",
+							"key": params.className,
 							"methods": [],
-							"name": "EmptyApexClass",
+							"name": params.className,
 							"namespace": null,
 							"parentClass": "",
 							"properties": [],
@@ -193,9 +267,9 @@ function genEmptyApexClassDataQuery() {
 									"public",
 									"with sharing"
 								],
-								"name": "EmptyApexClass",
+								"name": params.className,
 								"references": [],
-								"type": "EmptyApexClass"
+								"type": params.className
 							},
 							"variables": []
 						}
@@ -207,6 +281,12 @@ function genEmptyApexClassDataQuery() {
 			"warnings": []
 		}
 	);
+}
+
+function genEmptyApexClassDataQuery() {
+	return getEmptyApexClassWith({
+		className: "EmptyApexClass"
+	});
 }
 
 function genOnlyEmptyConstructorApexClassDataQuery() {

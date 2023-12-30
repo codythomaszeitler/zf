@@ -1,6 +1,8 @@
 import { APEX_CLASS_SOBJECT_NAME, ApexClass, SymbolTable } from "./apexClass";
 import { Command } from "./command";
 import { Uri } from "./integratedDevelopmentEnvironment";
+import { ReadApexClassesCommand } from "./readApexClassesCommand";
+import { SfdxProject } from "./readSfdxProjectCommand";
 import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
 import * as path from 'path';
@@ -18,8 +20,19 @@ export function getOfflineSymbolTableApexClassUri(params: {
 export class GenerateOfflineSymbolTableCommand extends Command {
 	public async execute(params: {
 		targetOrg: SalesforceOrg,
-		outputDir: string
+		outputDir: string,
+		sfdxProject: SfdxProject
 	}) {
+		const readApexClassCommand = new ReadApexClassesCommand({
+			cli: this.getCli(),
+			ide: this.getIde()
+		});
+
+		const alreadyExistingApexClasses = await readApexClassCommand.execute({
+			sfdxProject: params.sfdxProject
+		});
+		const alreadyExistingApexClassNames = alreadyExistingApexClasses.map(apexClass => apexClass.getName());
+
 		const dataQueryResults = await this.getCli().dataQuery({
 			targetOrg: params.targetOrg,
 			query: {
@@ -28,7 +41,10 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 			}
 		});
 
-		const apexClasses: ApexClass[] = dataQueryResults.getSObjects().map(sObject => {
+		const apexClasses: ApexClass[] = dataQueryResults.getSObjects().filter(sObject => {
+			const name = sObject["Name"];
+			return !alreadyExistingApexClassNames.includes(name);
+		}).map(sObject => {
 			const recordId = SalesforceId.get(sObject["Id"]);
 			const name = sObject["Name"];
 			const symbolTable = sObject["SymbolTable"] as SymbolTable;

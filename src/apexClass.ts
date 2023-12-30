@@ -4,12 +4,12 @@ export const APEX_CLASS_SOBJECT_NAME = 'ApexClass';
 
 export class ApexClass {
 
-	private readonly id: SalesforceId;
+	private readonly id?: SalesforceId;
 	private readonly symbolTable?: SymbolTable;
 	private readonly name: string;
 
 	public constructor(params: {
-		id: SalesforceId,
+		id?: SalesforceId,
 		name: string,
 		symbolTable?: SymbolTable
 	}) {
@@ -20,6 +20,10 @@ export class ApexClass {
 
 	public getName() {
 		return this.name;
+	}
+
+	public getNameWithExtension() {
+		return this.name + '.cls';
 	}
 
 	public getPublicConstructors() {
