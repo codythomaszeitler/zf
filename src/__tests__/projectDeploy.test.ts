@@ -7,17 +7,17 @@ import { DiagnosticSeverity, Uri } from '../integratedDevelopmentEnvironment';
 
 describe('project deploy', () => {
 
-    let salesforceCli: MockSalesforceCli;
+    let cli: MockSalesforceCli;
     let salesforceOrg: SalesforceOrg;
     let ide: MockIDE;
 
     beforeEach(() => {
-        salesforceCli = new MockSalesforceCli();
+        cli = new MockSalesforceCli();
         salesforceOrg = new SalesforceOrg({
             alias: 'test-org-alias',
             isActive: true
         });
-        salesforceCli.add(salesforceOrg);
+        cli.add(salesforceOrg);
 
         ide = new MockIDE();
     });
@@ -25,11 +25,11 @@ describe('project deploy', () => {
     it('should deploy successfully when report immediately states completion without failures', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
-        await salesforceCli.projectDeployComplete();
+        await cli.projectDeployComplete();
         await projectDeployPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(false);
     });
@@ -40,11 +40,11 @@ describe('project deploy', () => {
 
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
-        salesforceCli.projectDeployFailure(
+        cli.projectDeployFailure(
             {
                 columnNumber: 1,
                 lineNumber: 1,
@@ -53,18 +53,18 @@ describe('project deploy', () => {
             }
         );
 
-        await salesforceCli.projectDeployComplete();
+        await cli.projectDeployComplete();
         await projectDeployPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(true);
         expect(ide.didFocusProblemsTab()).toBe(true);
         expect(ide.didSetDiagnosticsFor(mockFile)).toBe(true);
-        expect(salesforceCli.didResumeProjectDeployment()).toBe(true);
+        expect(cli.didResumeProjectDeployment()).toBe(true);
     });
 
     it('should report half status if deployment is not completed', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
@@ -77,14 +77,14 @@ describe('project deploy', () => {
 
         expect(progressToken?.progress).toBe(50);
 
-        await salesforceCli.projectDeployComplete();
+        await cli.projectDeployComplete();
         await projectDeployPromise;
     });
 
     it('should report half status if deployment is not completed and there is a component failure', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
@@ -94,7 +94,7 @@ describe('project deploy', () => {
         const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
         ide.addFile(mockFile);
 
-        salesforceCli.projectDeployFailure(
+        cli.projectDeployFailure(
             {
                 columnNumber: 1,
                 lineNumber: 1,
@@ -116,7 +116,7 @@ describe('project deploy', () => {
 
         expect(progressToken?.progress).toBe(50);
 
-        await salesforceCli.projectDeployComplete();
+        await cli.projectDeployComplete();
         await projectDeployPromise;
 
         const diagnostics = ide.getDiagnosticsFor(mockFile);
@@ -135,7 +135,7 @@ describe('project deploy', () => {
     it('should be able to cancel successfully if project deploy report never got called', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
@@ -146,13 +146,13 @@ describe('project deploy', () => {
 
         await projectDeployPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(false);
-        expect(salesforceCli.wasDeploymentCancelled(salesforceCli.getDeploymentJobId())).toBe(true);
+        expect(cli.wasDeploymentCancelled(cli.getDeploymentJobId())).toBe(true);
     });
 
     it('should be able to cancel successfully if project deploy report got called once', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
@@ -165,13 +165,13 @@ describe('project deploy', () => {
 
         await projectDeployPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(false);
-        expect(salesforceCli.wasDeploymentCancelled(salesforceCli.getDeploymentJobId())).toBe(true);
+        expect(cli.wasDeploymentCancelled(cli.getDeploymentJobId())).toBe(true);
     });
 
     it('should be able to cancel successfully if project deploy report got called twice', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
@@ -188,18 +188,18 @@ describe('project deploy', () => {
 
         await projectDeployPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(false);
-        expect(salesforceCli.wasDeploymentCancelled(salesforceCli.getDeploymentJobId())).toBe(true);
+        expect(cli.wasDeploymentCancelled(cli.getDeploymentJobId())).toBe(true);
         expect(progress).toBe(50);
     });
 
     it("should cancel without issue if deployment is already completed", async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
-        await salesforceCli.projectDeployComplete();
+        await cli.projectDeployComplete();
 
         const progressToken = ide.getCurrentProgressToken();
         if (progressToken) {
@@ -215,11 +215,11 @@ describe('project deploy', () => {
     it("should show warning message if project deploy cancels with non-completed exception", async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
-        salesforceCli.toThrowOnProjectDeployCancel = new Error('Unexpected error!');
+        cli.toThrowOnProjectDeployCancel = new Error('Unexpected error!');
 
         const progressToken = ide.getCurrentProgressToken();
         if (progressToken) {
@@ -227,15 +227,15 @@ describe('project deploy', () => {
         }
 
         await projectDeployPromise;
-        expect(ide.didShowWarningMessage(salesforceCli.toThrowOnProjectDeployCancel.message)).toBe(true);
+        expect(ide.didShowWarningMessage(cli.toThrowOnProjectDeployCancel.message)).toBe(true);
     });
 
     it('should terminate immediately if there are no components to deploy', async () => {
-        salesforceCli.setNoComponentsToDeploy(true);
+        cli.setNoComponentsToDeploy(true);
 
         await projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: salesforceCli,
+            salesforceCli: cli,
             ide
         });
 
