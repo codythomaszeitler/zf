@@ -29,6 +29,6 @@ export class BulkDocumentSaveListener {
 				});
 			});
 			this.documents = [];
-		}, 10);
+		}, 250);
 	}
 }

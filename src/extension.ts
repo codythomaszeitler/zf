@@ -3,7 +3,7 @@ import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
 import { VsCode } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
-import { genOnDidSaveTextDocument, projectDeploy } from './projectDeploy';
+import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { generateFauxSObjects } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
@@ -247,9 +247,9 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
-	ide.onDidSaveTextDocument(genOnDidSaveTextDocument({
+	ide.onDidSaveTextDocuments(genOnDidSaveTextDocuments({
 		cli: salesforceCli,
-		ide: ide
+		ide
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));

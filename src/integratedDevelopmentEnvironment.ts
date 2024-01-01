@@ -3,10 +3,28 @@ import { Range } from "./range";
 import * as path from 'path';
 import { TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
+import { BulkDocumentSaveListener } from "./bulkDocumentSaveListener";
 
 export const APEX_LANGUAGE_ID = 'apex';
 
 export abstract class IntegratedDevelopmentEnvironment {
+
+    private bulkDocumentSaveListener: BulkDocumentSaveListener;
+
+    constructor() {
+        this.bulkDocumentSaveListener = new BulkDocumentSaveListener();
+    }
+
+    protected didSaveFile(textDocument: TextDocument) {
+        this.bulkDocumentSaveListener.save({
+            document: textDocument
+        });
+    }
+
+    public onDidSaveTextDocuments(listener: OnSaveTextDocumentsListener): void {
+        this.bulkDocumentSaveListener.onBulkSaveListener(listener);
+    }
+
     abstract showQuickPick(items: string[]): Thenable<string>;
     abstract showErrorMessage(message: string): Promise<void>;
     abstract showTextDocument(uri: Uri): Promise<void>;
@@ -32,17 +50,16 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract getHighlightedText(): Promise<string>;
     abstract registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg }): Promise<void>;
 
-    abstract onDidSaveTextDocument(listener: OnSaveTextDocumentListener): void;
-
     public async hasFile(uri: Uri): Promise<boolean> {
         const file = await this.findFile(uri.getValue());
         return !!file;
     }
-
-    onDidSaveTextDocuments(listener : OnSaveTextDocumentsListener) : void {
-    }
 }
-export type OnSaveTextDocumentsListener = (e: { textDocuments: TextDocument[] }) => void;
+
+export interface OnSaveTextDocumentsEvent {
+    textDocuments: TextDocument[]
+}
+export type OnSaveTextDocumentsListener = (e: OnSaveTextDocumentsEvent) => void;
 export type OnSaveTextDocumentListener = (e: { textDocument: TextDocument }) => void;
 
 export interface TextDocument {
