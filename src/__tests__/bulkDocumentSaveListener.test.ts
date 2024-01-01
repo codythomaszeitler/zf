@@ -1,4 +1,4 @@
-import { APEX_LANGUAGE_ID, OnSaveTextDocumentsListener, TextDocument, Uri } from "../integratedDevelopmentEnvironment";
+import { APEX_LANGUAGE_ID, OnSaveTextDocumentsEvent, OnSaveTextDocumentsListener, TextDocument, Uri } from "../integratedDevelopmentEnvironment";
 import { describe, expect, test, jest } from '@jest/globals';
 import * as path from 'path';
 import { BulkDocumentSaveListener } from "../bulkDocumentSaveListener";
@@ -11,7 +11,12 @@ describe('integrated development environment', () => {
 		jest.useFakeTimers();
 
 		let counter = 0;
-		const listener: OnSaveTextDocumentsListener = () => {
+		const listener: OnSaveTextDocumentsListener = (e: OnSaveTextDocumentsEvent) => {
+			if (counter === 0) {
+				expect(e.textDocuments).toHaveLength(3);
+			} else if (counter === 1) {
+				expect(e.textDocuments).toHaveLength(1);
+			}
 			counter++;
 		};
 		const testObject = new BulkDocumentSaveListener();
@@ -48,8 +53,17 @@ describe('integrated development environment', () => {
 			document: document3
 		});
 
-		jest.advanceTimersByTime(100);
+		jest.advanceTimersByTime(250);
 		expect(counter).toBe(1);
+
+		testObject.save({
+			document: document1
+		});
+		jest.advanceTimersByTime(5);
+		expect(counter).toBe(1);
+
+		jest.advanceTimersByTime(245);
+		expect(counter).toBe(2);
 	});
 });
 

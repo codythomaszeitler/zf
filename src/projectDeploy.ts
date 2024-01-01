@@ -168,40 +168,37 @@ function didHaveAnyFailures(projectDeployReportResult: ProjectDeployReportResult
 
 type ProjectDeployState = 'In Progress' | 'Not Started' | 'Queued';
 
-export function genOnDidSaveTextDocument({ cli, ide }: {
+export function genOnDidSaveTextDocuments({ cli, ide }: {
     cli: SalesforceCli,
     ide: IntegratedDevelopmentEnvironment
 }) {
     let projectDeployState: ProjectDeployState = 'Not Started';
-    let timerId: any;
 
-    function runProjectDeploy() {
-        projectDeployState = 'In Progress';
-        projectDeploy({
-            ide: ide,
-            cli: cli
-        }).then(() => {
-            if (projectDeployState === 'Queued') {
-                runProjectDeploy();
-            } else {
-                projectDeployState = 'Not Started';
-            }
-        });
-    }
-
-    return function onDidSaveTextDocument(e: {
-        textDocument: TextDocument
-    }) {
+    async function runQueueableProjectDeploy() {
         if (projectDeployState === 'Not Started') {
-            const shouldDeployOnSave = ide.getConfig("sf.zsi.vscode.deployOnSave", true);
-            if (shouldDeployOnSave) {
-                if (timerId) {
-                    clearTimeout(timerId);
+            projectDeployState = 'In Progress';
+            await projectDeploy({
+                ide,
+                cli
+            }).then(async () => {
+                if (projectDeployState === 'Queued') {
+                    projectDeployState = 'Not Started';
+                    await runQueueableProjectDeploy();
+                } else {
+                    projectDeployState = 'Not Started';
                 }
-                timerId = setTimeout(runProjectDeploy, 10);
-            }
+            });
         } else if (projectDeployState === 'In Progress') {
             projectDeployState = 'Queued';
+        }
+    }
+
+    return async function onDidSaveTextDocuments(e: {
+        textDocuments: TextDocument[]
+    }): Promise<void> {
+        const shouldDeployOnSave = ide.getConfig("sf.zsi.vscode.deployOnSave", true);
+        if (shouldDeployOnSave) {
+            await runQueueableProjectDeploy();
         }
     };
 }

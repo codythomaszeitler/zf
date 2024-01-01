@@ -2,8 +2,8 @@ import { describe, expect, beforeEach, jest } from '@jest/globals';
 import { MockIDE } from './__mocks__/mockIntegratedDevelopmentEnvironment';
 import { MockSalesforceCli } from './__mocks__/mockSalesforceCli';
 import { SalesforceOrg } from '../salesforceOrg';
-import { genOnDidSaveTextDocument, projectDeploy } from '../projectDeploy';
-import { DiagnosticSeverity, Uri } from '../integratedDevelopmentEnvironment';
+import { genOnDidSaveTextDocuments, projectDeploy } from '../projectDeploy';
+import { APEX_LANGUAGE_ID, DiagnosticSeverity, Uri } from '../integratedDevelopmentEnvironment';
 
 describe('project deploy', () => {
 
@@ -243,24 +243,102 @@ describe('project deploy', () => {
         expect(progressToken?.title.includes('Project Deploy Result')).toBe(false);
     });
 
-    it('should run project deploy when save is commanded', async () => {
-        jest.useFakeTimers();
-        const uri = Uri.get('force-app/main/default/TestClass.cls');
+    it('should run project deploy when save is done by user', async () => {
+        // So how should we test this?
+        const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
+        ide.addFile(mockFile);
+        cli.projectDeployFailure(
+            {
+                columnNumber: 1,
+                lineNumber: 1,
+                fileName: 'classes/TestFile.cls',
+                problem: 'This is an error!'
+            }
+        );
+        cli.setDefaultOrg(salesforceOrg);
 
-        const testFunction = genOnDidSaveTextDocument({
+        const testFunction = genOnDidSaveTextDocuments({
             cli,
             ide
         });
 
-        testFunction({
-            textDocument: {
-                languageId: 'apex',
-                uri
+        const testFunctionPromise = testFunction({
+            textDocuments: [{
+                languageId: APEX_LANGUAGE_ID,
+                uri: mockFile
+            }]
+        });
+        await cli.projectDeployComplete();
+        await testFunctionPromise;
+        expect(ide.didSetAnyDiagnostics()).toBe(true);
+    });
+
+    it('should only run project deploy twice if 10 project deploys are queued', async () => {
+        const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
+        ide.addFile(mockFile);
+        cli.projectDeployFailure(
+            {
+                columnNumber: 1,
+                lineNumber: 1,
+                fileName: 'classes/TestFile.cls',
+                problem: 'This is an error!'
             }
+        );
+        cli.setDefaultOrg(salesforceOrg);
+
+        const savedProjectDeployStart = cli.projectDeployStart;
+
+        let projectDeployCounter = 0;
+        cli.projectDeployStart = function ({ targetOrg }: { targetOrg: SalesforceOrg }) {
+            projectDeployCounter++;
+            return savedProjectDeployStart.call(cli, ({ targetOrg }));
+        }.bind(cli);
+
+        const testFunction = genOnDidSaveTextDocuments({
+            cli,
+            ide
         });
 
-        // This test is not good. It really is stating a flaw.
-        await jest.runAllTimersAsync();
-        expect(ide.getCurrentProgressToken()).not.toBeNull();
+        const promises = [];
+        for (let i = 0; i < 10; i++) {
+            const promise = testFunction({
+                textDocuments: [{
+                    languageId: APEX_LANGUAGE_ID,
+                    uri: mockFile
+                }]
+            });
+            promises.push(promise);
+        }
+
+        for (let i = 0; i < 10; i++) {
+            await 5;
+        }
+
+        await cli.projectDeployComplete();
+
+        for (let i = 0; i < 10; i++) {
+            await 5;
+        }
+        await cli.projectDeployComplete();
+        await Promise.all(promises);
+        expect(ide.didSetAnyDiagnostics()).toBe(true);
+        expect(projectDeployCounter).toBe(2);
+    });
+
+    it('should not do a project deploy if there sf.zsi.vscode.deployOnSAve is false', async () => {
+        ide.setConfig('sf.zsi.vscode.deployOnSave', false);
+
+        const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
+        const testFunction = genOnDidSaveTextDocuments({
+            cli, ide
+        });
+
+        await testFunction({
+            textDocuments: [{
+                languageId: APEX_LANGUAGE_ID,
+                uri: mockFile
+            }]
+        });
+        expect(ide.didSetAnyDiagnostics()).toBe(false);
     });
 });
