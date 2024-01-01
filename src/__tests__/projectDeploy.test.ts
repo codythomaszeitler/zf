@@ -1,8 +1,8 @@
-import { describe, expect, beforeEach } from '@jest/globals';
+import { describe, expect, beforeEach, jest } from '@jest/globals';
 import { MockIDE } from './__mocks__/mockIntegratedDevelopmentEnvironment';
 import { MockSalesforceCli } from './__mocks__/mockSalesforceCli';
 import { SalesforceOrg } from '../salesforceOrg';
-import { projectDeploy } from '../projectDeploy';
+import { genOnDidSaveTextDocument, projectDeploy } from '../projectDeploy';
 import { DiagnosticSeverity, Uri } from '../integratedDevelopmentEnvironment';
 
 describe('project deploy', () => {
@@ -25,7 +25,7 @@ describe('project deploy', () => {
     it('should deploy successfully when report immediately states completion without failures', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -40,7 +40,7 @@ describe('project deploy', () => {
 
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -64,7 +64,7 @@ describe('project deploy', () => {
     it('should report half status if deployment is not completed', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -84,7 +84,7 @@ describe('project deploy', () => {
     it('should report half status if deployment is not completed and there is a component failure', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -135,7 +135,7 @@ describe('project deploy', () => {
     it('should be able to cancel successfully if project deploy report never got called', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -152,7 +152,7 @@ describe('project deploy', () => {
     it('should be able to cancel successfully if project deploy report got called once', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -171,7 +171,7 @@ describe('project deploy', () => {
     it('should be able to cancel successfully if project deploy report got called twice', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -195,7 +195,7 @@ describe('project deploy', () => {
     it("should cancel without issue if deployment is already completed", async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -215,7 +215,7 @@ describe('project deploy', () => {
     it("should show warning message if project deploy cancels with non-completed exception", async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
@@ -235,11 +235,32 @@ describe('project deploy', () => {
 
         await projectDeploy({
             targetOrg: salesforceOrg,
-            salesforceCli: cli,
+            cli: cli,
             ide
         });
 
         const progressToken = ide.getCurrentProgressToken();
         expect(progressToken?.title.includes('Project Deploy Result')).toBe(false);
+    });
+
+    it('should run project deploy when save is commanded', async () => {
+        jest.useFakeTimers();
+        const uri = Uri.get('force-app/main/default/TestClass.cls');
+
+        const testFunction = genOnDidSaveTextDocument({
+            cli,
+            ide
+        });
+
+        testFunction({
+            textDocument: {
+                languageId: 'apex',
+                uri
+            }
+        });
+
+        // This test is not good. It really is stating a flaw.
+        await jest.runAllTimersAsync();
+        expect(ide.getCurrentProgressToken()).not.toBeNull();
     });
 });

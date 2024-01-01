@@ -10,12 +10,12 @@ import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployRepo
 export async function projectDeploy(params: {
     targetOrg?: SalesforceOrg,
     ide: IntegratedDevelopmentEnvironment,
-    salesforceCli: SalesforceCli
+    cli: SalesforceCli
 }) {
     const cancel = async (jobId: JobId) => {
         const alreadyCompletedErrorMessage = "Can't cancel deploy because it's already completed.";
         try {
-            await params.salesforceCli.projectDeployCancel({ jobId: jobId });
+            await params.cli.projectDeployCancel({ jobId: jobId });
         } catch (e: any) {
             if (e) {
                 const message = e.message;
@@ -31,7 +31,7 @@ export async function projectDeploy(params: {
             if (params.targetOrg) {
                 return params.targetOrg;
             } else {
-                const defaultOrg = await params.salesforceCli.getDefaultOrg();
+                const defaultOrg = await params.cli.getDefaultOrg();
                 return defaultOrg;
             }
         };
@@ -39,7 +39,7 @@ export async function projectDeploy(params: {
         const targetOrg = await getTargetOrg();
         if (targetOrg) {
             await doProjectDeploy({
-                salesforceCli: params.salesforceCli,
+                salesforceCli: params.cli,
                 ide: params.ide,
                 progressToken,
                 targetOrg: targetOrg,
@@ -168,7 +168,7 @@ function didHaveAnyFailures(projectDeployReportResult: ProjectDeployReportResult
 
 type ProjectDeployState = 'In Progress' | 'Not Started' | 'Queued';
 
-export function genOnDidSaveTextDocument(params: {
+export function genOnDidSaveTextDocument({ cli, ide }: {
     cli: SalesforceCli,
     ide: IntegratedDevelopmentEnvironment
 }) {
@@ -178,8 +178,8 @@ export function genOnDidSaveTextDocument(params: {
     function runProjectDeploy() {
         projectDeployState = 'In Progress';
         projectDeploy({
-            ide: params.ide,
-            salesforceCli: params.cli
+            ide: ide,
+            cli: cli
         }).then(() => {
             if (projectDeployState === 'Queued') {
                 runProjectDeploy();
@@ -193,7 +193,7 @@ export function genOnDidSaveTextDocument(params: {
         textDocument: TextDocument
     }) {
         if (projectDeployState === 'Not Started') {
-            const shouldDeployOnSave = params.ide.getConfig("sf.zsi.vscode.deployOnSave", true);
+            const shouldDeployOnSave = ide.getConfig("sf.zsi.vscode.deployOnSave", true);
             if (shouldDeployOnSave) {
                 if (timerId) {
                     clearTimeout(timerId);
