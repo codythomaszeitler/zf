@@ -4,6 +4,8 @@ import * as path from 'path';
 import { TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 
+export const APEX_LANGUAGE_ID = 'apex';
+
 export abstract class IntegratedDevelopmentEnvironment {
     abstract showQuickPick(items: string[]): Thenable<string>;
     abstract showErrorMessage(message: string): Promise<void>;
@@ -36,8 +38,11 @@ export abstract class IntegratedDevelopmentEnvironment {
         const file = await this.findFile(uri.getValue());
         return !!file;
     }
-}
 
+    onDidSaveTextDocuments(listener : OnSaveTextDocumentsListener) : void {
+    }
+}
+export type OnSaveTextDocumentsListener = (e: { textDocuments: TextDocument[] }) => void;
 export type OnSaveTextDocumentListener = (e: { textDocument: TextDocument }) => void;
 
 export interface TextDocument {
