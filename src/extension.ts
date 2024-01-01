@@ -64,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
 		try {
 			await projectDeploy({
 				ide,
-				salesforceCli
+				cli: salesforceCli
 			});
 		} catch (e: any) {
 			if (e) {
