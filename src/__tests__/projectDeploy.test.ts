@@ -244,7 +244,6 @@ describe('project deploy', () => {
     });
 
     it('should run project deploy when save is done by user', async () => {
-        // So how should we test this?
         const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
         ide.addFile(mockFile);
         cli.projectDeployFailure(

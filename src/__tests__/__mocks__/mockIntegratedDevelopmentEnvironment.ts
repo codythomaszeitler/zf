@@ -10,9 +10,7 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
-    onDidSaveTextDocument(listener: OnSaveTextDocumentListener): void {
-        throw new Error("Method not implemented.");
-    }
+    
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
