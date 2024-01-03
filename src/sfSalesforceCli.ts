@@ -424,18 +424,14 @@ export class SfSalesforceCli extends SalesforceCli {
                 }
             };
 
-            if (user.userId) {
-                const result: OrgListUser = {
-                    alias: getSfOrg(),
-                    defaultMarker: user.defaultMarker || "",
-                    userId: SalesforceId.get(user.userId)
-                };
-                return result;
-            }
-            else {
-                Logger.get().warn(`Found user object without user id. Skipping over user in return result. Skipped user object: [${JSON.stringify(user)}].`);
-                return undefined;
-            }
+            const result: OrgListUser = {
+                alias: getSfOrg(),
+                defaultMarker: user.defaultMarker || "",
+                userId: SalesforceId.get(user.userId),
+                username: user.username
+            };
+            return result;
+
         }).filter((user: any) => user);
 
         return new OrgListUsersResult({

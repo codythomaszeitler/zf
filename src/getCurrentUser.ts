@@ -1,22 +1,51 @@
 import { SalesforceCli } from "./salesforceCli";
-import { SalesforceId } from "./salesforceId";
+import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
 
-export async function getCurrentUser(params: {
+export const USER_SOBJECT_NAME = 'User';
+
+export async function getCurrentUser({ cli, targetOrg }: {
 	targetOrg: SalesforceOrg,
 	cli: SalesforceCli
 }): Promise<CurrentUser | null> {
-	const result = await params.cli.orgListUsers({
-		targetOrg: params.targetOrg
+	const result = await cli.orgListUsers({
+		targetOrg
 	});
 
 	const found = result.getUsers().find(user => user.defaultMarker === '(A)');
 	if (!found) {
 		return null;
 	}
-	return {
-		userId: found?.userId
-	};
+
+	if (found.userId === NULL_SF_ID) {
+		const userId = await getUserIdFor({
+			username: found.username,
+			cli,
+			targetOrg
+		});
+		return {
+			userId
+		};
+	} else {
+		return {
+			userId: found.userId
+		};
+	}
+}
+
+async function getUserIdFor({ username, cli, targetOrg }: { username: string, cli: SalesforceCli, targetOrg: SalesforceOrg }) {
+	const dataQueryResult = await cli.dataQuery({
+		targetOrg: targetOrg,
+		query: {
+			from: USER_SOBJECT_NAME,
+			where: `Username = '${username}'`
+		}
+	});
+
+	const users = dataQueryResult.getSObjects();
+	const user = users[0];
+	const id = SalesforceId.get(user.Id);
+	return id;
 }
 
 export interface CurrentUser {
