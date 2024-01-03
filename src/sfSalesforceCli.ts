@@ -10,7 +10,6 @@ import { Executor, ExecutorCommand, intoCliCommandString } from "./executor";
 import { JobId } from "./jobId";
 import { Logger } from "./logger";
 import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
-import { Position } from "./position";
 import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
