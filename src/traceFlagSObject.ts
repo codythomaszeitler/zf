@@ -1,5 +1,5 @@
 import { UpsertableSObject } from "./upsertableSObject";
-import { SalesforceId } from "./salesforceId";
+import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 
 export interface TraceFlagSObject extends UpsertableSObject {
 	readonly debugLevelId: SalesforceId;
@@ -49,12 +49,12 @@ export class TraceFlagSObjectBuilder {
 
 	public build(): TraceFlagSObject {
 		return {
-			id: this.id || "",
-			debugLevelId: this.debugLevelId || "",
+			id: this.id || NULL_SF_ID,
+			debugLevelId: this.debugLevelId || NULL_SF_ID,
 			expirationDate: this.expirationDate || new Date(Date.now()),
 			logType: this.logType || LogType.developerLog,
 			startDate: this.startDate,
-			tracedEntityId: this.tracedEntityId || "",
+			tracedEntityId: this.tracedEntityId || NULL_SF_ID,
 			getSObjectName(): string {
 				return 'TraceFlag';
 			},
