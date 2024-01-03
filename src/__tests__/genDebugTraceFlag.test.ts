@@ -33,7 +33,8 @@ describe('generate debug trace flag', () => {
 					{
 						alias: org,
 						defaultMarker: '(A)',
-						userId: currentRunningUserId
+						userId: currentRunningUserId,
+						username : 'test.username'
 					}
 				]
 			})

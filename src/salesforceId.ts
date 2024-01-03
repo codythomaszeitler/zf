@@ -2,6 +2,8 @@
 const USER_ID_PREFIX = '005';
 const DEBUG_LEVEL_ID_PREFIX = '005';
 
+const NULL_SF_ID_STRING = "000000000000000";
+
 export abstract class SalesforceId extends String {
     protected constructor(rawId: string) {
         super(rawId || '');
@@ -19,6 +21,10 @@ export abstract class SalesforceId extends String {
             }
             return GenericSalesforceId;
         };
+
+        if (!rawId) {
+            return SalesforceId.get(NULL_SF_ID_STRING);
+        }
 
         const cached = this.cache.get(rawId);
         if (cached) {
@@ -50,4 +56,4 @@ class DebugLogLevelId extends SalesforceId {
     }
 }
 
-export const NULL_SF_ID = SalesforceId.get("000000000000000");
+export const NULL_SF_ID = SalesforceId.get(NULL_SF_ID_STRING);

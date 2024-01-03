@@ -19,4 +19,5 @@ export interface OrgListUser {
 	alias: SalesforceOrg;
 	userId: SalesforceId;
 	defaultMarker: string;
+	username : string;
 }

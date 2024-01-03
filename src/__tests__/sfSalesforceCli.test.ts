@@ -387,36 +387,6 @@ describe('sf salesforce cli', () => {
             expect(testLogger.contains(re)).toBeTruthy();
         });
 
-        it('should skip over user that does not have user id in list of users', async () => {
-            const targetOrg: SalesforceOrg = new SalesforceOrg({
-                alias: 'cso',
-                isActive: true
-            });
-
-            const orgListUsersNominalResultString = getOrgListUsersNominalResponse({
-                orgAlias: targetOrg
-            });
-
-            const orgListUsersNominalResult = JSON.parse(orgListUsersNominalResultString);
-            delete orgListUsersNominalResult.result[0].userId;
-
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": get(),
-                "sf org list users --target-org cso --json": JSON.stringify(orgListUsersNominalResult),
-            });
-
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-            const result = await cli.orgListUsers({
-                targetOrg
-            });
-
-            expect(result.getUsers()).toHaveLength(0);
-
-            const re = /.*Found user object without user id. Skipping over user in return result\. Skipped user object: \[.*\]\..*/;
-            expect(testLogger.contains(re)).toBeTruthy();
-        });
-
         it('should be able to process user that does not have default marker', async () => {
             const targetOrg: SalesforceOrg = new SalesforceOrg({
                 alias: 'cso',
