@@ -24,8 +24,6 @@ export class MockFileSystem {
 	}
 
 	async findFile(glob: string): Promise<Uri | null> {
-		const re = globToRegExp(glob);
-
 		const found = await this.findFiles(glob);
 		if (found.length > 1) {
 			throw new Error(`Found more than one file matching ${glob}.`);
