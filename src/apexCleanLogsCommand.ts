@@ -12,11 +12,10 @@ export class ApexCleanLogsCommand extends Command {
 	}
 
 	public async execute(params: {
-		logDir: string
+		logDir: Uri
 	}) {
 		await this.getIde().withProgress(async (progressTokens) => {
-			const uri = Uri.get(params.logDir);
-			await this.getIde().deleteTextDocument(uri);
+			await this.getIde().deleteTextDocument(params.logDir);
 		}, {
 			title: 'Cleaning Local Apex Logs'
 		});

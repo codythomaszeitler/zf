@@ -10,7 +10,7 @@ import { SObjectDescribeResult } from "./sObjectDescribeResult";
 import { SObjectApiName } from "./sObjectApiName";
 import { ApexRunResult } from "./apexRunResult";
 import { DataCreateRecordResult as DataUpsertRecordResult } from "./dataCreateRecordResult";
-import { UpsertableSObject as UpsertableSObject } from "./upsertableSObject";
+import { UpsertableSObject } from "./upsertableSObject";
 import { OrgListUsersResult } from "./orgListUsersResult";
 import { SoqlQuery } from "./soqlQuery";
 import { DataQueryResult } from "./dataQueryResult";
@@ -18,6 +18,7 @@ import { ApexGetLogResult } from "./apexGetLogResult";
 import { ApexListLogResult } from "./apexListLogResult";
 import { SalesforceId } from "./salesforceId";
 import { ApexTestGetResult, ApexTestRunResult } from "./apexTestRunResult";
+import { Uri } from "./uri";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -67,9 +68,9 @@ export abstract class SalesforceCli {
 
     abstract apexGetLog(params: {
         targetOrg: SalesforceOrg,
-        numLogs?: number | undefined,
-        logId?: SalesforceId | undefined,
-        logDir: string
+        numLogs?: number,
+        logId?: SalesforceId,
+        logDir: Uri
     }): Promise<ApexGetLogResult>;
 
     abstract apexListLog(params: {

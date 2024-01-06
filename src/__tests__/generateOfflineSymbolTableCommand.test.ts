@@ -10,7 +10,6 @@ import { genMockExecutor } from './__mocks__/mockShell';
 import { SalesforceCli } from '../salesforceCli';
 import { APEX_CLASS_SOBJECT_NAME, ApexClass } from '../apexClass';
 import { genRandomId } from './salesforceId.test';
-import * as path from 'path';
 import { Uri } from '../integratedDevelopmentEnvironment';
 
 describe('generate offline symbol table command', () => {
@@ -23,7 +22,7 @@ describe('generate offline symbol table command', () => {
 
 	let org: SalesforceOrg;
 
-	let testDir: string;
+	let testDir: Uri;
 
 	let commandToStdOutput: any;
 
@@ -42,8 +41,8 @@ describe('generate offline symbol table command', () => {
 		ide = new MockIDE({
 			filesystem: fs
 		});
-		testDir = 'testDir';
-
+		// So it writes to a testDir?
+		testDir = ide.generateUri('offlineSymbolTable');
 		testObject = new GenerateOfflineSymbolTableCommand({
 			cli,
 			ide
@@ -204,8 +203,8 @@ describe('generate offline symbol table command', () => {
 			outputDir: testDir
 		});
 
-		const inForceAppDirUri = Uri.get(path.join('force-app', 'main', 'default', apexClass.getNameWithExtension()));
-		await fs.writeFile(inForceAppDirUri, `public ${apexClass.getName()} {}`);
+		const apexClassUri = ide.generateUri("force-app", "main", "default", apexClass.getNameWithExtension());
+		await fs.writeFile(apexClassUri, `public ${apexClass.getName()} {}`);
 
 		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
 			= getEmptyApexClassWith({

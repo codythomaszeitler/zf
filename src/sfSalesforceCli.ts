@@ -23,7 +23,7 @@ import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
 import { SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
 import { SoqlQuery } from "./soqlQuery";
-import * as path from 'path';
+import { Uri } from "./uri";
 
 export class SfSalesforceCli extends SalesforceCli {
 
@@ -510,8 +510,8 @@ export class SfSalesforceCli extends SalesforceCli {
         });
     }
 
-    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: string; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
-        const logDir = path.join(params.logDir, params.targetOrg.getAlias());
+    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: Uri; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
+        const logDir = Uri.join(params.logDir, params.targetOrg.getAlias());
         let command: ExecutorCommand;
         if (params.numLogs) {
             command = {
@@ -521,7 +521,7 @@ export class SfSalesforceCli extends SalesforceCli {
                     'get',
                     'log',
                     '--output-dir',
-                    logDir,
+                    logDir.getFileSystemPath(),
                     '--number',
                     `${params.numLogs}`,
                     '--target-org',
@@ -537,7 +537,7 @@ export class SfSalesforceCli extends SalesforceCli {
                     'get',
                     'log',
                     '--output-dir',
-                    logDir,
+                    logDir.getFileSystemPath(),
                     '--log-id',
                     `${params.logId}`,
                     '--target-org',

@@ -5,22 +5,19 @@ import { ReadApexClassesCommand } from "./readApexClassesCommand";
 import { SfdxProject } from "./readSfdxProjectCommand";
 import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
-import * as path from 'path';
 
 export function getOfflineSymbolTableApexClassUri(params: {
 	targetOrg: SalesforceOrg,
-	outputDir: string,
+	outputDir: Uri,
 	apexClass: ApexClass
 }) {
-	const joinedPath = path.join(params.outputDir, params.targetOrg.getAlias(), `${params.apexClass.getName()}.cls`);
-	const uri = Uri.get(joinedPath);
-	return uri;
+	return Uri.join(params.outputDir, params.targetOrg.getAlias(), `${params.apexClass.getName()}.cls`);
 }
 
 export class GenerateOfflineSymbolTableCommand extends Command {
 	public async execute(params: {
 		targetOrg: SalesforceOrg,
-		outputDir: string,
+		outputDir: Uri,
 		sfdxProject: SfdxProject
 	}) {
 		const readApexClassCommand = new ReadApexClassesCommand({

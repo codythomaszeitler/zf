@@ -1,25 +1,21 @@
 import { Command } from "./command";
 import { Uri } from "./integratedDevelopmentEnvironment";
-import * as path from 'path';
 
 export function getSfdxProjectUri(params: {
-	currentDir: string
+	currentDir: Uri
 }) {
-	const uri = Uri.get(path.join(params.currentDir, "sfdx-project.json"));
-	return uri;
+	return Uri.join(params.currentDir, "sfdx-project.json");
 }
 
 export class ReadSfdxProjectCommand extends Command {
-	public async execute(params: {
-		currentDir: string
-	}): Promise<SfdxProject> {
+	public async execute(): Promise<SfdxProject> {
 		const uri = getSfdxProjectUri({
-			currentDir: params.currentDir
+			currentDir: this.getIde().getCurrentDir()
 		});
 		const asString = await this.getIde().readFile({
 			uri
 		});
-		const sfdxProject = JSON.parse(asString) as SfdxProject;
+		const sfdxProject = { ...JSON.parse(asString) } as SfdxProject;
 		return sfdxProject;
 	}
 }

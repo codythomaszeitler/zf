@@ -39,6 +39,7 @@
         "retrieveable",
         "richtextarea",
         "Scontrol",
+        "Sfdx",
         "Sobject",
         "sobjects",
         "triggerable",
@@ -46,5 +47,6 @@
         "updateable",
         "Visualforce",
         "Workitem"
-    ]
+    ],
+    "salesforcedx-vscode-slds.basic.mobileValidation": false
 }

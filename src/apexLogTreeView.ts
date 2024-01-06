@@ -1,5 +1,5 @@
 import { ApexLog } from "./apexLog";
-import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
+import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceOrg } from "./salesforceOrg";
 import { ApexLogTreeGenerateCommand } from "./apexLogTreeGenerateCommand";
@@ -15,14 +15,14 @@ export class ApexLogTreeView implements TreeView<ApexLog> {
 
 	private readonly cli: SalesforceCli;
 	private readonly ide: IntegratedDevelopmentEnvironment;
-	private readonly logDir: string;
+	private readonly logDir: Uri;
 
 	private listeners: RefreshListener<TreeNode<ApexLog>>[];
 
 	public constructor(params: {
 		cli: SalesforceCli,
 		ide: IntegratedDevelopmentEnvironment,
-		logDir: string
+		logDir: Uri
 	}) {
 		this.uniqueName = APEX_LOG_TREE_API_NAME;
 		this.cli = params.cli;

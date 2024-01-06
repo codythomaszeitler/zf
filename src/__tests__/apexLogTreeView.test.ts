@@ -4,17 +4,18 @@ import { SalesforceOrg } from "../salesforceOrg";
 import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { MockSalesforceCli } from "./__mocks__/mockSalesforceCli";
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect } from '@jest/globals';
 import { genRandomId } from "./salesforceId.test";
 import { getLogFileUri } from "../showApexLogCommand";
 import { TreeNode } from "../treeNode";
+import { Uri } from "../integratedDevelopmentEnvironment";
 
 describe('apex log tree view', () => {
 
 	let cli: MockSalesforceCli;
 	let ide: MockIDE;
 	let fs: MockFileSystem;
-	let logDir: string;
+	let logDir: Uri;
 	let org: SalesforceOrg;
 
 	beforeEach(() => {
@@ -28,7 +29,12 @@ describe('apex log tree view', () => {
 			filesystem: fs
 		});
 
-		logDir = 'testLogDir';
+		logDir = Uri.from(
+			{
+				fileSystemPath : 'testLogDir',
+				scheme : 'file'
+			}
+		);
 
 		org = new SalesforceOrg({
 			alias: 'cso',

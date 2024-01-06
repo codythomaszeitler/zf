@@ -1,4 +1,4 @@
-import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, OnSaveTextDocumentListener, TextLine, Uri } from "./integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, TextLine, Uri } from "./integratedDevelopmentEnvironment";
 import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
@@ -11,12 +11,21 @@ import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 import { TextDecoder, TextEncoder } from "util";
 
+function getCurrentDir(): Uri {
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        const uriMapper = new UriMapper();
+        const vscodeUri = vscode.workspace.workspaceFolders[0].uri;
+        return uriMapper.intoDomainRepresentation(vscodeUri);
+    }
+    throw new Error('Cannot use extension without at least one workspace folder.');
+}
+
 export class VsCode extends IntegratedDevelopmentEnvironment {
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
     constructor() {
-        super();
+        super({ currentDir: getCurrentDir() });
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('Salesforce Apex Cody');
         this.outputChannel = vscode.window.createOutputChannel('sf-zsi', { log: true });
 
@@ -122,16 +131,14 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
     }
 
-    findFile(glob: string): Promise<Uri | null> {
+    findFile(glob: string, base?: Uri): Promise<Uri | null> {
         return new Promise((resolve, reject) => {
-            vscode.workspace.findFiles(glob).then(uris => {
+            this.findFiles(glob, base).then(uris => {
                 if (uris.length > 1) {
                     reject(`Found more than one file matching ${glob}.`);
                 } else {
-                    const uriMapper = new UriMapper();
                     if (uris.length === 1) {
-                        const domainUri = uriMapper.intoDomainRepresentation(uris[0]);
-                        resolve(domainUri);
+                        resolve(uris[0]);
                     } else {
                         resolve(null);
                     }
@@ -140,11 +147,21 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
     }
 
-    findFiles(glob: string): Promise<Uri[]> {
+    findFiles(glob: string, base?: Uri): Promise<Uri[]> {
+        const toSearchWith = () => {
+            const uriMapper = new UriMapper();
+            if (base) {
+                const vsCodeUri = uriMapper.intoVsCodeRepresentation(base);
+                return new vscode.RelativePattern(vsCodeUri, glob);
+            } else {
+                return glob;
+            }
+        };
+
         return new Promise((resolve, reject) => {
-            vscode.workspace.findFiles(glob).then(vscodeUris => {
+            vscode.workspace.findFiles(toSearchWith()).then(vscodeUris => {
+                const uriMapper = new UriMapper();
                 const uris = vscodeUris.map(vscodeUri => {
-                    const uriMapper = new UriMapper();
                     return uriMapper.intoDomainRepresentation(vscodeUri);
                 });
                 resolve(uris);
@@ -305,12 +322,18 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
 
 class UriMapper {
     intoVsCodeRepresentation(uri: Uri) {
-        const vscodeUri = vscode.Uri.parse(uri.getValue());
+        const vscodeUri = vscode.Uri.from({
+            scheme: uri.getScheme(),
+            path: uri.getFileSystemPath()
+        });
         return vscodeUri;
     }
 
     intoDomainRepresentation(uri: vscode.Uri) {
-        const domainUri = Uri.get(uri.toString());
+        const domainUri = Uri.from({
+            scheme: uri.scheme,
+            fileSystemPath: uri.fsPath
+        });
         return domainUri;
     }
 }

@@ -30,7 +30,7 @@ export class ApexLogDirectoryReadCommand extends Command {
 			return cliLogs.getLogs().find((log) => log.getId() === salesforceId);
 		};
 
-		const uris = await this.getIde().findFiles(`**\\${params.logDir}\\*`);
+		const uris = await this.getIde().findFiles(`**/${params.logDir}/*`, this.getIde().getCurrentDir());
 		const promises = uris.map(uri => {
 			const basename = uri.getBaseName();
 			const id = basename.replace('.log', '');
@@ -46,7 +46,7 @@ export class ApexLogDirectoryReadCommand extends Command {
 			} else {
 				return {
 					uri,
-					name: uri.getValue()
+					name: uri.getFileSystemPath()
 				};
 			}
 		});

@@ -10,35 +10,18 @@ import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
-import * as path from 'path';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
 import { RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
 import { ReadSfdxProjectCommand } from './readSfdxProjectCommand';
+import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 
-function getCurrentDir() {
-	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-		return vscode.workspace.workspaceFolders[0].uri.path;
-	}
-	throw new Error('Cannot use extension without at least one workspace folder.');
+function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
+	return ide.generateUri('.zf', 'offlineSymbolTable');
 }
 
-function getZfLogDir() {
-	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-		return path.join(vscode.workspace.workspaceFolders[0].uri.path, '.zf', 'logs');
-	}
-	else {
-		return path.join('.zf', 'logs');
-	}
-}
-
-function getZfOfflineSymbolTableDir() {
-	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-		return path.join(vscode.workspace.workspaceFolders[0].uri.path, '.zf', 'offlineSymbolTable');
-	}
-	else {
-		return path.join('.zf', 'offlineSymbolTable');
-	}
+function getZfLogDir(ide: IntegratedDevelopmentEnvironment) {
+	return ide.generateUri('.zf', 'logs');
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -125,7 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
-	const zfLogDir = getZfLogDir();
+	const zfLogDir = getZfLogDir(ide);
 
 	async function runGetRecentApexLogs() {
 		await ide.withProgress(async (progressToken) => {
@@ -212,7 +195,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
-	const zfOfflineSymbolTableDir = getZfOfflineSymbolTableDir();
+	const zfOfflineSymbolTableDir = getZfOfflineSymbolTableDir(ide);
 	async function runGeneratorOfflineSymbolTable() {
 		ide.withProgress(async (progressToken) => {
 			try {
@@ -223,9 +206,7 @@ export function activate(context: vscode.ExtensionContext) {
 					cli: salesforceCli
 				});
 
-				const sfdxProject = await readSfdxProjectCommand.execute({
-					currentDir: getCurrentDir()
-				});
+				const sfdxProject = await readSfdxProjectCommand.execute();
 
 				if (defaultOrg) {
 					const generateOfflineSymbolTableCommand = new GenerateOfflineSymbolTableCommand({

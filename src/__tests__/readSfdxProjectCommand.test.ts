@@ -1,9 +1,10 @@
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect } from '@jest/globals';
 import { SalesforceOrg } from "../salesforceOrg";
 import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { MockSalesforceCli } from "./__mocks__/mockSalesforceCli";
 import { ReadSfdxProjectCommand, getSfdxProjectUri } from '../readSfdxProjectCommand';
+import { Uri } from '../uri';
 
 describe('read sfdx project command', () => {
 
@@ -31,9 +32,8 @@ describe('read sfdx project command', () => {
 	});
 
 	it('should read sfdx project command when commanded', async () => {
-		const currentDir = 'testDir';
 		const sfdxProjectUri = getSfdxProjectUri({
-			currentDir
+			currentDir: ide.getCurrentDir()
 		});
 
 		await fs.writeFile(sfdxProjectUri, genSfdxProjectJson());
@@ -43,9 +43,7 @@ describe('read sfdx project command', () => {
 			ide
 		});
 
-		const sfdxProject = await testObject.execute({
-			currentDir
-		});
+		const sfdxProject = await testObject.execute();
 		expect(sfdxProject.packageDirectories).toHaveLength(1);
 	});
 });

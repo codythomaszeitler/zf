@@ -3,16 +3,13 @@ import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEn
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
-import * as path from 'path';
 
 export function getLogFileUri(params: {
 	targetOrg: SalesforceOrg,
-	logDir: string,
+	logDir: Uri,
 	logId: SalesforceId
 }) {
-	const joinedPath = path.join(params.logDir, params.targetOrg.getAlias(), `${params.logId.toString()}.log`);
-	const uri = Uri.get(joinedPath);
-	return uri;
+	return Uri.join(params.logDir, params.targetOrg.getAlias(), `${params.logId.toString()}.log`);
 }
 
 export class ShowApexLogCommand extends Command {
@@ -26,7 +23,7 @@ export class ShowApexLogCommand extends Command {
 	public async execute(params: {
 		targetOrg: SalesforceOrg,
 		logId: SalesforceId,
-		logDir: string
+		logDir: Uri
 	}) {
 		const logFileUri = getLogFileUri({
 			targetOrg: params.targetOrg,
