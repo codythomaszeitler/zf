@@ -26,6 +26,7 @@ import { ApexLog } from "../../apexLog";
 import { MockFileSystem } from "./mockFileSystem";
 import { getLogFileUri } from "../../showApexLogCommand";
 import { ApexTestRunResult, ApexTestGetResult } from "../../apexTestRunResult";
+import { Uri } from "../../uri";
 
 export class MockSalesforceCli extends SalesforceCli {
 
@@ -211,7 +212,7 @@ export class MockSalesforceCli extends SalesforceCli {
     }
 
     async getDefaultOrg(): Promise<SalesforceOrg | null> {
-        return this.defaultOrg || null;
+        return this.defaultOrg ?? null;
     }
 
     setNoComponentsToDeploy(noComponentsToDeploy: boolean) {
@@ -326,7 +327,7 @@ export class MockSalesforceCli extends SalesforceCli {
         }
     }
 
-    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: string; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
+    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: Uri; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
         if (this.toThrowOnApexGetLog) {
             throw this.toThrowOnApexGetLog;
         }

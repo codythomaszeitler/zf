@@ -1,5 +1,6 @@
 import * as globToRegExp from 'glob-to-regexp';
 import { Uri } from "../../integratedDevelopmentEnvironment";
+import G = require('glob');
 
 interface File {
 	readonly uri: Uri;
@@ -23,8 +24,8 @@ export class MockFileSystem {
 		});
 	}
 
-	async findFile(glob: string): Promise<Uri | null> {
-		const found = await this.findFiles(glob);
+	async findFile(glob: string, base?: Uri): Promise<Uri | null> {
+		const found = await this.findFiles(glob, base);
 		if (found.length > 1) {
 			throw new Error(`Found more than one file matching ${glob}.`);
 		}
@@ -36,12 +37,22 @@ export class MockFileSystem {
 		}
 	}
 
-	async findFiles(glob: string): Promise<Uri[]> {
+	async findFiles(glob: string, base?: Uri): Promise<Uri[]> {
+		if (process.platform === 'win32' && base) {
+			let startOfPath = base.getFileSystemPath().replace(/\\/g, '/');
+			if (!startOfPath.endsWith('/') && !glob.startsWith('/')) {
+				startOfPath += '/';
+			}
+			glob = startOfPath + glob;
+		}
+
 		const re = globToRegExp(glob);
 		const found = [];
 
 		for (const file of this.files) {
-			if (re.test(file.uri.getValue())) {
+			const asPosixPath = file.uri.getFileSystemPath().replace(/\\/g, '/');
+
+			if (re.test(asPosixPath)) {
 				found.push(file.uri);
 			}
 		}
@@ -49,9 +60,9 @@ export class MockFileSystem {
 	}
 
 	public async readFile(uri: Uri): Promise<string> {
-		const found = this.files.find(file => file.uri.getValue() === uri.getValue());
+		const found = this.files.find(file => file.uri.getFileSystemPath() === uri.getFileSystemPath());
 		if (!found) {
-			throw new Error(`Could not find file with uri ${uri.getValue()}`);
+			throw new Error(`Could not find file with uri ${uri.getFileSystemPath()}`);
 		}
 		return found.contents;
 	}
@@ -66,7 +77,7 @@ export class MockFileSystem {
 	}
 
 	public async writeFile(uri: Uri, contents: string): Promise<void> {
-		const found = this.files.find(file => file.uri.getValue() === uri.getValue());
+		const found = this.files.find(file => file.uri.getFileSystemPath() === uri.getFileSystemPath());
 		if (!found) {
 			this.files.push({
 				uri,

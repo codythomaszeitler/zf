@@ -1,18 +1,29 @@
 import { ProgressToken } from "./progressToken";
 import { Range } from "./range";
-import * as path from 'path';
 import { TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 import { BulkDocumentSaveListener } from "./bulkDocumentSaveListener";
+export { Uri } from './uri';
+import { Uri } from './uri';
 
 export const APEX_LANGUAGE_ID = 'apex';
 
 export abstract class IntegratedDevelopmentEnvironment {
 
     private bulkDocumentSaveListener: BulkDocumentSaveListener;
+    private readonly currentDir: Uri;
 
-    constructor() {
+    constructor({ currentDir }: { currentDir: Uri }) {
         this.bulkDocumentSaveListener = new BulkDocumentSaveListener();
+        this.currentDir = currentDir;
+    }
+
+    public getCurrentDir(): Uri {
+        return this.currentDir;
+    }
+
+    public generateUri(...paths: string[]): Uri {
+        return Uri.join(this.getCurrentDir(), ...paths);
     }
 
     protected didSaveFile(textDocument: TextDocument) {
@@ -32,8 +43,8 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract showWarningMessage(message: string): Promise<void>;
     abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string, isCancellable?: boolean }): Promise<T>;
     abstract getActiveTextEditor(): Promise<ActiveTextEditor | null>;
-    abstract findFile(glob: string): Promise<Uri | null>;
-    abstract findFiles(glob: string): Promise<Uri[]>;
+    abstract findFile(glob: string, base?: Uri): Promise<Uri | null>;
+    abstract findFiles(glob: string, base?: Uri): Promise<Uri[]>;
     abstract readLineAt(params: { uri: Uri, line: number }): Promise<TextLine>;
     abstract readFile(params: { uri: Uri }): Promise<string>;
     abstract writeFile(params: { uri: Uri, contents: string }): Promise<void>;
@@ -51,7 +62,8 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg }): Promise<void>;
 
     public async hasFile(uri: Uri): Promise<boolean> {
-        const file = await this.findFile(uri.getValue());
+        const basename = uri.getBaseName();
+        const file = await this.findFile(basename, Uri.dirname(uri));
         return !!file;
     }
 }
@@ -79,29 +91,27 @@ export interface CommandExecuteResult {
 
 }
 
-export class Uri {
+// Something is fundamentally wrong with URI.
+// Really, a URI is a collection paths + a file
+// Ohhh but wait a minute... How do you represent that you are at a root path.
+// A B C D E
 
-    private readonly value: string;
-    private constructor(value: string) {
-        this.value = value;
-    }
+// In the way that I have it could either mean the following two things:
+// /A/B/C/D/E
+// A/B/C/D/E
 
-    public static get(value: string): Uri {
-        return new Uri(value);
-    }
+// These mean two separate things.
 
-    public getValue(): string {
-        return this.value;
-    }
+// Do not forgot that really this should be done on the "workspaceFolder" level,
+// so like a lot of paths are like 
 
-    public getBaseName(): string {
-        return path.basename(this.value);
-    }
 
-    public isApexClass(): boolean {
-        return this.value.endsWith('.cls');
-    }
-}
+// You can have two apex files that the same name because you have can have two 
+// managed packages with the same name, but they have different package prefixes.
+// You know what would be good? Go to the store and get some green tea.
+// boil it up, serve it up.
+
+
 
 export class TextLine {
     private readonly text: string;

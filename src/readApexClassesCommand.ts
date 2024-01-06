@@ -3,12 +3,13 @@ import { Command } from "./command";
 import { SfdxProject } from "./readSfdxProjectCommand";
 
 export class ReadApexClassesCommand extends Command {
-	public async execute(params: {
+	public async execute({ sfdxProject }: {
 		sfdxProject: SfdxProject
 	}) {
 		const apexClasses: ApexClass[] = [];
-		const promises = params.sfdxProject.packageDirectories.map(packageDir => {
-			return this.getIde().findFiles(packageDir.path + '/**/*.cls').then(uris => {
+		const promises = sfdxProject.packageDirectories.map(packageDir => {
+			const asUri = this.getIde().generateUri(packageDir.path);
+			return this.getIde().findFiles('**/*.cls', asUri).then(uris => {
 				apexClasses.push(...uris.map(uri => {
 					const apexClassName = uri.getBaseName().replace('.cls', '');
 					const apexClass = new ApexClass({
@@ -20,6 +21,7 @@ export class ReadApexClassesCommand extends Command {
 		});
 
 		await Promise.all(promises);
+
 		return apexClasses;
 	}
 }

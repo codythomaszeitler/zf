@@ -1,4 +1,4 @@
-import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, OnSaveTextDocumentListener, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
 import { SalesforceOrg } from "../../salesforceOrg";
@@ -10,7 +10,7 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
-    
+
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
@@ -37,7 +37,12 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     constructor(params?: {
         filesystem?: MockFileSystem
     }) {
-        super();
+        super({
+            currentDir: Uri.from({
+                scheme: 'file',
+                fileSystemPath: 'testProjectDir'
+            })
+        });
         this.selectQuickPickItem = nonStartedQuickPick;
         this._waitForShowQuickPickResolve = () => { };
         this.shownErrorMessages = [];
@@ -124,12 +129,12 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return this.shownWarningMessages.includes(message);
     }
 
-    async findFile(glob: string): Promise<Uri | null> {
-        return this.filesystem.findFile(glob);
+    async findFile(glob: string, base?: Uri): Promise<Uri | null> {
+        return this.filesystem.findFile(glob, base);
     }
 
-    findFiles(glob: string): Promise<Uri[]> {
-        return this.filesystem.findFiles(glob);
+    findFiles(glob: string, base?: Uri): Promise<Uri[]> {
+        return this.filesystem.findFiles(glob, base);
     }
 
     addFile(uri: Uri) {
@@ -213,13 +218,13 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     async showTextDocument(uri: Uri): Promise<void> {
         const hasFile = await this.hasFile(uri);
         if (!hasFile) {
-            throw new Error(`Could not find file at ${uri.getValue()}`);
+            throw new Error(`Could not find file at ${uri.getFileSystemPath()}`);
         }
         this.shownTextDocuments.push(uri);
     }
 
     toHaveShownTextDocument(uri: Uri): boolean {
-        return !!this.shownTextDocuments.find((_uri) => _uri.getValue() === uri.getValue());
+        return !!this.shownTextDocuments.find((_uri) => _uri.getFileSystemPath() === uri.getFileSystemPath());
     }
 
     public async writeFile(params: { uri: Uri; contents: string; }): Promise<void> {
