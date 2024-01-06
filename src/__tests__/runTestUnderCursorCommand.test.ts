@@ -56,7 +56,10 @@ describe('run test under cursor command', () => {
 
 	it('should show a warning message if current editor is not an apex class', async () => {
 		ide.setActiveTextEditor({
-			uri: Uri.get('force-app/main/default/lwc/notAnApexClass/notAnApexClass.js')
+			uri: Uri.from({
+				scheme: 'file',
+				fileSystemPath: 'force-app/main/default/lwc/notAnApexClass/notAnApexClass.js'
+			})
 		});
 
 		await testObject.execute({
@@ -68,7 +71,10 @@ describe('run test under cursor command', () => {
 	it('should run apex test when first report immediately reports successfully completed', async () => {
 		const testName = 'SetAccountNameTest.cls';
 		ide.setActiveTextEditor({
-			uri: Uri.get(`force-app/main/default/class/${testName}`)
+			uri: Uri.from({
+				scheme: 'file',
+				fileSystemPath: `force-app/main/default/class/${testName}`
+			})
 		});
 
 		const testRunId = genRandomId('TestRun');
@@ -158,7 +164,10 @@ describe('run test under cursor command', () => {
 	it('should should show failure diagnostic when test has failure', async () => {
 		const testName = 'SetAccountNameTest.cls';
 		ide.setActiveTextEditor({
-			uri: Uri.get(`force-app/main/default/class/${testName}`)
+			uri: Uri.from({
+				scheme: 'file',
+				fileSystemPath: `force-app/main/default/class/${testName}`
+			})
 		});
 
 		const testRunId = genRandomId('TestRun');

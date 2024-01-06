@@ -1,11 +1,16 @@
 import { APEX_LANGUAGE_ID, OnSaveTextDocumentsEvent, OnSaveTextDocumentsListener, TextDocument, Uri } from "../integratedDevelopmentEnvironment";
-import { describe, expect, test, jest } from '@jest/globals';
+import { describe, expect, jest } from '@jest/globals';
 import * as path from 'path';
 import { BulkDocumentSaveListener } from "../bulkDocumentSaveListener";
 
 const defaultApexClassesDir = path.join('force-app', 'main', 'default', 'classes');
 
 describe('integrated development environment', () => {
+
+	const defaultProjectDir = Uri.from({
+		scheme: 'file',
+		fileSystemPath: '/testProjectDir'
+	});
 
 	it('should be able to properly emit a bulk save documents event when multiple documents are saved close together', () => {
 		jest.useFakeTimers();
@@ -24,17 +29,26 @@ describe('integrated development environment', () => {
 
 		const document1 = {
 			languageId: APEX_LANGUAGE_ID,
-			uri: Uri.get(path.join(defaultApexClassesDir, 'TestApexClass1.cls'))
+			uri: Uri.from({
+				scheme: 'file',
+				fileSystemPath: Uri.join(defaultProjectDir, defaultApexClassesDir, 'TestApexClass1.cls').getFileSystemPath()
+			})
 		} as TextDocument;
 
 		const document2 = {
 			languageId: APEX_LANGUAGE_ID,
-			uri: Uri.get(path.join(defaultApexClassesDir, 'TestApexClass2.cls'))
+			uri: Uri.from({
+				scheme: 'file',
+				fileSystemPath: Uri.join(defaultProjectDir, defaultApexClassesDir, 'TestApexClass2.cls').getFileSystemPath()
+			})
 		} as TextDocument;
 
 		const document3 = {
 			languageId: APEX_LANGUAGE_ID,
-			uri: Uri.get(path.join(defaultApexClassesDir, 'TestApexClass3.cls'))
+			uri: Uri.from({
+				scheme: 'file',
+				fileSystemPath: Uri.join(defaultProjectDir, defaultApexClassesDir, 'TestApexClass3.cls').getFileSystemPath()
+			})
 		} as TextDocument;
 
 		testObject.save({

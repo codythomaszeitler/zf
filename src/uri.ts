@@ -7,13 +7,6 @@ export class Uri {
 		this.scheme = scheme;
 	}
 
-	public static get(value: string): Uri {
-		return Uri.from({
-			scheme: 'file',
-			fileSystemPath: value
-		});
-	}
-
 	public static from({ scheme, fileSystemPath }: { scheme: string, fileSystemPath: string }) {
 		return new Uri(scheme, fileSystemPath);
 	}

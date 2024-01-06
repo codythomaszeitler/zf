@@ -35,7 +35,11 @@ describe('project deploy', () => {
     });
 
     it('should put an error with the matching URI if the deployment fails', async () => {
-        const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
+        const mockFile = Uri.from({
+            scheme: 'file',
+            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
+        });
+
         ide.addFile(mockFile);
 
         const projectDeployPromise = projectDeploy({
@@ -91,7 +95,11 @@ describe('project deploy', () => {
         const progressToken = ide.getCurrentProgressToken();
         expect(progressToken).toBeTruthy();
 
-        const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
+        const mockFile = Uri.from({
+            scheme: 'file',
+            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
+        });
+
         ide.addFile(mockFile);
 
         cli.projectDeployFailure(
@@ -244,7 +252,11 @@ describe('project deploy', () => {
     });
 
     it('should run project deploy when save is done by user', async () => {
-        const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
+        const mockFile = Uri.from({
+            scheme: 'file',
+            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
+        });
+
         ide.addFile(mockFile);
         cli.projectDeployFailure(
             {
@@ -273,7 +285,11 @@ describe('project deploy', () => {
     });
 
     it('should only run project deploy twice if 10 project deploys are queued', async () => {
-        const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
+        const mockFile = Uri.from({
+            scheme: 'file',
+            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
+        });
+
         ide.addFile(mockFile);
         cli.projectDeployFailure(
             {
@@ -327,7 +343,11 @@ describe('project deploy', () => {
     it('should not do a project deploy if there sf.zsi.vscode.deployOnSAve is false', async () => {
         ide.setConfig('sf.zsi.vscode.deployOnSave', false);
 
-        const mockFile = Uri.get('file:/dev/force-app/main/default/classes/TestFile.cls');
+        const mockFile = Uri.from({
+            scheme: 'file',
+            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
+        });
+
         const testFunction = genOnDidSaveTextDocuments({
             cli, ide
         });

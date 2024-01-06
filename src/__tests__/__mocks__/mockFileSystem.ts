@@ -38,13 +38,22 @@ export class MockFileSystem {
 	}
 
 	async findFiles(glob: string, base?: Uri): Promise<Uri[]> {
-		if (process.platform === 'win32' && base) {
-			let startOfPath = base.getFileSystemPath().replace(/\\/g, '/');
-			if (!startOfPath.endsWith('/') && !glob.startsWith('/')) {
-				startOfPath += '/';
+		const getBaseFileSystemPath = () => {
+			if (!base) {
+				return '';
 			}
-			glob = startOfPath + glob;
+			if (process.platform === 'win32') {
+				return base.getFileSystemPath().replace(/\\/g, '/');
+			} else {
+				return base.getFileSystemPath();
+			}
+		};
+
+		let startOfPath = getBaseFileSystemPath();
+		if (!startOfPath.endsWith('/') && !glob.startsWith('/')) {
+			startOfPath += '/';
 		}
+		glob = startOfPath + glob;
 
 		const re = globToRegExp(glob);
 		const found = [];
