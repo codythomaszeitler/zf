@@ -62,10 +62,7 @@ export class MockFileSystem {
 	public async readFile(uri: Uri): Promise<string> {
 		const found = this.files.find(file => file.uri.getFileSystemPath() === uri.getFileSystemPath());
 		if (!found) {
-			const getCurrentFilesystemAsString = () => {
-				return this.files.map(file => file.contents).join(';');
-			};
-			throw new Error(`Could not find file with uri ${uri.getFileSystemPath()} - ${getCurrentFilesystemAsString()}`);
+			throw new Error(`Could not find file with uri ${uri.getFileSystemPath()}`);
 		}
 		return found.contents;
 	}
