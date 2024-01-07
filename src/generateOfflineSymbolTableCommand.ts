@@ -84,7 +84,7 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		});
 
 		const alreadyExistingApexClasses = await readApexClassCommand.execute({
-			sfdxProject: sfdxProject
+			sfdxProject
 		});
 		const alreadyExistingApexClassNames = alreadyExistingApexClasses.map(apexClass => apexClass.getName());
 		return alreadyExistingApexClassNames;
