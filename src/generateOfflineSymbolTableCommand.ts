@@ -20,15 +20,7 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		outputDir: Uri,
 		sfdxProject: SfdxProject
 	}) {
-		const readApexClassCommand = new ReadApexClassesCommand({
-			cli: this.getCli(),
-			ide: this.getIde()
-		});
-
-		const alreadyExistingApexClasses = await readApexClassCommand.execute({
-			sfdxProject: params.sfdxProject
-		});
-		const alreadyExistingApexClassNames = alreadyExistingApexClasses.map(apexClass => apexClass.getName());
+		const alreadyExistingApexClassNames = await this.getLocalApexClassName(params);
 
 		const dataQueryResults = await this.getCli().dataQuery({
 			targetOrg: params.targetOrg,
@@ -83,6 +75,19 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		}
 
 		return Promise.all(promises);
+	}
+
+	private async getLocalApexClassName(params: { targetOrg: SalesforceOrg; outputDir: Uri; sfdxProject: SfdxProject; }) {
+		const readApexClassCommand = new ReadApexClassesCommand({
+			cli: this.getCli(),
+			ide: this.getIde()
+		});
+
+		const alreadyExistingApexClasses = await readApexClassCommand.execute({
+			sfdxProject: params.sfdxProject
+		});
+		const alreadyExistingApexClassNames = alreadyExistingApexClasses.map(apexClass => apexClass.getName());
+		return alreadyExistingApexClassNames;
 	}
 }
 
