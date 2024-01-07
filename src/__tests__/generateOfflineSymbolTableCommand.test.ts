@@ -191,6 +191,40 @@ describe('generate offline symbol table command', () => {
 		expect(expected).toBe(contents);
 	});
 
+	it('should be able to generate apex class with static Integer property into test directory', async () => {
+		const [apexClass, uri] = createApexClass('HasStaticIntegerProperty');
+
+		commandToStdOutput[getApexClassQueryString(org)]
+			= genOnlyHasStaticIntegerProperty();
+
+		await testObject.execute({
+			targetOrg: org,
+			outputDir: testDir
+		});
+
+		const contents = await fs.readFile(uri);
+		const expected = `global class ${apexClass.getName()} {\n\tglobal static Integer a;}`;
+
+		expect(expected).toBe(contents);
+	});
+
+	it('should be able to generate apex class with static Integer method (Integer) into test directory', async () => {
+		const [apexClass, uri] = createApexClass('HasStaticMethod');
+
+		commandToStdOutput[getApexClassQueryString(org)]
+			= genOnlyHasStaticMethod();
+
+		await testObject.execute({
+			targetOrg: org,
+			outputDir: testDir
+		});
+
+		const contents = await fs.readFile(uri);
+		const expected = `global class ${apexClass.getName()} {\n\tglobal static Integer foo(Integer a) {}}`;
+
+		expect(expected).toBe(contents);
+	});
+
 	it('should not generate apex class that is found within path of packageDirectories', async () => {
 		const [apexClass, uri] = createApexClass('IExistInPackageDir');
 
@@ -652,6 +686,158 @@ function genOnlyHasConstructorWithMultipleArgs() {
 									},
 									"modifiers": [],
 									"name": "b",
+									"references": [],
+									"type": "Integer"
+								}
+							]
+						}
+					}
+				],
+				"totalSize": 1,
+				"done": true
+			},
+			"warnings": []
+		}
+	);
+}
+
+
+function genOnlyHasStaticIntegerProperty() {
+	return JSON.stringify(
+		{
+			"status": 0,
+			"result": {
+				"records": [
+					{
+						"attributes": {
+							"type": "ApexClass",
+							"url": "/services/data/v59.0/tooling/sobjects/ApexClass/01p6s00000LPqU5AAL"
+						},
+						"Id": "01p6s00000LPqU5AAL",
+						"Name": "HasStaticIntegerProperty",
+						"SymbolTable": {
+							"constructors": [],
+							"externalReferences": [],
+							"id": "HasStaticIntegerProperty",
+							"innerClasses": [],
+							"interfaces": [],
+							"key": "HasStaticIntegerProperty",
+							"methods": [],
+							"name": "HasStaticIntegerProperty",
+							"namespace": null,
+							"parentClass": "",
+							"properties": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 27,
+										"line": 2
+									},
+									"modifiers": [
+										"static",
+										"public"
+									],
+									"name": "a",
+									"references": [],
+									"type": "Integer"
+								}
+							],
+							"tableDeclaration": {
+								"annotations": [],
+								"location": {
+									"column": 27,
+									"line": 1
+								},
+								"modifiers": [
+									"public",
+									"with sharing"
+								],
+								"name": "HasStaticIntegerProperty",
+								"references": [],
+								"type": "HasStaticIntegerProperty"
+							},
+							"variables": []
+						}
+					}
+				],
+				"totalSize": 1,
+				"done": true
+			},
+			"warnings": []
+		}
+	);
+}
+
+function genOnlyHasStaticMethod() {
+	return JSON.stringify(
+		{
+			"status": 0,
+			"result": {
+				"records": [
+					{
+						"attributes": {
+							"type": "ApexClass",
+							"url": "/services/data/v59.0/tooling/sobjects/ApexClass/01p6s00000LPqUAAA1"
+						},
+						"Id": "01p6s00000LPqUAAA1",
+						"Name": "HasStaticMethod",
+						"SymbolTable": {
+							"constructors": [],
+							"externalReferences": [],
+							"id": "HasStaticMethod",
+							"innerClasses": [],
+							"interfaces": [],
+							"key": "HasStaticMethod",
+							"methods": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 27,
+										"line": 2
+									},
+									"modifiers": [
+										"static",
+										"public"
+									],
+									"name": "foo",
+									"parameters": [
+										{
+											"name": "a",
+											"type": "Integer"
+										}
+									],
+									"references": [],
+									"returnType": "Integer",
+									"type": null
+								}
+							],
+							"name": "HasStaticMethod",
+							"namespace": null,
+							"parentClass": "",
+							"properties": [],
+							"tableDeclaration": {
+								"annotations": [],
+								"location": {
+									"column": 27,
+									"line": 1
+								},
+								"modifiers": [
+									"public",
+									"with sharing"
+								],
+								"name": "HasStaticMethod",
+								"references": [],
+								"type": "HasStaticMethod"
+							},
+							"variables": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 39,
+										"line": 2
+									},
+									"modifiers": [],
+									"name": "a",
 									"references": [],
 									"type": "Integer"
 								}
