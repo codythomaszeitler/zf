@@ -1,4 +1,4 @@
-import { ApexClass, Parameter } from "./apexClass";
+import { ApexClass, ApexModifier, Parameter } from "./apexClass";
 import { ApexClassSelector } from "./apexClassSelector";
 import { Command } from "./command";
 import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
@@ -152,6 +152,14 @@ function apexClassIntoString(params: {
 		}).join(', ');
 	}
 
+	function getStaticModifierIfExist(modifiers: ApexModifier[]) {
+		if (modifiers.includes('static')) {
+			return 'static ';
+		} else {
+			return '';
+		}
+	}
+
 	function apexClassConstructorsIntoString() {
 		const publicConstructors = params.apexClass.getPublicConstructors();
 
@@ -166,7 +174,7 @@ function apexClassIntoString(params: {
 		const publicMethods = params.apexClass.getPublicMethods();
 
 		const asStrings = publicMethods.map(publicMethod => {
-			return `global ${publicMethod.returnType} ${publicMethod.name}(${apexParametersIntoString(publicMethod.parameters)}) {}`;
+			return `global ${getStaticModifierIfExist(publicMethod.modifiers)}${publicMethod.returnType} ${publicMethod.name}(${apexParametersIntoString(publicMethod.parameters)}) {}`;
 		});
 
 		return asStrings.join(separator);
@@ -176,7 +184,7 @@ function apexClassIntoString(params: {
 		const publicProperties = params.apexClass.getPublicProperties();
 
 		const asStrings = publicProperties.map(publicProperty => {
-			return `global ${publicProperty.type} ${publicProperty.name};`;
+			return `global ${getStaticModifierIfExist(publicProperty.modifiers)}${publicProperty.type} ${publicProperty.name};`;
 		});
 
 		return asStrings.join(separator);

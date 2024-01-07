@@ -61,7 +61,7 @@ export class ApexClass {
 	}
 }
 
-type ApexModifier = 'public' | 'private' | 'protected' | 'with sharing';
+export type ApexModifier = 'public' | 'private' | 'protected' | 'with sharing' | 'static';
 
 export interface Parameter {
 	name: string;
