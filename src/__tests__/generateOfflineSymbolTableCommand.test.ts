@@ -157,6 +157,23 @@ describe('generate offline symbol table command', () => {
 		expect(expected).toBe(contents);
 	});
 
+	it('should be able to generate apex class with with method that has multiple args into test directory', async () => {
+		const [apexClass, uri] = createApexClass('HasMethodWithMultipleArgs');
+
+		commandToStdOutput[getApexClassQueryString(org)]
+			= getOnlyHasMethodWithMultipleArgs();
+
+		await testObject.execute({
+			targetOrg: org,
+			outputDir: testDir
+		});
+
+		const contents = await fs.readFile(uri);
+		const expected = `global class ${apexClass.getName()} {\n\tglobal Integer foo(Integer a, Integer b) {}}`;
+
+		expect(expected).toBe(contents);
+	});
+
 	it('should not generate apex class that is found within path of packageDirectories', async () => {
 		const [apexClass, uri] = createApexClass('IExistInPackageDir');
 
@@ -425,6 +442,105 @@ function genOnlyHasPublicIntegerPropertyApexClass() {
 								"type": "OnlyHasPublicIntegerProperty"
 							},
 							"variables": []
+						}
+					}
+				],
+				"totalSize": 1,
+				"done": true
+			},
+			"warnings": []
+		}
+	);
+}
+
+function getOnlyHasMethodWithMultipleArgs() {
+	return JSON.stringify(
+		{
+			"status": 0,
+			"result": {
+				"records": [
+					{
+						"attributes": {
+							"type": "ApexClass",
+							"url": "/services/data/v59.0/tooling/sobjects/ApexClass/01p6s00000LPqTqAAL"
+						},
+						"Id": "01p6s00000LPqTqAAL",
+						"Name": "HasMethodWithMultipleArgs",
+						"SymbolTable": {
+							"constructors": [],
+							"externalReferences": [],
+							"id": "HasMethodWithMultipleArgs",
+							"innerClasses": [],
+							"interfaces": [],
+							"key": "HasMethodWithMultipleArgs",
+							"methods": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 20,
+										"line": 2
+									},
+									"modifiers": [
+										"public"
+									],
+									"name": "foo",
+									"parameters": [
+										{
+											"name": "a",
+											"type": "Integer"
+										},
+										{
+											"name": "b",
+											"type": "Integer"
+										}
+									],
+									"references": [],
+									"returnType": "Integer",
+									"type": null
+								}
+							],
+							"name": "HasMethodWithMultipleArgs",
+							"namespace": null,
+							"parentClass": "",
+							"properties": [],
+							"tableDeclaration": {
+								"annotations": [],
+								"location": {
+									"column": 27,
+									"line": 1
+								},
+								"modifiers": [
+									"public",
+									"with sharing"
+								],
+								"name": "HasMethodWithMultipleArgs",
+								"references": [],
+								"type": "HasMethodWithMultipleArgs"
+							},
+							"variables": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 32,
+										"line": 2
+									},
+									"modifiers": [],
+									"name": "a",
+									"references": [],
+									"type": "Integer"
+								},
+								{
+									"annotations": [],
+									"location": {
+										"column": 43,
+										"line": 2
+									},
+									"modifiers": [],
+									"name": "b",
+									"references": [],
+									"type": "Integer"
+								}
+							]
 						}
 					}
 				],
