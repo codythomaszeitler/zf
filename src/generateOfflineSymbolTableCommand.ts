@@ -22,6 +22,7 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		if (!targetOrg) {
 			targetOrg = await this.getTargetOrDefaultOrg(targetOrg);
 			if (!targetOrg) {
+				this.getIde().showWarningMessage('Could not generate offline symbol table without default org set.');
 				return;
 			}
 		}

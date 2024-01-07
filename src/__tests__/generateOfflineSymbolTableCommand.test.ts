@@ -6,12 +6,13 @@ import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { GenerateOfflineSymbolTableCommand, getOfflineSymbolTableApexClassUri } from '../generateOfflineSymbolTableCommand';
 import { SfSalesforceCli } from '../sfSalesforceCli';
 import { get } from './data/orgListOutput';
-import { genMockExecutor } from './__mocks__/mockShell';
+import { genMockExecutor, getSfConfigGetTargetOrgCommandString, getSfOrgListCommandString } from './__mocks__/mockShell';
 import { SalesforceCli } from '../salesforceCli';
 import { APEX_CLASS_SOBJECT_NAME, ApexClass } from '../apexClass';
 import { genRandomId } from './salesforceId.test';
 import { Uri } from '../integratedDevelopmentEnvironment';
 import { getSfdxProjectUri } from '../readSfdxProjectCommand';
+import { getWhenDefaultOrgDoesNotExist } from './data/configGetOutput';
 
 describe('generate offline symbol table command', () => {
 	function getApexClassQueryString(targetOrg: SalesforceOrg) {
@@ -28,12 +29,10 @@ describe('generate offline symbol table command', () => {
 
 	let testDir: Uri;
 
-	let commandToStdOutput: any;
+	let commandToStdOutput: any = {};
 
 	beforeEach(async () => {
-		commandToStdOutput = {
-			'sf org list --json': get()
-		};
+		commandToStdOutput[getSfOrgListCommandString()] = get();
 
 		org = new SalesforceOrg({
 			alias: 'cso',
@@ -78,6 +77,16 @@ describe('generate offline symbol table command', () => {
 
 		return [apexClass, uri];
 	};
+
+	it('should log a warning message if there is no default org set and no target org given', async () => {
+		commandToStdOutput[getSfConfigGetTargetOrgCommandString()] = getWhenDefaultOrgDoesNotExist();
+
+		await testObject.execute({
+			outputDir: testDir
+		});
+
+		expect(ide.didShowWarningMessage('Could not generate offline symbol table without default org set.')).toBe(true);
+	});
 
 	it('should be able to generate empty apex class into test directory', async () => {
 		const [apexClass, uri] = createApexClass('EmptyApexClass');
