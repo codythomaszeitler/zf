@@ -91,28 +91,6 @@ export interface CommandExecuteResult {
 
 }
 
-// Something is fundamentally wrong with URI.
-// Really, a URI is a collection paths + a file
-// Ohhh but wait a minute... How do you represent that you are at a root path.
-// A B C D E
-
-// In the way that I have it could either mean the following two things:
-// /A/B/C/D/E
-// A/B/C/D/E
-
-// These mean two separate things.
-
-// Do not forgot that really this should be done on the "workspaceFolder" level,
-// so like a lot of paths are like 
-
-
-// You can have two apex files that the same name because you have can have two 
-// managed packages with the same name, but they have different package prefixes.
-// You know what would be good? Go to the store and get some green tea.
-// boil it up, serve it up.
-
-
-
 export class TextLine {
     private readonly text: string;
 
