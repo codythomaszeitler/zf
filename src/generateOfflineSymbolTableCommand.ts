@@ -160,7 +160,11 @@ function apexClassIntoString(params: {
 		const publicMethods = params.apexClass.getPublicMethods();
 
 		const asStrings = publicMethods.map(publicMethod => {
-			return `global ${publicMethod.returnType} ${publicMethod.name}() {}`;
+			const parameters = publicMethod.parameters.map(parameter => {
+				return parameter.type + ' ' + parameter.name;
+			}).join(', ');
+
+			return `global ${publicMethod.returnType} ${publicMethod.name}(${parameters}) {}`;
 		});
 
 		return asStrings.join(separator);
