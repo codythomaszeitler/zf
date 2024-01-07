@@ -20,7 +20,7 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		outputDir: Uri,
 		sfdxProject: SfdxProject
 	}) {
-		const alreadyExistingApexClassNames = await this.getLocalApexClassName(params);
+		const localApexClassNames = await this.getLocalApexClassName(params);
 
 		const dataQueryResults = await this.getCli().dataQuery({
 			targetOrg: params.targetOrg,
@@ -32,7 +32,7 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 
 		const apexClasses: ApexClass[] = dataQueryResults.getSObjects().filter(sObject => {
 			const name = sObject["Name"];
-			return !alreadyExistingApexClassNames.includes(name);
+			return !localApexClassNames.includes(name);
 		}).map(sObject => {
 			const recordId = SalesforceId.get(sObject["Id"]);
 			const name = sObject["Name"];
