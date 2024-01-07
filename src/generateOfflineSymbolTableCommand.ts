@@ -1,4 +1,4 @@
-import { ApexClass } from "./apexClass";
+import { ApexClass, Parameter } from "./apexClass";
 import { ApexClassSelector } from "./apexClassSelector";
 import { Command } from "./command";
 import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
@@ -146,11 +146,17 @@ function apexClassIntoString(params: {
 	const properties = apexPropertiesIntoString();
 	return `global class ${params.apexClass.getName()} {\n\t${constructors}${methods}${properties}}`;
 
+	function apexParametersIntoString(parameters: Parameter[]) {
+		return parameters.map(parameter => {
+			return parameter.type + ' ' + parameter.name;
+		}).join(', ');
+	}
+
 	function apexClassConstructorsIntoString() {
 		const publicConstructors = params.apexClass.getPublicConstructors();
 
 		const asStrings = publicConstructors.map(publicConstructor => {
-			return `global ${publicConstructor.name}() {}`;
+			return `global ${publicConstructor.name}(${apexParametersIntoString(publicConstructor.parameters)}) {}`;
 		});
 
 		return asStrings.join(separator);
@@ -160,11 +166,7 @@ function apexClassIntoString(params: {
 		const publicMethods = params.apexClass.getPublicMethods();
 
 		const asStrings = publicMethods.map(publicMethod => {
-			const parameters = publicMethod.parameters.map(parameter => {
-				return parameter.type + ' ' + parameter.name;
-			}).join(', ');
-
-			return `global ${publicMethod.returnType} ${publicMethod.name}(${parameters}) {}`;
+			return `global ${publicMethod.returnType} ${publicMethod.name}(${apexParametersIntoString(publicMethod.parameters)}) {}`;
 		});
 
 		return asStrings.join(separator);

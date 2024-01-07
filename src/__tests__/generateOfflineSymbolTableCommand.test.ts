@@ -157,11 +157,11 @@ describe('generate offline symbol table command', () => {
 		expect(expected).toBe(contents);
 	});
 
-	it('should be able to generate apex class with with method that has multiple args into test directory', async () => {
+	it('should be able to generate apex class with method that has multiple args into test directory', async () => {
 		const [apexClass, uri] = createApexClass('HasMethodWithMultipleArgs');
 
 		commandToStdOutput[getApexClassQueryString(org)]
-			= getOnlyHasMethodWithMultipleArgs();
+			= genOnlyHasMethodWithMultipleArgs();
 
 		await testObject.execute({
 			targetOrg: org,
@@ -170,6 +170,23 @@ describe('generate offline symbol table command', () => {
 
 		const contents = await fs.readFile(uri);
 		const expected = `global class ${apexClass.getName()} {\n\tglobal Integer foo(Integer a, Integer b) {}}`;
+
+		expect(expected).toBe(contents);
+	});
+
+	it('should be able to generate apex class with constructor that has multiple args into test directory', async () => {
+		const [apexClass, uri] = createApexClass('HasConstructorWithMultipleArgs');
+
+		commandToStdOutput[getApexClassQueryString(org)]
+			= genOnlyHasConstructorWithMultipleArgs();
+
+		await testObject.execute({
+			targetOrg: org,
+			outputDir: testDir
+		});
+
+		const contents = await fs.readFile(uri);
+		const expected = `global class ${apexClass.getName()} {\n\tglobal ${apexClass.getName()}(Integer a, Integer b) {}}`;
 
 		expect(expected).toBe(contents);
 	});
@@ -453,7 +470,7 @@ function genOnlyHasPublicIntegerPropertyApexClass() {
 	);
 }
 
-function getOnlyHasMethodWithMultipleArgs() {
+function genOnlyHasMethodWithMultipleArgs() {
 	return JSON.stringify(
 		{
 			"status": 0,
@@ -533,6 +550,104 @@ function getOnlyHasMethodWithMultipleArgs() {
 									"annotations": [],
 									"location": {
 										"column": 43,
+										"line": 2
+									},
+									"modifiers": [],
+									"name": "b",
+									"references": [],
+									"type": "Integer"
+								}
+							]
+						}
+					}
+				],
+				"totalSize": 1,
+				"done": true
+			},
+			"warnings": []
+		}
+	);
+}
+
+function genOnlyHasConstructorWithMultipleArgs() {
+	return JSON.stringify(
+		{
+			"status": 0,
+			"result": {
+				"records": [
+					{
+						"attributes": {
+							"type": "ApexClass",
+							"url": "/services/data/v59.0/tooling/sobjects/ApexClass/01p6s00000LPqU0AAL"
+						},
+						"Id": "01p6s00000LPqU0AAL",
+						"Name": "HasConstructorWithMultipleArgs",
+						"SymbolTable": {
+							"constructors": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 12,
+										"line": 2
+									},
+									"modifiers": [
+										"public"
+									],
+									"name": "HasConstructorWithMultipleArgs",
+									"parameters": [
+										{
+											"name": "a",
+											"type": "Integer"
+										},
+										{
+											"name": "b",
+											"type": "Integer"
+										}
+									],
+									"references": [],
+									"type": null
+								}
+							],
+							"externalReferences": [],
+							"id": "HasConstructorWithMultipleArgs",
+							"innerClasses": [],
+							"interfaces": [],
+							"key": "HasConstructorWithMultipleArgs",
+							"methods": [],
+							"name": "HasConstructorWithMultipleArgs",
+							"namespace": null,
+							"parentClass": "",
+							"properties": [],
+							"tableDeclaration": {
+								"annotations": [],
+								"location": {
+									"column": 27,
+									"line": 1
+								},
+								"modifiers": [
+									"public",
+									"with sharing"
+								],
+								"name": "HasConstructorWithMultipleArgs",
+								"references": [],
+								"type": "HasConstructorWithMultipleArgs"
+							},
+							"variables": [
+								{
+									"annotations": [],
+									"location": {
+										"column": 51,
+										"line": 2
+									},
+									"modifiers": [],
+									"name": "a",
+									"references": [],
+									"type": "Integer"
+								},
+								{
+									"annotations": [],
+									"location": {
+										"column": 62,
 										"line": 2
 									},
 									"modifiers": [],
