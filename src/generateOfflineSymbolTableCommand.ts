@@ -3,7 +3,7 @@ import { ApexClassSelector } from "./apexClassSelector";
 import { Command } from "./command";
 import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
 import { ReadApexClassesCommand } from "./readApexClassesCommand";
-import { SfdxProject } from "./readSfdxProjectCommand";
+import { ReadSfdxProjectCommand, SfdxProject } from "./readSfdxProjectCommand";
 import { SalesforceOrg } from "./salesforceOrg";
 
 export function getOfflineSymbolTableApexClassUri(params: {
@@ -15,12 +15,24 @@ export function getOfflineSymbolTableApexClassUri(params: {
 }
 
 export class GenerateOfflineSymbolTableCommand extends Command {
-	public async execute(params: {
-		targetOrg: SalesforceOrg,
-		outputDir: Uri,
-		sfdxProject: SfdxProject
+	public async execute({ targetOrg, outputDir }: {
+		targetOrg?: SalesforceOrg,
+		outputDir: Uri
 	}) {
-		const offlineSymbolTableApexClasses: ApexClass[] = await this.getOfflineSymbolTableApexClasses(params);
+		if (!targetOrg) {
+			targetOrg = await this.getTargetOrDefaultOrg(targetOrg);
+			if (!targetOrg) {
+				return;
+			}
+		}
+
+		const sfdxProject = await this.getSfdxProject();
+
+		const offlineSymbolTableApexClasses: ApexClass[] = await this.getOfflineSymbolTableApexClasses({
+			outputDir,
+			sfdxProject,
+			targetOrg
+		});
 
 		const promises = [];
 		const numGenerators = 10;
@@ -28,8 +40,8 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		for (let i = 0; i < numGenerators; i++) {
 			const apexClassWriter = new ApexClassWriter({
 				apexClasses: offlineSymbolTableApexClasses,
-				outputDir: params.outputDir,
-				targetOrg: params.targetOrg,
+				outputDir,
+				targetOrg,
 				ide: this.getIde()
 			});
 
@@ -37,6 +49,15 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		}
 
 		return Promise.all(promises);
+	}
+
+	private async getSfdxProject() {
+		const readSfdxProjectCommand = new ReadSfdxProjectCommand({
+			ide: this.getIde(),
+			cli: this.getCli()
+		});
+		const sfdxProject = await readSfdxProjectCommand.execute();
+		return sfdxProject;
 	}
 
 	private async getOfflineSymbolTableApexClasses(params: { targetOrg: SalesforceOrg; outputDir: Uri; sfdxProject: SfdxProject; }) {

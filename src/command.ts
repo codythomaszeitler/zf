@@ -1,5 +1,6 @@
 import { IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
 import { SalesforceCli } from "./salesforceCli";
+import { SalesforceOrg } from "./salesforceOrg";
 
 export abstract class Command {
 
@@ -17,6 +18,15 @@ export abstract class Command {
 
 	protected getCli() {
 		return this.cli;
+	}
+
+	protected async getTargetOrDefaultOrg(targetOrg?: SalesforceOrg): Promise<SalesforceOrg | undefined> {
+		if (targetOrg) {
+			return targetOrg;
+		} else {
+			return await this.cli.getDefaultOrg() ?? undefined;
+		}
+
 	}
 }
 

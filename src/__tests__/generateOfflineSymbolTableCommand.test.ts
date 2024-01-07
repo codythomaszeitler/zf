@@ -11,8 +11,12 @@ import { SalesforceCli } from '../salesforceCli';
 import { APEX_CLASS_SOBJECT_NAME, ApexClass } from '../apexClass';
 import { genRandomId } from './salesforceId.test';
 import { Uri } from '../integratedDevelopmentEnvironment';
+import { getSfdxProjectUri } from '../readSfdxProjectCommand';
 
 describe('generate offline symbol table command', () => {
+	function getApexClassQueryString(targetOrg: SalesforceOrg) {
+		return `sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org ${targetOrg.getAlias()} --json`;
+	}
 
 	let testObject: GenerateOfflineSymbolTableCommand;
 
@@ -26,7 +30,7 @@ describe('generate offline symbol table command', () => {
 
 	let commandToStdOutput: any;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		commandToStdOutput = {
 			'sf org list --json': get()
 		};
@@ -41,19 +45,30 @@ describe('generate offline symbol table command', () => {
 		ide = new MockIDE({
 			filesystem: fs
 		});
-		// So it writes to a testDir?
 		testDir = ide.generateUri('offlineSymbolTable');
 		testObject = new GenerateOfflineSymbolTableCommand({
 			cli,
 			ide
 		});
+
+		const sfdxProjectUri = getSfdxProjectUri({
+			currentDir: ide.getCurrentDir()
+		});
+		await fs.writeFile(sfdxProjectUri, JSON.stringify({
+			packageDirectories: [
+				{
+					path: 'force-app',
+					default: true
+				}
+			]
+		}));
 	});
 
-	it('should be able to generate empty apex class into test directory', async () => {
+	const createApexClass = function (apexClassName: string): [ApexClass, Uri] {
 		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
 		const apexClass = new ApexClass({
 			id: recordId,
-			name: 'EmptyApexClass'
+			name: apexClassName
 		});
 		const uri = getOfflineSymbolTableApexClassUri({
 			targetOrg: org,
@@ -61,20 +76,19 @@ describe('generate offline symbol table command', () => {
 			outputDir: testDir
 		});
 
-		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+		return [apexClass, uri];
+	};
+
+	it('should be able to generate empty apex class into test directory', async () => {
+		const [apexClass, uri] = createApexClass('EmptyApexClass');
+
+		commandToStdOutput[getApexClassQueryString(org)]
 			= genEmptyApexClassDataQuery();
 
 		await testObject.execute({
 			targetOrg: org,
 			outputDir: testDir,
-			sfdxProject: {
-				packageDirectories: [
-					{
-						path: 'force-app',
-						default: true
-					}
-				]
-			}
+
 		});
 
 		const contents = await fs.readFile(uri);
@@ -84,31 +98,14 @@ describe('generate offline symbol table command', () => {
 	});
 
 	it('should be able to generate apex class with only empty constructor into test directory', async () => {
-		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
-		const apexClass = new ApexClass({
-			id: recordId,
-			name: 'OnlyHasEmptyConstructor'
-		});
-		const uri = getOfflineSymbolTableApexClassUri({
-			targetOrg: org,
-			apexClass,
-			outputDir: testDir
-		});
+		const [apexClass, uri] = createApexClass('OnlyHasEmptyConstructor');
 
-		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+		commandToStdOutput[getApexClassQueryString(org)]
 			= genOnlyEmptyConstructorApexClassDataQuery();
 
 		await testObject.execute({
 			targetOrg: org,
-			outputDir: testDir,
-			sfdxProject: {
-				packageDirectories: [
-					{
-						path: 'force-app',
-						default: true
-					}
-				]
-			}
+			outputDir: testDir
 		});
 
 		const contents = await fs.readFile(uri);
@@ -118,33 +115,14 @@ describe('generate offline symbol table command', () => {
 	});
 
 	it('should be able to generate apex class with only empty void public method into test directory', async () => {
+		const [apexClass, uri] = createApexClass('OnlyHasVoidPublicMethod');
 
-		const className = 'OnlyHasVoidPublicMethod';
-		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
-		const apexClass = new ApexClass({
-			id: recordId,
-			name: className
-		});
-		const uri = getOfflineSymbolTableApexClassUri({
-			targetOrg: org,
-			apexClass,
-			outputDir: testDir
-		});
-
-		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+		commandToStdOutput[getApexClassQueryString(org)]
 			= genOnlyHasPublicVoidMethodApexClass();
 
 		await testObject.execute({
 			targetOrg: org,
-			outputDir: testDir,
-			sfdxProject: {
-				packageDirectories: [
-					{
-						path: 'force-app',
-						default: true
-					}
-				]
-			}
+			outputDir: testDir
 		});
 
 		const contents = await fs.readFile(uri);
@@ -154,33 +132,14 @@ describe('generate offline symbol table command', () => {
 	});
 
 	it('should be able to generate apex class with only integer public property into test directory', async () => {
+		const [apexClass, uri] = createApexClass('OnlyHasPublicIntegerProperty');
 
-		const className = 'OnlyHasPublicIntegerProperty';
-		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
-		const apexClass = new ApexClass({
-			id: recordId,
-			name: className
-		});
-		const uri = getOfflineSymbolTableApexClassUri({
-			targetOrg: org,
-			apexClass,
-			outputDir: testDir
-		});
-
-		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+		commandToStdOutput[getApexClassQueryString(org)]
 			= genOnlyHasPublicIntegerPropertyApexClass();
 
 		await testObject.execute({
 			targetOrg: org,
-			outputDir: testDir,
-			sfdxProject: {
-				packageDirectories: [
-					{
-						path: 'force-app',
-						default: true
-					}
-				]
-			}
+			outputDir: testDir
 		});
 
 		const contents = await fs.readFile(uri);
@@ -190,38 +149,19 @@ describe('generate offline symbol table command', () => {
 	});
 
 	it('should not generate apex class that is found within path of packageDirectories', async () => {
-
-		const className = 'IExistInPackageDir';
-		const recordId = genRandomId(APEX_CLASS_SOBJECT_NAME);
-		const apexClass = new ApexClass({
-			id: recordId,
-			name: className
-		});
-		const uri = getOfflineSymbolTableApexClassUri({
-			targetOrg: org,
-			apexClass,
-			outputDir: testDir
-		});
+		const [apexClass, uri] = createApexClass('IExistInPackageDir');
 
 		const apexClassUri = ide.generateUri("force-app", "main", "default", apexClass.getNameWithExtension());
 		await fs.writeFile(apexClassUri, `public ${apexClass.getName()} {}`);
 
-		commandToStdOutput['sf data query --query "SELECT Id, Name, SymbolTable FROM ApexClass" --use-tooling-api --target-org cso --json']
+		commandToStdOutput[getApexClassQueryString(org)]
 			= getEmptyApexClassWith({
 				className: apexClass.getName()
 			});
 
 		await testObject.execute({
 			targetOrg: org,
-			outputDir: testDir,
-			sfdxProject: {
-				packageDirectories: [
-					{
-						path: 'force-app',
-						default: true
-					}
-				]
-			}
+			outputDir: testDir
 		});
 
 		const hasFile = await fs.hasFile(uri);

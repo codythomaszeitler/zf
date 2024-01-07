@@ -199,27 +199,13 @@ export function activate(context: vscode.ExtensionContext) {
 	async function runGeneratorOfflineSymbolTable() {
 		ide.withProgress(async (progressToken) => {
 			try {
-				const defaultOrg = await salesforceCli.getDefaultOrg();
-
-				const readSfdxProjectCommand = new ReadSfdxProjectCommand({
-					ide: ide,
+				const generateOfflineSymbolTableCommand = new GenerateOfflineSymbolTableCommand({
+					ide,
 					cli: salesforceCli
 				});
-
-				const sfdxProject = await readSfdxProjectCommand.execute();
-
-				if (defaultOrg) {
-					const generateOfflineSymbolTableCommand = new GenerateOfflineSymbolTableCommand({
-						ide,
-						cli: salesforceCli
-					});
-
-					await generateOfflineSymbolTableCommand.execute({
-						targetOrg: defaultOrg,
-						outputDir: zfOfflineSymbolTableDir,
-						sfdxProject
-					});
-				}
+				await generateOfflineSymbolTableCommand.execute({
+					outputDir: zfOfflineSymbolTableDir,
+				});
 			} catch (e: any) {
 				ide.showErrorMessage(e.message);
 			}
