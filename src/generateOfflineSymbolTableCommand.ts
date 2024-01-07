@@ -77,14 +77,14 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		return Promise.all(promises);
 	}
 
-	private async getLocalApexClassName(params: { targetOrg: SalesforceOrg; outputDir: Uri; sfdxProject: SfdxProject; }) {
+	private async getLocalApexClassName({ sfdxProject }: { sfdxProject: SfdxProject; }) {
 		const readApexClassCommand = new ReadApexClassesCommand({
 			cli: this.getCli(),
 			ide: this.getIde()
 		});
 
 		const alreadyExistingApexClasses = await readApexClassCommand.execute({
-			sfdxProject: params.sfdxProject
+			sfdxProject: sfdxProject
 		});
 		const alreadyExistingApexClassNames = alreadyExistingApexClasses.map(apexClass => apexClass.getName());
 		return alreadyExistingApexClassNames;
