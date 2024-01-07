@@ -1,9 +1,9 @@
-import { APEX_CLASS_SOBJECT_NAME, ApexClass, SymbolTable } from "./apexClass";
+import { ApexClass } from "./apexClass";
+import { ApexClassSelector } from "./apexClassSelector";
 import { Command } from "./command";
-import { Uri } from "./integratedDevelopmentEnvironment";
+import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
 import { ReadApexClassesCommand } from "./readApexClassesCommand";
 import { SfdxProject } from "./readSfdxProjectCommand";
-import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
 
 export function getOfflineSymbolTableApexClassUri(params: {
@@ -20,64 +20,37 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		outputDir: Uri,
 		sfdxProject: SfdxProject
 	}) {
-		const localApexClassNames = await this.getLocalApexClassName(params);
-
-		const dataQueryResults = await this.getCli().dataQuery({
-			targetOrg: params.targetOrg,
-			query: {
-				from: APEX_CLASS_SOBJECT_NAME,
-				fields: ['Name', 'SymbolTable']
-			}
-		});
-
-		const apexClasses: ApexClass[] = dataQueryResults.getSObjects().filter(sObject => {
-			const name = sObject["Name"];
-			return !localApexClassNames.includes(name);
-		}).map(sObject => {
-			const recordId = SalesforceId.get(sObject["Id"]);
-			const name = sObject["Name"];
-			const symbolTable = sObject["SymbolTable"] as SymbolTable;
-
-			return new ApexClass({
-				id: recordId,
-				name,
-				symbolTable
-			});
-		});
-
-		const writeApexClassToFile = async (): Promise<void> => {
-			const apexClass = apexClasses.pop();
-			if (!apexClass) {
-				return;
-			}
-
-			const uri = getOfflineSymbolTableApexClassUri({
-				targetOrg: params.targetOrg,
-				apexClass,
-				outputDir: params.outputDir
-			});
-
-			await this.getIde().writeFile({
-				uri,
-				contents: apexClassIntoString({
-					apexClass: apexClass
-				})
-			});
-
-			return writeApexClassToFile();
-		};
+		const offlineSymbolTableApexClasses: ApexClass[] = await this.getOfflineSymbolTableApexClasses(params);
 
 		const promises = [];
 		const numGenerators = 10;
 
 		for (let i = 0; i < numGenerators; i++) {
-			promises.push(writeApexClassToFile());
+			const apexClassWriter = new ApexClassWriter({
+				apexClasses: offlineSymbolTableApexClasses,
+				outputDir: params.outputDir,
+				targetOrg: params.targetOrg,
+				ide: this.getIde()
+			});
+
+			promises.push(apexClassWriter.run());
 		}
 
 		return Promise.all(promises);
 	}
 
-	private async getLocalApexClassName({ sfdxProject }: { sfdxProject: SfdxProject; }) {
+	private async getOfflineSymbolTableApexClasses(params: { targetOrg: SalesforceOrg; outputDir: Uri; sfdxProject: SfdxProject; }) {
+		const localApexClassNames = await this.getLocalApexClassNames(params);
+		const serverSideApexClasses = await this.queryAllApexClass(params);
+
+		const serverSideOnlyApexClasses: ApexClass[] = serverSideApexClasses.filter(sObject => {
+			const name = sObject.getName();
+			return !localApexClassNames.includes(name);
+		});
+		return serverSideOnlyApexClasses;
+	}
+
+	private async getLocalApexClassNames({ sfdxProject }: { sfdxProject: SfdxProject; }) {
 		const readApexClassCommand = new ReadApexClassesCommand({
 			cli: this.getCli(),
 			ide: this.getIde()
@@ -88,6 +61,56 @@ export class GenerateOfflineSymbolTableCommand extends Command {
 		});
 		const alreadyExistingApexClassNames = alreadyExistingApexClasses.map(apexClass => apexClass.getName());
 		return alreadyExistingApexClassNames;
+	}
+
+	private async queryAllApexClass({ targetOrg }: { targetOrg: SalesforceOrg }) {
+		const apexClassSelector = new ApexClassSelector({
+			cli: this.getCli()
+		});
+		return apexClassSelector.queryAllApexClasses({
+			targetOrg
+		});
+	}
+}
+
+class ApexClassWriter {
+
+	private readonly apexClasses: ApexClass[];
+	private readonly targetOrg: SalesforceOrg;
+	private readonly outputDir: Uri;
+	private readonly ide: IntegratedDevelopmentEnvironment;
+
+	public constructor({ apexClasses, targetOrg, outputDir, ide }: { apexClasses: ApexClass[]; targetOrg: SalesforceOrg; outputDir: Uri; ide: IntegratedDevelopmentEnvironment }) {
+		this.apexClasses = apexClasses;
+		this.targetOrg = targetOrg;
+		this.outputDir = outputDir;
+		this.ide = ide;
+	}
+
+	public async run(): Promise<void> {
+		const apexClass = this.apexClasses.pop();
+		if (!apexClass) {
+			return;
+		}
+
+		await this.writeApexClass(apexClass);
+
+		return this.run();
+	}
+
+	private async writeApexClass(apexClass: ApexClass) {
+		const uri = getOfflineSymbolTableApexClassUri({
+			targetOrg: this.targetOrg,
+			apexClass: apexClass,
+			outputDir: this.outputDir
+		});
+
+		await this.ide.writeFile({
+			uri,
+			contents: apexClassIntoString({
+				apexClass: apexClass
+			})
+		});
 	}
 }
 
