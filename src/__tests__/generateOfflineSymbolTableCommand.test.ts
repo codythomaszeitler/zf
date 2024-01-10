@@ -5,7 +5,7 @@ import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { GenerateOfflineSymbolTableCommand, getOfflineSymbolTableApexClassUri } from '../generateOfflineSymbolTableCommand';
 import { SfSalesforceCli } from '../sfSalesforceCli';
-import { get } from './data/orgListOutput';
+import { get, getOrgListUsersWithoutEmptyDefaultMarker } from './data/orgListOutput';
 import { genMockExecutor, getSfConfigGetTargetOrgCommandString, getSfOrgListCommandString } from './__mocks__/mockShell';
 import { SalesforceCli } from '../salesforceCli';
 import { APEX_CLASS_SOBJECT_NAME, ApexClass } from '../apexClass';
@@ -79,7 +79,9 @@ describe('generate offline symbol table command', () => {
 	};
 
 	it('should log a warning message if there is no default org set and no target org given', async () => {
-		commandToStdOutput[getSfConfigGetTargetOrgCommandString()] = getWhenDefaultOrgDoesNotExist();
+		commandToStdOutput[getSfOrgListCommandString({
+			skipConnectionStatus: true
+		})] = getOrgListUsersWithoutEmptyDefaultMarker();
 
 		await testObject.execute({
 			outputDir: testDir

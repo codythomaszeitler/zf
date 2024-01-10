@@ -5,12 +5,16 @@ export interface SfOrgListResult {
     };
 }
 
-export interface SandboxOrgListResult {
+interface SharedOrgListResult {
+    isDefaultUsername: boolean;
+}
+
+export interface SandboxOrgListResult extends SharedOrgListResult {
     connectedStatus?: string;
     username?: string;
 }
 
-export interface ScratchOrgListResult {
+export interface ScratchOrgListResult extends SharedOrgListResult {
     alias?: string;
     isExpired?: boolean;
 }

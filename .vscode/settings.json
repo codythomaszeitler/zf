@@ -48,5 +48,6 @@
         "Visualforce",
         "Workitem"
     ],
-    "salesforcedx-vscode-slds.basic.mobileValidation": false
+    "salesforcedx-vscode-slds.basic.mobileValidation": false,
+    "jest.jestCommandLine": "jest"
 }

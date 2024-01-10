@@ -118,6 +118,57 @@ export function get() {
   });
 };
 
+export function getSfOrgListWithSkipConnectionNominalResponse({ targetOrg }: {
+  targetOrg: SalesforceOrg
+}) {
+  return JSON.stringify(
+    {
+      "status": 0,
+      "result": {
+        "nonScratchOrgs": [],
+        "scratchOrgs": [
+          {
+            "accessToken": "00D6s000000tHFx!ARsAQLsMfoNj70tgexjTcnJ7URZL_lInZpp2j0BINEWCgKu0RFZwOzNCHAyw9wXVsTUO9YJh8NsWhLkPL.jYskdeozO.zMrB",
+            "instanceUrl": "https://drive-dream-2620-dev-ed.scratch.my.salesforce.com",
+            "orgId": "00D6s000000tHFxEAM",
+            "username": "test-4h5tpd1qb1jn@example.com",
+            "loginUrl": "https://CS165.salesforce.com",
+            "clientId": "PlatformCLI",
+            "isDevHub": false,
+            "devHubUsername": "codyzeitler12@cunning-raccoon-bz3els.com",
+            "created": "1704576233000",
+            "expirationDate": "2024-01-13",
+            "createdOrgInstance": "CS165",
+            "instanceApiVersion": "59.0",
+            "instanceApiVersionLastRetrieved": "1/9/2024, 11:29:09 PM",
+            "tracksSource": true,
+            "alias": targetOrg.getAlias(),
+            "isDefaultDevHubUsername": false,
+            "isDefaultUsername": true,
+            "lastUsed": "2024-01-10T06:29:16.142Z",
+            "signupUsername": "test-4h5tpd1qb1jn@example.com",
+            "createdBy": "codyzeitler12@cunning-raccoon-bz3els.com",
+            "createdDate": "2024-01-06T21:23:53.000+0000",
+            "devHubOrgId": "00D5e000001AcqNEAS",
+            "devHubId": "00D5e000001AcqNEAS",
+            "attributes": {
+              "type": "ScratchOrgInfo",
+              "url": "/services/data/v59.0/sobjects/ScratchOrgInfo/2SR5e00000119vRGAQ"
+            },
+            "orgName": "Cody company",
+            "edition": "Developer",
+            "status": "Active",
+            "isExpired": false,
+            "namespace": null,
+            "defaultMarker": "(U)"
+          }
+        ]
+      },
+      "warnings": []
+    }
+  );
+}
+
 export function getNoSandboxesAndNoScratches() {
   return JSON.stringify({
     "status": 0,
@@ -256,6 +307,26 @@ export function getOrgListUsersNominalResponse(params: {
       {
         "defaultMarker": "(A)",
         "alias": `${params.orgAlias.getAlias()}`,
+        "username": "test-7yrotqw6z1en@example.com",
+        "profileName": "System Administrator",
+        "orgId": "00DDC000000rVVl2AM",
+        "accessToken": "a3f4c20798c68dca9a1fb4e8f1c118e84b6dd6b1fca19158ef0dd05eb5418da122c08272ae060a3157561f9fa9a82675965f0960fb19cc4b55affc4a772ea14d4450439997c430951f5cfda177e5eaef956b268422eebd0275d369443f3bcfb8eaf9ad75df621e2ede660d02f1fa87004f327a33be2c:25d9b1a30211b0bf8b96158f2d30452e",
+        "instanceUrl": "https://momentum-platform-58622-dev-ed.scratch.my.salesforce.com",
+        "loginUrl": "https://CS236.salesforce.com",
+        "userId": "005DC000004mxEMYAY"
+      }
+    ],
+    "warnings": []
+  });
+}
+
+export function getOrgListUsersWithoutEmptyDefaultMarker() {
+  return JSON.stringify({
+    "status": 0,
+    "result": [
+      {
+        "defaultMarker": "",
+        "alias": "test-org",
         "username": "test-7yrotqw6z1en@example.com",
         "profileName": "System Administrator",
         "orgId": "00DDC000000rVVl2AM",

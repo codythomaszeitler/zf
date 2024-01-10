@@ -41,7 +41,7 @@ export function getWhenResultArrayIsEmpty() {
     );
 }
 
-export function getWhenResultArrayDoesNotExist() {
+export function getWhenResultKeyDoesNotExist() {
     return JSON.stringify({
         "status": 0,
         "warnings": []
