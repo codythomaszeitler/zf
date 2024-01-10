@@ -176,9 +176,14 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
     ide: IntegratedDevelopmentEnvironment
 }) {
     let projectDeployState: ProjectDeployState = 'Not Started';
+    let targetOrg: SalesforceOrg | null = null;
 
     const toDeploy = new Map<string, Uri>();
-    async function runQueueableProjectDeploy(targetOrg: SalesforceOrg) {
+    async function runQueueableProjectDeploy() {
+        if (!targetOrg) {
+            return;
+        }
+
         if (projectDeployState === 'Not Started') {
             projectDeployState = 'In Progress';
 
@@ -192,13 +197,15 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
             }).then(async () => {
                 if (projectDeployState === 'Queued') {
                     projectDeployState = 'Not Started';
-                    await runQueueableProjectDeploy(targetOrg);
+                    await runQueueableProjectDeploy();
                 } else {
                     projectDeployState = 'Not Started';
+                    targetOrg = null;
                 }
             }).catch((e: any) => {
                 ide.showErrorMessage(e.message);
                 projectDeployState = 'Not Started';
+                targetOrg = null;
             });
         } else if (projectDeployState === 'In Progress') {
             projectDeployState = 'Queued';
@@ -210,14 +217,21 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
     }): Promise<void> {
         const shouldDeployOnSave = ide.getConfig("sf.zsi.vscode.deployOnSave", true);
         if (shouldDeployOnSave) {
-            const defaultOrg = await cli.getDefaultOrg();
-            if (defaultOrg) {
-                textDocuments.forEach(textDocument => {
-                    toDeploy.set(textDocument.uri.getFileSystemPath(), textDocument.uri);
-                });
+            await ide.withProgress(async progressToken => {
+                if (projectDeployState === 'Not Started') {
+                    targetOrg = await cli.getDefaultOrg();
+                }
 
-                await runQueueableProjectDeploy(defaultOrg);
-            }
+                if (targetOrg) {
+                    textDocuments.filter(textDocument => textDocument.uri.isApexClass()).forEach(textDocument => {
+                        toDeploy.set(textDocument.uri.getFileSystemPath(), textDocument.uri);
+                    });
+
+                    await runQueueableProjectDeploy();
+                }
+            }, {
+                title: 'Queueing Project Deploy'
+            });
         }
     };
 }
