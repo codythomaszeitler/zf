@@ -61,6 +61,6 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
 }
 
 export function intoCliCommandString(command: ExecutorCommand): string {
-    const toString = command.command + " " + command.args.join(" ");
+    const toString = command.command + " " + command.args.filter(arg => arg).join(" ");
     return toString;
 }

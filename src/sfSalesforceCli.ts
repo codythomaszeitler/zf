@@ -34,7 +34,9 @@ export class SfSalesforceCli extends SalesforceCli {
         super(executor, proxy);
 
         this.cached = [];
-        this.previousGetOrgListPromise = this.noCacheGetOrgList();
+        this.previousGetOrgListPromise = this.noCacheGetOrgList({
+            skipConnectionStatus: false
+        });
         this.previousGetOrgListPromise.then((orgs) => {
             this.cached = orgs;
         });
@@ -42,19 +44,24 @@ export class SfSalesforceCli extends SalesforceCli {
 
     async getOrgList(): Promise<SalesforceOrg[]> {
         await this.previousGetOrgListPromise;
-        this.previousGetOrgListPromise = this.noCacheGetOrgList();
+        this.previousGetOrgListPromise = this.noCacheGetOrgList({
+            skipConnectionStatus: false
+        });
         this.previousGetOrgListPromise.then((orgs) => {
             this.cached = orgs;
         });
         return this.cached;
     }
 
-    private async noCacheGetOrgList(): Promise<SalesforceOrg[]> {
+    private async noCacheGetOrgList({ skipConnectionStatus }: {
+        skipConnectionStatus: boolean
+    }): Promise<SalesforceOrg[]> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
                 'org',
                 'list',
+                skipConnectionStatus ? '--skip-connection-status' : '',
                 '--json'
             ]
         };
@@ -89,6 +96,8 @@ export class SfSalesforceCli extends SalesforceCli {
         const sandboxes: SalesforceOrg[] = orgListResult.result.nonScratchOrgs.
             map((sandbox) => (new SalesforceOrg({
                 isActive: isSandboxConnected(sandbox),
+                isScratchOrg: false,
+                isDefaultOrg: sandbox.isDefaultUsername,
                 alias: sandbox.username ? sandbox.username : ''
             })));
         return sandboxes;
@@ -111,6 +120,8 @@ export class SfSalesforceCli extends SalesforceCli {
             map((scratchOrg) => (
                 new SalesforceOrg({
                     isActive: isScratchOrgConnected(scratchOrg),
+                    isScratchOrg: true,
+                    isDefaultOrg: scratchOrg.isDefaultUsername,
                     alias: scratchOrg.alias ? scratchOrg.alias : ''
                 })
             ));
@@ -132,37 +143,13 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async getDefaultOrg(): Promise<SalesforceOrg | null> {
-        const getAlias = (stdout: any) => {
-            if (!stdout || !stdout.result || stdout.result.length === 0) {
-                return null;
-            }
-
-            return stdout.result[0].value;
-        };
-
-        const command: ExecutorCommand = {
-            command: 'sf',
-            args: [
-                'config',
-                'get',
-                'target-org',
-                '--json'
-            ]
-        };
-
-        const { stdout } = await this.exec(command);
-
-        const alias = getAlias(stdout);
-        if (!alias) {
-            return null;
-        }
-
-        const org: SalesforceOrg = new SalesforceOrg({
-            alias,
-            isActive: true
+        const orgList = await this.noCacheGetOrgList({
+            skipConnectionStatus: true
         });
-
-        return org;
+        const defaultOrg = orgList.find(org =>
+            org.getIsDefaultOrg()
+        );
+        return defaultOrg ?? null;
     }
 
     async projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult> {

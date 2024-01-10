@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { describe, expect, it } from '@jest/globals';
-import { get, getMissingResultProperty, getMissingSandboxesProperty, getMissingScratchOrgsProperty, getNoSandboxesAndNoScratches, getOrgListUsersNominalResponse, getScratchOrgMissingAliasProperty, getScratchOrgMissingIsExpiredProperty } from './data/orgListOutput';
+import { get, getMissingResultProperty, getMissingSandboxesProperty, getMissingScratchOrgsProperty, getNoSandboxesAndNoScratches, getOrgListUsersNominalResponse, getOrgListUsersWithoutEmptyDefaultMarker, getScratchOrgMissingAliasProperty, getScratchOrgMissingIsExpiredProperty, getSfOrgListWithSkipConnectionNominalResponse } from './data/orgListOutput';
 import { SfSalesforceCli } from '../sfSalesforceCli';
 import { NO_SF_ORG_FOUND, SalesforceOrg } from "../salesforceOrg";
 import { ExecutorCommand } from '../executor';
-import { getWhenDefaultOrgDoesNotExist, getWhenDefaultOrgExists, getWhenResultArrayDoesNotExist, getWhenResultArrayIsEmpty } from './data/configGetOutput';
+import { getWhenResultKeyDoesNotExist, getWhenResultArrayIsEmpty } from './data/configGetOutput';
 import { getWithCustomObject, getWithFailureMessage, getWithoutResultArray } from './data/sobjectListOutputs';
 import { SObjectListResult } from '../sObjectListResult';
 import { SObjectApiName } from '../sObjectApiName';
@@ -16,6 +16,7 @@ import { getDebugLevelWithDeveloperName, getDebugLogWithDeveloperNameFilter, get
 import { DEBUG_LEVEL_SOBJECT_NAME } from '../debugLevelSObject';
 import { getApexListLogNominalResponse } from './data/apexListLogOutput';
 import { SalesforceId } from '../salesforceId';
+import { genCommandToStdOutput, getSfOrgListCommandString, getSfOrgListUsersCommandString } from './__mocks__/mockShell';
 
 describe('sf salesforce cli', () => {
 
@@ -113,12 +114,20 @@ describe('sf salesforce cli', () => {
 
     describe('salesforce cli - get default org', () => {
         it('should be able to get the default org when one exists', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": get(),
-                "sf config get target-org --json": getWhenDefaultOrgExists()
+            const targetOrg = new SalesforceOrg({
+                alias: 'cso'
             });
 
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+            const commandToStdOutput = genCommandToStdOutput();
+            commandToStdOutput[getSfOrgListCommandString({
+                skipConnectionStatus: true
+            })] = getSfOrgListWithSkipConnectionNominalResponse({
+                targetOrg
+            });
+
+            const cli: SfSalesforceCli = new SfSalesforceCli(genMockExecutor(
+                commandToStdOutput
+            ));
 
             const org: SalesforceOrg | null = await cli.getDefaultOrg();
             if (!org) {
@@ -129,34 +138,42 @@ describe('sf salesforce cli', () => {
         });
 
         it('should return null if no default org exists', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": get(),
-                "sf config get target-org --json": getWhenDefaultOrgDoesNotExist()
-            });
+            const commandToStdOutput = genCommandToStdOutput();
+            commandToStdOutput[getSfOrgListCommandString({
+                skipConnectionStatus: true
+            })] = getOrgListUsersWithoutEmptyDefaultMarker();
 
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+            const cli: SfSalesforceCli = new SfSalesforceCli(genMockExecutor(
+                commandToStdOutput
+            ));
 
             const org: SalesforceOrg | null = await cli.getDefaultOrg();
             expect(org).toBeNull();
         });
 
         it('should return null if result array is empty', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": get(),
-                "sf config get target-org --json": getWhenResultArrayIsEmpty()
-            });
+            const commandToStdOutput = genCommandToStdOutput();
+            commandToStdOutput[getSfOrgListCommandString({
+                skipConnectionStatus: true
+            })] = getWhenResultArrayIsEmpty();
 
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+            const cli: SfSalesforceCli = new SfSalesforceCli(genMockExecutor(
+                commandToStdOutput
+            ));
 
             const org: SalesforceOrg | null = await cli.getDefaultOrg();
             expect(org).toBeNull();
         });
 
+
+        // What really should happen here 
         it('should return null if result array does not exist', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": get(),
-                "sf config get target-org --json": getWhenResultArrayDoesNotExist()
-            });
+            const commandToStdOutput = genCommandToStdOutput();
+            commandToStdOutput[getSfOrgListCommandString({
+                skipConnectionStatus: true
+            })] = getWhenResultKeyDoesNotExist();
+
+            const mockExecutor = genMockExecutor(commandToStdOutput);
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
@@ -167,7 +184,7 @@ describe('sf salesforce cli', () => {
 
     function genMockExecutor(commandToStdOutput: any) {
         return async function (command: ExecutorCommand) {
-            const asString = command.command + ' ' + command.args.join(' ');
+            const asString = command.command + ' ' + command.args.filter(arg => arg).join(' ');
             const stdout = commandToStdOutput[asString];
 
             return {

@@ -6,8 +6,7 @@ import { OrgListUsersResult } from '../orgListUsersResult';
 import { SalesforceId } from '../salesforceId';
 import { getCurrentUser } from '../getCurrentUser';
 import { SfSalesforceCli } from '../sfSalesforceCli';
-import { genMockExecutor } from './__mocks__/mockShell';
-import { get } from './data/orgListOutput';
+import { genCommandToStdOutput, genMockExecutor, getSfOrgListUsersCommandString } from './__mocks__/mockShell';
 
 describe('get current user', () => {
 
@@ -86,9 +85,8 @@ describe('get current user with real cli results', () => {
 	beforeEach(() => {
 		testUsername = "test-a3cn1nmylp3a@example.com";
 
-		commandToStdOutput = {
-			'sf org list --json': get()
-		};
+		commandToStdOutput = genCommandToStdOutput();
+
 		cli = new SfSalesforceCli(genMockExecutor(commandToStdOutput));
 		org = new SalesforceOrg({
 			alias: 'cso',
@@ -97,7 +95,9 @@ describe('get current user with real cli results', () => {
 	});
 
 	it('should use data query to get user id if one is blank on org list users', async () => {
-		commandToStdOutput[`sf org list users --target-org ${org.getAlias()} --json`] = genOrgListUsersWithoutUserId({
+		commandToStdOutput[getSfOrgListUsersCommandString({
+			targetOrg: org
+		})] = genOrgListUsersWithoutUserId({
 			org
 		});
 		commandToStdOutput[`sf data query --query "SELECT Id FROM User WHERE Username = '${testUsername}'" --use-tooling-api --target-org ${org.getAlias()} --json`] = genUserDataQuery();
@@ -113,7 +113,9 @@ describe('get current user with real cli results', () => {
 	});
 
 	it('should use data query to get user id if one does not exist on org list users', async () => {
-		commandToStdOutput[`sf org list users --target-org ${org.getAlias()} --json`] = genOrgListUsersWithoutUserIdKey({
+		commandToStdOutput[getSfOrgListUsersCommandString({
+			targetOrg: org
+		})] = genOrgListUsersWithoutUserIdKey({
 			org
 		});
 		commandToStdOutput[`sf data query --query "SELECT Id FROM User WHERE Username = '${testUsername}'" --use-tooling-api --target-org ${org.getAlias()} --json`] = genUserDataQuery();
