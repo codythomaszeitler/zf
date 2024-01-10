@@ -152,7 +152,16 @@ export class SfSalesforceCli extends SalesforceCli {
         return defaultOrg ?? null;
     }
 
-    async projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult> {
+    async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[] }): Promise<ProjectDeployStartResult> {
+        const getSourceDirArgsIfExist = () => {
+            if (!params.sourceDir) {
+                return [];
+            }
+
+            return ['--source-dir',
+                ...params.sourceDir.map(uri => uri.getFileSystemPath())];
+        };
+
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -161,6 +170,7 @@ export class SfSalesforceCli extends SalesforceCli {
                 'start',
                 '--target-org',
                 params.targetOrg.getAlias(),
+                ...getSourceDirArgsIfExist(),
                 '--async',
                 '--json',
                 '--ignore-conflicts'
