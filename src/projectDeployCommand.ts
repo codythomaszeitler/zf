@@ -31,10 +31,9 @@ export class ProjectDeployCommand extends Command {
 				};
 			}
 
-			const sourceDir = !this.targetOrg.getIsScratchOrg() ? [...this.toDeploy.values()] : undefined;
 			do {
+				const sourceDir = this.getSourceDir();
 				this.toDeploy.clear();
-				this.state = 'In Progress';
 				await projectDeploy({
 					ide: this.getIde(),
 					cli: this.getCli(),
@@ -64,5 +63,13 @@ export class ProjectDeployCommand extends Command {
 		sfMetadataUris.forEach(sfMetadataUri => {
 			this.toDeploy.set(sfMetadataUri.getFileSystemPath(), sfMetadataUri);
 		});
+	}
+
+	private getSourceDir() {
+		if (!this.targetOrg) {
+			return undefined;
+		}
+		const sourceDir = !this.targetOrg.getIsScratchOrg() ? [...this.toDeploy.values()] : undefined;
+		return sourceDir;
 	}
 }
