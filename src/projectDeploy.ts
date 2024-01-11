@@ -205,9 +205,13 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
                     if (isComplete) {
                         projectDeployCommand = undefined;
                     }
+                }).catch(e => {
+                    ide.showErrorMessage(e.message);
+                    projectDeployCommand = undefined;
                 });
             }, {
-                title: getTitle(uris)
+                title: getTitle(uris),
+                isCancellable: false
             });
         }
     };
