@@ -180,7 +180,8 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
 
     const toDeploy = new Map<string, Uri>();
     async function runQueueableProjectDeploy() {
-        if (!targetOrg) {
+        if (!targetOrg || toDeploy.size === 0) {
+            projectDeployState = 'Not Started';
             return;
         }
 
@@ -215,23 +216,36 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
     return async function onDidSaveTextDocuments({ textDocuments }: {
         textDocuments: TextDocument[]
     }): Promise<void> {
+        const getTitle = () => {
+            if (projectDeployState === 'Not Started') {
+                return `Checking / Queueing Salesforce Metadata for deployment`;
+            }
+            else {
+                return `Checking / Queueing Salesforce Metadata for deployment ${textDocuments.map(textDocument => textDocument.uri.getBaseName()).join(' ')}`;
+            };
+        };
+
         const shouldDeployOnSave = ide.getConfig("sf.zsi.vscode.deployOnSave", true);
         if (shouldDeployOnSave) {
             await ide.withProgress(async progressToken => {
+                const uris = textDocuments.map(textDocument => textDocument.uri);
+                const sfMetadataUris = await ide.getSalesforceMetadataUris(uris);
+                if (sfMetadataUris.length === 0) {
+                    return;
+                }
+
+                sfMetadataUris.forEach(uri => {
+                    toDeploy.set(uri.getFileSystemPath(), uri);
+                });
                 if (projectDeployState === 'Not Started') {
                     targetOrg = await cli.getDefaultOrg();
                 }
 
                 if (targetOrg) {
-                    const sfMetadataUris = await ide.getSalesforceMetadataUris(textDocuments.map(textDocument => textDocument.uri));
-                    sfMetadataUris.forEach(uri => {
-                        toDeploy.set(uri.getFileSystemPath(), uri);
-                    });
-
                     await runQueueableProjectDeploy();
                 }
             }, {
-                title: 'Queueing Project Deploy'
+                title: getTitle()
             });
         }
     };
