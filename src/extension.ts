@@ -13,7 +13,7 @@ import { getRecentApexLogs } from './getRecentApexLogs';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
 import { RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
-import { CacheReadSfdxProjectCommand } from './readSfdxProjectCommand';
+import { CacheReadSfdxProjectCommand, genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
@@ -214,22 +214,10 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
-	const readSfdxProjectCommand = new CacheReadSfdxProjectCommand({
+	ide.onDidSaveTextDocuments(genCacheSfdxProjectOnSave({
 		cli: salesforceCli,
 		ide
-	});
-	readSfdxProjectCommand.execute();
-
-	ide.onDidSaveTextDocuments(async ({ textDocuments }) => {
-		const sfdxProjectUri = textDocuments.find(textDocument => textDocument.uri.getBaseName() === 'sfdx-project.json');
-		if (sfdxProjectUri) {
-			const readSfdxProjectCommand = new CacheReadSfdxProjectCommand({
-				cli: salesforceCli,
-				ide
-			});
-			readSfdxProjectCommand.execute();
-		}
-	});
+	}));
 
 	ide.onDidSaveTextDocuments(genOnDidSaveTextDocuments({
 		cli: salesforceCli,
