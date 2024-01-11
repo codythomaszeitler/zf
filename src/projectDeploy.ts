@@ -6,6 +6,7 @@ import { Position } from "./position";
 import { Range } from "./range";
 import { ProgressToken } from "./progressToken";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
+import { ProjectDeployCommand } from "./projectDeployCommand";
 
 export async function projectDeploy(params: {
     targetOrg?: SalesforceOrg,
@@ -169,83 +170,44 @@ function didHaveAnyFailures(projectDeployReportResult: ProjectDeployReportResult
     });
 }
 
-type ProjectDeployState = 'In Progress' | 'Not Started' | 'Queued';
-
 export function genOnDidSaveTextDocuments({ cli, ide }: {
     cli: SalesforceCli,
     ide: IntegratedDevelopmentEnvironment
 }) {
-    let projectDeployState: ProjectDeployState = 'Not Started';
-    let targetOrg: SalesforceOrg | null = null;
+    let projectDeployCommand: ProjectDeployCommand | undefined = undefined;
 
-    const toDeploy = new Map<string, Uri>();
-    async function runQueueableProjectDeploy() {
-        if (!targetOrg || toDeploy.size === 0) {
-            projectDeployState = 'Not Started';
-            return;
+    const getTitle = (uris: Uri[]) => {
+        if (projectDeployCommand) {
+            return `Checking/Adding files to deployment queue ${uris.map(uri => uri.getBaseName()).join(" ")}`;
+        } else {
+            return 'Starting Deployment Queue';
         }
 
-        if (projectDeployState === 'Not Started') {
-            projectDeployState = 'In Progress';
-
-            const sourceDir = !targetOrg.getIsScratchOrg() ? [...toDeploy.values()] : undefined;
-            toDeploy.clear();
-            await projectDeploy({
-                ide,
-                cli,
-                sourceDir,
-                targetOrg
-            }).then(async () => {
-                if (projectDeployState === 'Queued') {
-                    projectDeployState = 'Not Started';
-                    await runQueueableProjectDeploy();
-                } else {
-                    projectDeployState = 'Not Started';
-                    targetOrg = null;
-                }
-            }).catch((e: any) => {
-                ide.showErrorMessage(e.message);
-                projectDeployState = 'Not Started';
-                targetOrg = null;
-            });
-        } else if (projectDeployState === 'In Progress') {
-            projectDeployState = 'Queued';
-        }
-    }
+    };
 
     return async function onDidSaveTextDocuments({ textDocuments }: {
         textDocuments: TextDocument[]
     }): Promise<void> {
-        const getTitle = () => {
-            if (projectDeployState === 'Not Started') {
-                return `Checking / Queueing Salesforce Metadata for deployment`;
-            }
-            else {
-                return `Checking / Queueing Salesforce Metadata for deployment ${textDocuments.map(textDocument => textDocument.uri.getBaseName()).join(' ')}`;
-            };
-        };
 
         const shouldDeployOnSave = ide.getConfig("sf.zsi.vscode.deployOnSave", true);
         if (shouldDeployOnSave) {
+            const uris = textDocuments.map(textDocument => textDocument.uri);
             await ide.withProgress(async progressToken => {
-                const uris = textDocuments.map(textDocument => textDocument.uri);
-                const sfMetadataUris = await ide.getSalesforceMetadataUris(uris);
-                if (sfMetadataUris.length === 0) {
-                    return;
+                if (!projectDeployCommand) {
+                    projectDeployCommand = new ProjectDeployCommand({
+                        ide,
+                        cli
+                    });
                 }
-
-                sfMetadataUris.forEach(uri => {
-                    toDeploy.set(uri.getFileSystemPath(), uri);
+                await projectDeployCommand.execute({
+                    uris
+                }).then(({ isComplete }) => {
+                    if (isComplete) {
+                        projectDeployCommand = undefined;
+                    }
                 });
-                if (projectDeployState === 'Not Started') {
-                    targetOrg = await cli.getDefaultOrg();
-                }
-
-                if (targetOrg) {
-                    await runQueueableProjectDeploy();
-                }
             }, {
-                title: getTitle()
+                title: getTitle(uris)
             });
         }
     };
