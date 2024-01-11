@@ -223,8 +223,9 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
                 }
 
                 if (targetOrg) {
-                    textDocuments.filter(textDocument => textDocument.uri.isApexClass()).forEach(textDocument => {
-                        toDeploy.set(textDocument.uri.getFileSystemPath(), textDocument.uri);
+                    const sfMetadataUris = await ide.getSalesforceMetadataUris(textDocuments.map(textDocument => textDocument.uri));
+                    sfMetadataUris.forEach(uri => {
+                        toDeploy.set(uri.getFileSystemPath(), uri);
                     });
 
                     await runQueueableProjectDeploy();

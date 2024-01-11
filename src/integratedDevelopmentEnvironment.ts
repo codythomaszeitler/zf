@@ -5,6 +5,8 @@ import { SalesforceOrg } from "./salesforceOrg";
 import { BulkDocumentSaveListener } from "./bulkDocumentSaveListener";
 export { Uri } from './uri';
 import { Uri } from './uri';
+import { SfdxProject } from "./readSfdxProjectCommand";
+import { Logger } from "./logger";
 
 export const APEX_LANGUAGE_ID = 'apex';
 
@@ -12,8 +14,9 @@ export abstract class IntegratedDevelopmentEnvironment {
 
     private bulkDocumentSaveListener: BulkDocumentSaveListener;
     private readonly currentDir: Uri;
+    private sfdxProject: SfdxProject | undefined;
 
-    constructor({ currentDir }: { currentDir: Uri }) {
+    constructor({ currentDir }: { currentDir: Uri; }) {
         this.bulkDocumentSaveListener = new BulkDocumentSaveListener();
         this.currentDir = currentDir;
     }
@@ -34,6 +37,34 @@ export abstract class IntegratedDevelopmentEnvironment {
 
     public onDidSaveTextDocuments(listener: OnSaveTextDocumentsListener): void {
         this.bulkDocumentSaveListener.onBulkSaveListener(listener);
+    }
+
+    public setCachedSfdxProject(sfdxProject: SfdxProject) {
+        this.sfdxProject = sfdxProject;
+    }
+
+    public getCachedSfdxProject() {
+        return this.sfdxProject;
+    }
+
+    public async getSalesforceMetadataUris(uris: Uri[]): Promise<Uri[]> {
+        if (!this.sfdxProject) {
+            Logger.get().warn(`Tried to run 'isSalesforceMetadata' without sfdx-project loaded into IDE.`);
+            return [];
+        }
+
+        const fileGlobs = "{" + uris.map(uri => uri.getBaseName()).join(",") + "}";
+        const packageDirPaths = "{" + this.sfdxProject.packageDirectories.map(packageDir => packageDir.path).join(",") + "}";
+
+        const sfMetadataUris: Uri[] = [];
+        const promises = this.sfdxProject.packageDirectories.map(packageDir => {
+            return this.findFiles(`${packageDirPaths}/**/${fileGlobs}`, this.getCurrentDir()).then((uris: Uri[]) => {
+                sfMetadataUris.push(...uris);
+            });
+        });
+
+        await Promise.all(promises);
+        return sfMetadataUris;
     }
 
     abstract showQuickPick(items: string[]): Thenable<string>;
@@ -71,7 +102,7 @@ export abstract class IntegratedDevelopmentEnvironment {
 export interface OnSaveTextDocumentsEvent {
     textDocuments: TextDocument[]
 }
-export type OnSaveTextDocumentsListener = (e: OnSaveTextDocumentsEvent) => void;
+export type OnSaveTextDocumentsListener = (e: OnSaveTextDocumentsEvent) => Promise<void>;
 export type OnSaveTextDocumentListener = (e: { textDocument: TextDocument }) => void;
 
 export interface TextDocument {

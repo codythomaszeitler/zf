@@ -20,6 +20,14 @@ export class ReadSfdxProjectCommand extends Command {
 	}
 }
 
+export class CacheReadSfdxProjectCommand extends ReadSfdxProjectCommand {
+	public async execute(): Promise<SfdxProject> {
+		const sfdxProject = await super.execute();
+		this.getIde().setCachedSfdxProject(sfdxProject);
+		return sfdxProject;
+	}
+}
+
 export interface SfdxProject {
 	readonly packageDirectories: {
 		readonly path: string;
