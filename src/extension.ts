@@ -13,7 +13,7 @@ import { getRecentApexLogs } from './getRecentApexLogs';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
 import { RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
-import { ReadSfdxProjectCommand } from './readSfdxProjectCommand';
+import { CacheReadSfdxProjectCommand } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
@@ -213,6 +213,23 @@ export function activate(context: vscode.ExtensionContext) {
 			title: 'Generating offline symbol table'
 		});
 	}
+
+	const readSfdxProjectCommand = new CacheReadSfdxProjectCommand({
+		cli: salesforceCli,
+		ide
+	});
+	readSfdxProjectCommand.execute();
+
+	ide.onDidSaveTextDocuments(async ({ textDocuments }) => {
+		const sfdxProjectUri = textDocuments.find(textDocument => textDocument.uri.getBaseName() === 'sfdx-project.json');
+		if (sfdxProjectUri) {
+			const readSfdxProjectCommand = new CacheReadSfdxProjectCommand({
+				cli: salesforceCli,
+				ide
+			});
+			readSfdxProjectCommand.execute();
+		}
+	});
 
 	ide.onDidSaveTextDocuments(genOnDidSaveTextDocuments({
 		cli: salesforceCli,
