@@ -1,6 +1,6 @@
 {
-  "name": "sf-zsi",
-  "displayName": "sf zsi",
+  "name": "zf",
+  "displayName": "ZeitlerForce",
   "repository": "https://github.com/codythomaszeitler/sf-zsi.git",
   "description": "vscode extensions for salesforce.",
   "version": "0.0.1",
@@ -13,48 +13,49 @@
   "activationEvents": [
     "workspaceContains:sfdx-project.json"
   ],
+  "publisher": "zsi",
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "sf.zsi.openOrg",
-        "title": "SF ZSI: Open Org"
+        "title": "ZF: Open Org"
       },
       {
         "command": "sf.zsi.projectDeploy",
-        "title": "SF ZSI: Project Deploy"
+        "title": "ZF: Project Deploy"
       },
       {
         "command": "sf.zsi.generateFauxSObjects",
-        "title": "SF ZSI: Generate Faux SObjects"
+        "title": "ZF: Generate Faux SObjects"
       },
       {
         "command": "sf.zsi.runHighlightedApex",
-        "title": "SF ZSI: Run Highlighted Apex"
+        "title": "ZF: Run Highlighted Apex"
       },
       {
         "command": "sf.zsi.enableDebugLogForCurrentUser",
-        "title": "SF ZSI: Enable Debug Logging"
+        "title": "ZF: Enable Debug Logging"
       },
       {
         "command": "sf.zsi.getRecentApexLogs",
-        "title": "SF ZSI: Get Recent Apex Logs"
+        "title": "ZF: Get Recent Apex Logs"
       },
       {
         "command": "sf.zsi.cleanLocalApexLogs",
-        "title": "SF ZSI: Clean Local Apex Logs"
+        "title": "ZF: Clean Local Apex Logs"
       },
       {
         "command": "sf.zsi.refreshApexLogs",
-        "title": "SF ZSI: Refresh Apex Logs"
+        "title": "ZF: Refresh Apex Logs"
       },
       {
         "command": "sf.zsi.runTestUnderCursor",
-        "title": "SF ZSI: Run Test Under Cursor"
+        "title": "ZF: Run Test Under Cursor"
       },
       {
         "command" : "sf.zsi.generateOfflineSymbolTable",
-        "title": "SF ZSI: Generate Apex Offline Symbol Table"
+        "title": "ZF: Generate Apex Offline Symbol Table"
       }
     ],
     "views": {
