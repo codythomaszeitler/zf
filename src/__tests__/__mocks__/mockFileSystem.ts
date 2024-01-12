@@ -55,7 +55,9 @@ export class MockFileSystem {
 		}
 		glob = startOfPath + glob;
 
-		const re = globToRegExp(glob);
+		const re = globToRegExp(glob, {
+			extended: true
+		});
 		const found = [];
 
 		for (const file of this.files) {

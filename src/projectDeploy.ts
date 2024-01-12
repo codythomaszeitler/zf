@@ -143,7 +143,7 @@ async function showFailuresInProblemsTab(ide: IntegratedDevelopmentEnvironment, 
 function showFailuresInProblemsTabForFile(ide: IntegratedDevelopmentEnvironment, fileName: string, projectDeployReportResult: ProjectDeployReportResult): Promise<void> {
 
     const componentFailures = projectDeployReportResult.getFailuresForFileName(fileName);
-    return ide.findFile(`**/${fileName}`).then(uri => {
+    return ide.findFile(`**/${fileName}`, ide.getCurrentDir()).then(uri => {
         if (uri) {
             const diagnostics = componentFailures.map(intoDiagnostic);
             ide.setDiagnostics(uri, diagnostics);

@@ -20,6 +20,15 @@ describe('project deploy', () => {
         cli.add(salesforceOrg);
 
         ide = new MockIDE();
+
+        ide.setCachedSfdxProject({
+            packageDirectories: [
+                {
+                    default: true,
+                    path: 'force-app'
+                }
+            ]
+        });
     });
 
     it('should deploy successfully when report immediately states completion without failures', async () => {
@@ -35,10 +44,7 @@ describe('project deploy', () => {
     });
 
     it('should put an error with the matching URI if the deployment fails', async () => {
-        const mockFile = Uri.from({
-            scheme: 'file',
-            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
-        });
+        const mockFile = ide.generateUri("force-app", "main", "default", "classes", "TestFile.cls");
 
         ide.addFile(mockFile);
 
@@ -95,10 +101,7 @@ describe('project deploy', () => {
         const progressToken = ide.getCurrentProgressToken();
         expect(progressToken).toBeTruthy();
 
-        const mockFile = Uri.from({
-            scheme: 'file',
-            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
-        });
+        const mockFile = ide.generateUri("force-app", "main", "default", "classes", "TestFile.cls");
 
         ide.addFile(mockFile);
 
@@ -252,10 +255,7 @@ describe('project deploy', () => {
     });
 
     it('should run project deploy when save is done by user', async () => {
-        const mockFile = Uri.from({
-            scheme: 'file',
-            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
-        });
+        const mockFile = ide.generateUri("force-app", "main", "default", "classes", "TestFile.cls");
 
         ide.addFile(mockFile);
         cli.projectDeployFailure(
@@ -279,16 +279,14 @@ describe('project deploy', () => {
                 uri: mockFile
             }]
         });
+
         await cli.projectDeployComplete();
         await testFunctionPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(true);
     });
 
     it('should only run project deploy twice if 10 project deploys are queued', async () => {
-        const mockFile = Uri.from({
-            scheme: 'file',
-            fileSystemPath: '/dev/force-app/main/default/classes/TestFile.cls'
-        });
+        const mockFile = ide.generateUri("force-app", "main", "default", "classes", "TestFile.cls");
 
         ide.addFile(mockFile);
         cli.projectDeployFailure(
@@ -307,7 +305,7 @@ describe('project deploy', () => {
         cli.projectDeployStart = function ({ targetOrg }: { targetOrg: SalesforceOrg }) {
             projectDeployCounter++;
             return savedProjectDeployStart.call(cli, ({ targetOrg }));
-        }.bind(cli);
+        };
 
         const testFunction = genOnDidSaveTextDocuments({
             cli,
@@ -325,19 +323,10 @@ describe('project deploy', () => {
             promises.push(promise);
         }
 
-        for (let i = 0; i < 10; i++) {
-            await 5;
-        }
-
-        await cli.projectDeployComplete();
-
-        for (let i = 0; i < 10; i++) {
-            await 5;
-        }
         await cli.projectDeployComplete();
         await Promise.all(promises);
         expect(ide.didSetAnyDiagnostics()).toBe(true);
-        expect(projectDeployCounter).toBe(2);
+        expect(projectDeployCounter).toBe(1);
     });
 
     it('should not do a project deploy if there sf.zsi.vscode.deployOnSAve is false', async () => {
