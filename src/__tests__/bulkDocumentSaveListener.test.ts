@@ -16,7 +16,7 @@ describe('integrated development environment', () => {
 		jest.useFakeTimers();
 
 		let counter = 0;
-		const listener: OnSaveTextDocumentsListener = (e: OnSaveTextDocumentsEvent) => {
+		const listener: OnSaveTextDocumentsListener = async (e: OnSaveTextDocumentsEvent) => {
 			if (counter === 0) {
 				expect(e.textDocuments).toHaveLength(3);
 			} else if (counter === 1) {
