@@ -31,6 +31,12 @@ export class ProjectDeployCommand extends Command {
 				};
 			}
 
+			if (this.toDeploy.size === 0) {
+				return {
+					isComplete: true
+				}; 
+			}
+
 			do {
 				const sourceDir = this.getSourceDir();
 				this.toDeploy.clear();

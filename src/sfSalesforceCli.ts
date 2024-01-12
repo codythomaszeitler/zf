@@ -159,7 +159,7 @@ export class SfSalesforceCli extends SalesforceCli {
             }
 
             return ['--source-dir',
-                ...params.sourceDir.map(uri => uri.getFileSystemPath())];
+                ...params.sourceDir.map(uri => '"' + uri.getFileSystemPath() + '"')];
         };
 
         const command: ExecutorCommand = {
