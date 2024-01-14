@@ -41,6 +41,18 @@ describe('project deploy command to sandbox', () => {
 			uri
 		}));
 
+		let deployedUris = null;
+		const savedProjectDeployStart = cli.projectDeployStart.bind(cli);
+		cli.projectDeployStart = function ({
+			targetOrg,
+			sourceDir
+		}) {
+			deployedUris = sourceDir;
+			return savedProjectDeployStart({
+				targetOrg
+			});
+		};
+
 		const deployPromise = testObject.execute({
 			uris: [uri]
 		});
@@ -49,6 +61,12 @@ describe('project deploy command to sandbox', () => {
 
 		await deployPromise;
 		expect(ide.didSetAnyDiagnostics()).toBe(true);
+
+		if (deployedUris) {
+			expect(deployedUris).toHaveLength(1);
+		} else {
+			expect(true).toBe(false);
+		}
 	});
 
 	it('should deploy specific uris in the same queue if not yet completed', async () => {
@@ -230,5 +248,65 @@ describe('project deploy command when there is no default org', () => {
 
 		await deployPromise;
 		expect(ide.didSetAnyDiagnostics()).toBe(true);
+	});
+});
+
+describe('project deploy command to scratch org', () => {
+	let cli: MockSalesforceCli;
+	let ide: MockIDE;
+	let sandbox: SalesforceOrg;
+
+	let testObject: ProjectDeployCommand;
+
+	beforeEach(() => {
+		cli = new MockSalesforceCli();
+		ide = new MockIDE();
+		sandbox = new SalesforceOrg({
+			alias: 'testSandbox',
+			isActive: true,
+			isDefaultOrg: true,
+			isScratchOrg: true
+		});
+
+		testObject = new ProjectDeployCommand({
+			cli,
+			ide
+		});
+
+		cli.setDefaultOrg(sandbox);
+
+		ide.setCachedSfdxProject(MockIDE.genDefaultForceAppSfdxProject());
+	});
+
+	it('should not have source dir during deployment', async () => {
+		const uri = ide.generateUri("force-app", "main", "default", "classes", "TestFile.cls");
+		ide.addFile(uri);
+
+		cli.projectDeployFailure(MockSalesforceCli.genProjectDeployFailure({
+			uri
+		}));
+
+		let deployedUris = null;
+		const savedProjectDeployStart = cli.projectDeployStart.bind(cli);
+		cli.projectDeployStart = function ({
+			targetOrg,
+			sourceDir
+		}) {
+			deployedUris = sourceDir;
+			return savedProjectDeployStart({
+				targetOrg
+			});
+		};
+
+		const deployPromise = testObject.execute({
+			uris: [uri]
+		});
+
+		await cli.projectDeployComplete();
+
+		await deployPromise;
+		expect(ide.didSetAnyDiagnostics()).toBe(true);
+
+		expect(deployedUris).toBe(undefined);
 	});
 });

@@ -117,7 +117,7 @@ export class MockSalesforceCli extends SalesforceCli {
         return !!this.openedOrgs.find((org) => org.getAlias() === alias);
     }
 
-    async projectDeployStart(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployStartResult> {
+    async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[] }): Promise<ProjectDeployStartResult> {
         if (this.noComponentsToDeploy) {
             return new ProjectDeployStartResult({
                 jobId: new JobId('')
