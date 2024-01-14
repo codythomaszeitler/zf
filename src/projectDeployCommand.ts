@@ -26,15 +26,17 @@ export class ProjectDeployCommand extends Command {
 			});
 
 			if (!this.targetOrg) {
+				this.state = 'Not Running';
 				return {
 					isComplete: true
 				};
 			}
 
 			if (this.toDeploy.size === 0) {
+				this.state = 'Not Running';
 				return {
 					isComplete: true
-				}; 
+				};
 			}
 
 			do {

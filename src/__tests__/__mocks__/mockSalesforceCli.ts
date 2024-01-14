@@ -198,6 +198,27 @@ export class MockSalesforceCli extends SalesforceCli {
         this.failures.push(failure);
     }
 
+    public static genProjectDeployFailure({
+        uri
+    }: {
+        uri: Uri
+    }) {
+        const getFileName = () => {
+            if (uri.isApexClass()) {
+                return `classes/${uri.getBaseName()}`;
+            } else {
+                return 'NOT-IMPL';
+            }
+        };
+
+        return {
+            columnNumber: 1,
+            lineNumber: 1,
+            fileName: getFileName(),
+            problem: 'This is an error!'
+        };
+    }
+
     wasDeploymentCancelled(jobId: JobId | null) {
         return jobId === this.deploymentJobId && this.deploymentStatus === 'cancelled';
     }
