@@ -1,6 +1,7 @@
 import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
+import { SfdxProject } from "../../readSfdxProjectCommand";
 import { SalesforceOrg } from "../../salesforceOrg";
 import { TreeView } from "../../treeView";
 import { MockFileSystem } from "./mockFileSystem";
@@ -61,6 +62,17 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this.currentProgressToken = null;
         this.shownTextDocuments = [];
         this.activeTextEditor = null;
+    }
+
+    public static genDefaultForceAppSfdxProject(): SfdxProject {
+        return {
+            packageDirectories: [
+                {
+                    default: true,
+                    path: 'force-app'
+                }
+            ]
+        };
     }
 
     public setActiveTextEditor(activeTextEditor: ActiveTextEditor | null): void {
