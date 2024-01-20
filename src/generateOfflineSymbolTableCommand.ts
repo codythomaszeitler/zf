@@ -1,4 +1,4 @@
-import { ApexClass, ApexModifier, Parameter } from "./apexClass";
+import { ApexClass } from "./apexClass";
 import { ApexClassSelector } from "./apexClassSelector";
 import { Command } from "./command";
 import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
@@ -121,72 +121,19 @@ class ApexClassWriter {
 	}
 
 	private async writeApexClass(apexClass: ApexClass) {
-		const uri = getOfflineSymbolTableApexClassUri({
-			targetOrg: this.targetOrg,
-			apexClass: apexClass,
-			outputDir: this.outputDir
-		});
+		const body = apexClass.getBody();
+		if (body) {
+			const uri = getOfflineSymbolTableApexClassUri({
+				targetOrg: this.targetOrg,
+				apexClass: apexClass,
+				outputDir: this.outputDir
+			});
 
-		await this.ide.writeFile({
-			uri,
-			contents: apexClassIntoString({
-				apexClass: apexClass
+			await this.ide.writeFile({
+				uri,
+				contents: apexClass.getBody()
 			})
-		});
-	}
-}
-
-function apexClassIntoString(params: {
-	apexClass: ApexClass
-}) {
-	const separator = '\n\t';
-
-	const constructors = apexClassConstructorsIntoString();
-	const methods = apexMethodsIntoString();
-	const properties = apexPropertiesIntoString();
-	return `global class ${params.apexClass.getName()} {\n\t${constructors}${methods}${properties}}`;
-
-	function apexParametersIntoString(parameters: Parameter[]) {
-		return parameters.map(parameter => {
-			return parameter.type + ' ' + parameter.name;
-		}).join(', ');
-	}
-
-	function getStaticModifierIfExist(modifiers: ApexModifier[]) {
-		if (modifiers.includes('static')) {
-			return 'static ';
-		} else {
-			return '';
 		}
-	}
-
-	function apexClassConstructorsIntoString() {
-		const publicConstructors = params.apexClass.getPublicConstructors();
-
-		const asStrings = publicConstructors.map(publicConstructor => {
-			return `global ${publicConstructor.name}(${apexParametersIntoString(publicConstructor.parameters)}) {}`;
-		});
-
-		return asStrings.join(separator);
-	}
-
-	function apexMethodsIntoString() {
-		const publicMethods = params.apexClass.getPublicMethods();
-
-		const asStrings = publicMethods.map(publicMethod => {
-			return `global ${getStaticModifierIfExist(publicMethod.modifiers)}${publicMethod.returnType} ${publicMethod.name}(${apexParametersIntoString(publicMethod.parameters)}) {}`;
-		});
-
-		return asStrings.join(separator);
-	}
-
-	function apexPropertiesIntoString() {
-		const publicProperties = params.apexClass.getPublicProperties();
-
-		const asStrings = publicProperties.map(publicProperty => {
-			return `global ${getStaticModifierIfExist(publicProperty.modifiers)}${publicProperty.type} ${publicProperty.name};`;
-		});
-
-		return asStrings.join(separator);
+		;
 	}
 }

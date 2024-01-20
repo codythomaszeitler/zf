@@ -135,8 +135,7 @@ function apiTypeNameToApexTypeName(type: SObjectFieldType) {
     } else if (type === 'double' || type === 'percent' || type === 'currency') {
         return 'Double';
     }
-}
 
-// global class Account {
-//     global String Name;
-//}
+    // TODO: Add lookup field.
+    // TODO: Add child relationships here.
+}
