@@ -7,19 +7,26 @@ export class ApexClass {
 	private readonly id?: SalesforceId;
 	private readonly symbolTable?: SymbolTable;
 	private readonly name: string;
+	private readonly body: string;
 
 	public constructor(params: {
 		id?: SalesforceId,
 		name: string,
-		symbolTable?: SymbolTable
+		symbolTable?: SymbolTable,
+		body?: string
 	}) {
 		this.id = params.id;
 		this.symbolTable = params.symbolTable;
 		this.name = params.name;
+		this.body = params.body ?? "";
 	}
 
 	public getName() {
 		return this.name;
+	}
+
+	public getBody() {
+		return this.body;
 	}
 
 	public getNameWithExtension() {

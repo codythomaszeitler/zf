@@ -9,19 +9,21 @@ export class ApexClassSelector extends Selector {
 			targetOrg,
 			query: {
 				from: APEX_CLASS_SOBJECT_NAME,
-				fields: ['Name', 'SymbolTable']
+				fields: ['Name', 'SymbolTable', 'Body']
 			}
 		});
 
 		return dataQueryResults.getSObjects().map(sObject => {
 			const recordId = SalesforceId.get(sObject["Id"]);
 			const name = sObject["Name"];
+			const body = sObject["Body"] !== '(hidden)' ? sObject["Body"] : '';
 			const symbolTable = sObject["SymbolTable"] as SymbolTable;
 
 			return new ApexClass({
 				id: recordId,
 				name,
-				symbolTable
+				symbolTable,
+				body
 			});
 		});
 	}
