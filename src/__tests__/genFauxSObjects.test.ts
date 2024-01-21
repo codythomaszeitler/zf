@@ -67,10 +67,6 @@ describe('gen faux sobjects', () => {
                 new SObjectFieldDescribeResult({
                     apiName: 'Test_Currency__c',
                     type: 'currency'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Lookup__c',
-                    type: 'reference'
                 })
             ],
             childRelationships: []
@@ -118,8 +114,6 @@ describe('gen faux sobjects', () => {
 	global String Test_EncryptedString__c;
 	global Date Test_Date__c;
 	global Double Test_Currency__c;
-	global Id Test_Lookup__c;
-	global Id Test_Lookup__c;
 }`);
     });
 });
