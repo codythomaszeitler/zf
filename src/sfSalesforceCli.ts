@@ -16,7 +16,7 @@ import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { SObject } from "./sObject";
 import { SObjectApiName } from "./sObjectApiName";
-import { SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
+import { SObjectChildRelationshipDescribeResult, SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
 import { SObjectListResult } from "./sObjectListResult";
 import { SalesforceCli } from "./salesforceCli";
 import { NULL_SF_ID, SalesforceId } from "./salesforceId";
@@ -308,13 +308,23 @@ export class SfSalesforceCli extends SalesforceCli {
         const fields: SObjectFieldDescribeResult[] = stdout.result.fields.map((field: any) => {
             return new SObjectFieldDescribeResult({
                 apiName: field.name,
-                type: field.type
+                type: field.type,
+                referenceTo: field.referenceTo,
+                relationshipName: field.relationshipName
+            });
+        });
+
+        const childRelationships: SObjectChildRelationshipDescribeResult[] = stdout.result.childRelationships.map((childRelationship: any) => {
+            return new SObjectChildRelationshipDescribeResult({
+                childSObject: childRelationship.childSObject,
+                relationshipName: childRelationship.relationshipName
             });
         });
 
         const result: SObjectDescribeResult = new SObjectDescribeResult({
             apiName: params.sObjectApiName,
-            fields
+            fields,
+            childRelationships
         });
         return result;
     }
