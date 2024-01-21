@@ -110,12 +110,12 @@ export interface FauxSObjectField {
 function mapFields(fields: SObjectFieldDescribeResult[]): FauxSObjectField[] {
     const apexFields: FauxSObjectField[] = [];
     fields.forEach(field => {
-        apexFields.push(...apiTypeNameToApexTypeName(field));
+        apexFields.push(...describeResultToApexField(field));
     });
     return apexFields;
 }
 
-function apiTypeNameToApexTypeName(field: SObjectFieldDescribeResult): FauxSObjectField[] {
+function describeResultToApexField(field: SObjectFieldDescribeResult): FauxSObjectField[] {
     const fauxSObjectFields: FauxSObjectField[] = [];
     if (field.getType() === 'string' || field.getType() === 'url' || field.getType() === 'phone' || field.getType() === 'picklist' || field.getType() === 'multipicklist' || field.getType() === 'textarea' || field.getType() === 'encryptedstring') {
         const fauxSObjectField: FauxSObjectField = {
