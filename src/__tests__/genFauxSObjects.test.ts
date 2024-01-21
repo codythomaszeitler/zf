@@ -72,7 +72,8 @@ describe('gen faux sobjects', () => {
                     apiName: 'Test_Lookup__c',
                     type: 'reference'
                 })
-            ]
+            ],
+            childRelationships: []
         });
         const output: FauxSObjectApexClass = generateFauxSObject({
             describe
@@ -101,7 +102,7 @@ describe('gen faux sobjects', () => {
         });
 
         expect(asString).toBe(
-`global class Account {
+            `global class Account {
 	global String Name;
 	global Id Id;
 	global Boolean IsDeleted;
@@ -117,6 +118,8 @@ describe('gen faux sobjects', () => {
 	global String Test_EncryptedString__c;
 	global Date Test_Date__c;
 	global Double Test_Currency__c;
+	global Id Test_Lookup__c;
+	global Id Test_Lookup__c;
 }`);
     });
 });

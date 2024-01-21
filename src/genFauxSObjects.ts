@@ -1,15 +1,14 @@
 import { Logger } from "./logger";
 import { ProgressToken } from "./progressToken";
-import { SObjectDescribeResult, SObjectFieldDescribeResult, SObjectFieldType } from "./sObjectDescribeResult";
+import { SObjectChildRelationshipDescribeResult, SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
 import { SObjectListResult } from "./sObjectListResult";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceOrg } from "./salesforceOrg";
 import * as fs from "fs/promises";
 
-export function fauxSObjectIntoString(params: {
+export function fauxSObjectIntoString({ fauxApexClass }: {
     fauxApexClass: FauxSObjectApexClass
 }) {
-    const fauxApexClass = params.fauxApexClass;
     const fields = fauxApexClass.fields.map(field => '\t' + field.modifier + ' ' + field.type + ' ' + field.name + ';').join('\n');
     return `global class ${fauxApexClass.name} {\n` + fields + '\n}';
 }
@@ -21,7 +20,7 @@ export async function generateFauxSObjects(params: {
     progressToken: ProgressToken
 }) {
     await fs.mkdir(params.outputDir, {
-        recursive : true
+        recursive: true
     });
 
     const sobjectListResult: SObjectListResult = await params.salesforceCli.sobjectList({
@@ -45,9 +44,9 @@ export async function generateFauxSObjects(params: {
         return params.salesforceCli.sobjectDescribe({
             targetOrg: params.targetOrg,
             sObjectApiName: apiName
-        }).then(async (sObjectDescribeResult: any) => {
+        }).then(async (sObjectDescribeResult: SObjectDescribeResult) => {
             params.progressToken.report({
-                progress: (completed / total),
+                progress: (completed / total) * 100,
                 title: apiName.toString()
             });
 
@@ -87,9 +86,12 @@ export async function generateFauxSObjects(params: {
 export function generateFauxSObject(params: {
     describe: SObjectDescribeResult
 }): FauxSObjectApexClass {
+    const fields = mapFields(params.describe.getFields());
+    fields.push(...mapChildRelationships(params.describe.getChildRelationships()));
+
     const output: FauxSObjectApexClass = {
         name: params.describe.getApiName().toString(),
-        fields: mapFields(params.describe.getFields())
+        fields
     };
     return output;
 }
@@ -105,37 +107,89 @@ export interface FauxSObjectField {
     type: string;
 }
 
-function mapFields(fields: SObjectFieldDescribeResult[]) {
+function mapFields(fields: SObjectFieldDescribeResult[]): FauxSObjectField[] {
     const apexFields: FauxSObjectField[] = [];
-
     fields.forEach(field => {
-        const type = apiTypeNameToApexTypeName(field.getType());
-        if (type) {
-            apexFields.push({
-                name: field.getApiName(),
-                modifier: 'global',
-                type
-            });
-        }
+        apexFields.push(...apiTypeNameToApexTypeName(field));
     });
     return apexFields;
 }
 
-function apiTypeNameToApexTypeName(type: SObjectFieldType) {
-    if (type === 'string' || type === 'url' || type === 'phone' || type === 'picklist' || type === 'multipicklist' || type === 'textarea' || type === 'encryptedstring') {
-        return 'String';
-    } else if (type === 'id') {
-        return 'Id';
-    } else if (type === 'boolean') {
-        return 'Boolean';
-    } else if (type === 'time' || type === 'date') {
-        return 'Date';
-    } else if (type === 'datetime') {
-        return 'Datetime';
-    } else if (type === 'double' || type === 'percent' || type === 'currency') {
-        return 'Double';
+function apiTypeNameToApexTypeName(field: SObjectFieldDescribeResult): FauxSObjectField[] {
+    const fauxSObjectFields: FauxSObjectField[] = [];
+    if (field.getType() === 'string' || field.getType() === 'url' || field.getType() === 'phone' || field.getType() === 'picklist' || field.getType() === 'multipicklist' || field.getType() === 'textarea' || field.getType() === 'encryptedstring') {
+        const fauxSObjectField: FauxSObjectField = {
+            name: field.getApiName(),
+            type: 'String',
+            modifier: 'global'
+        };
+
+        fauxSObjectFields.push(fauxSObjectField);
+    } else if (field.getType() === 'id') {
+        const fauxSObjectField: FauxSObjectField = {
+            name: field.getApiName(),
+            type: 'Id',
+            modifier: 'global'
+        };
+
+        fauxSObjectFields.push(fauxSObjectField);
+    } else if (field.getType() === 'boolean') {
+        const fauxSObjectField: FauxSObjectField = {
+            name: field.getApiName(),
+            type: 'Boolean',
+            modifier: 'global'
+        };
+
+        fauxSObjectFields.push(fauxSObjectField);
+    } else if (field.getType() === 'time' || field.getType() === 'date') {
+        const fauxSObjectField: FauxSObjectField = {
+            name: field.getApiName(),
+            type: 'Date',
+            modifier: 'global'
+        };
+
+        fauxSObjectFields.push(fauxSObjectField);
+    } else if (field.getType() === 'datetime') {
+        const fauxSObjectField: FauxSObjectField = {
+            name: field.getApiName(),
+            type: 'Datetime',
+            modifier: 'global'
+        };
+
+        fauxSObjectFields.push(fauxSObjectField);
+    } else if (field.getType() === 'double' || field.getType() === 'percent' || field.getType() === 'currency') {
+        const fauxSObjectField: FauxSObjectField = {
+            name: field.getApiName(),
+            type: 'Double',
+            modifier: 'global'
+        };
+
+        fauxSObjectFields.push(fauxSObjectField);
+    } else if (field.getType() === 'reference') {
+        fauxSObjectFields.push({
+            name: field.getApiName(),
+            type: 'Id',
+            modifier: 'global'
+        });
+
+        field.getReferenceTo().forEach(reference => {
+            fauxSObjectFields.push({
+                name: field.getRelationshipName(),
+                type: reference,
+                modifier: 'global'
+            });
+        });
     }
 
-    // TODO: Add lookup field.
-    // TODO: Add child relationships here.
+    return fauxSObjectFields;
+}
+
+function mapChildRelationships(childRelationships: SObjectChildRelationshipDescribeResult[]): FauxSObjectField[] {
+    return childRelationships.filter(childRelationship => childRelationship.relationshipName).map(childRelationship => {
+        return {
+            modifier: 'global',
+            name: childRelationship.relationshipName,
+            type: `List<${childRelationship.childSObject}>`
+        };
+    });
 }
