@@ -1,119 +1,213 @@
 import { describe, expect, test } from '@jest/globals';
-import { SObjectApiName } from "../sObjectApiName";
-import { SObjectDescribeResult, SObjectFieldDescribeResult } from "../sObjectDescribeResult";
-import { FauxSObjectApexClass, fauxSObjectIntoString, generateFauxSObject } from '../genFauxSObjects';
+import { GenerateFauxSObjectsCommand, } from '../genFauxSObjects';
+import { MockIDE } from './__mocks__/mockIntegratedDevelopmentEnvironment';
+import { MockFileSystem } from './__mocks__/mockFileSystem';
+import { SfSalesforceCli } from '../sfSalesforceCli';
+import { genCommandToStdOutput, genMockExecutor } from './__mocks__/mockShell';
+import { SalesforceOrg } from '../salesforceOrg';
+import { getSObjectList, } from './data/sobjectListOutputs';
+import { Uri } from '../integratedDevelopmentEnvironment';
+import { getNewSObjectAccountDescribe } from './data/sobjectDescribeOutput';
 
-describe('gen faux sobjects', () => {
-    it('foo', () => {
-        const describe: SObjectDescribeResult = new SObjectDescribeResult({
-            apiName: SObjectApiName.get('Account'),
-            fields: [
-                new SObjectFieldDescribeResult({
-                    apiName: 'Name',
-                    type: 'string'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Id',
-                    type: 'id'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'IsDeleted',
-                    type: 'boolean'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Url__c',
-                    type: 'url'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Time__c',
-                    type: 'time'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Datetime__c',
-                    type: 'datetime'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Double__c',
-                    type: 'double'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Percent__c',
-                    type: 'percent'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Phone__c',
-                    type: 'phone'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Picklist__c',
-                    type: 'picklist'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_MultiPicklist__c',
-                    type: 'multipicklist'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_TextArea__c',
-                    type: 'textarea'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_EncryptedString__c',
-                    type: 'encryptedstring'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Date__c',
-                    type: 'date'
-                }),
-                new SObjectFieldDescribeResult({
-                    apiName: 'Test_Currency__c',
-                    type: 'currency'
-                })
-            ],
-            childRelationships: []
-        });
-        const output: FauxSObjectApexClass = generateFauxSObject({
-            describe
+describe('gen faux sobjects with command like object', () => {
+
+    let cli: SfSalesforceCli;
+    let ide: MockIDE;
+    let fs: MockFileSystem;
+    let org: SalesforceOrg;
+
+    let cliInputOutput: any = {};
+
+    const genSfSObjectListCommandString = () => {
+        return `sf sobject list --target-org ${org.getAlias()} --json`;
+    };
+
+    const genSfSObjectDescribeCommandString = (sObjectType: string) => {
+        return `sf sobject describe --sobject ${sObjectType} --target-org ${org.getAlias()} --json`;
+    };
+
+    beforeEach(() => {
+        org = new SalesforceOrg({
+            alias: 'testOrg',
+            isActive: true
         });
 
-        expect(output.name).toBe('Account');
-        expect(output.fields).toHaveLength(15);
-        expect(output.fields[0].type).toBe('String');
-        expect(output.fields[1].type).toBe('Id');
-        expect(output.fields[2].type).toBe('Boolean');
-        expect(output.fields[3].type).toBe('String');
-        expect(output.fields[4].type).toBe('Date');
-        expect(output.fields[5].type).toBe('Datetime');
-        expect(output.fields[6].type).toBe('Double');
-        expect(output.fields[7].type).toBe('Double');
-        expect(output.fields[8].type).toBe('String');
-        expect(output.fields[9].type).toBe('String');
-        expect(output.fields[10].type).toBe('String');
-        expect(output.fields[11].type).toBe('String');
-        expect(output.fields[12].type).toBe('String');
-        expect(output.fields[13].type).toBe('Date');
-        expect(output.fields[14].type).toBe('Double');
+        fs = new MockFileSystem();
+        ide = new MockIDE({ filesystem: fs });
 
-        const asString = fauxSObjectIntoString({
-            fauxApexClass: output
+        cliInputOutput = genCommandToStdOutput();
+        cli = new SfSalesforceCli(genMockExecutor(cliInputOutput));
+
+        cliInputOutput[genSfSObjectListCommandString()] = getSObjectList(['Account']);
+        cliInputOutput[genSfSObjectDescribeCommandString('Account')] = getNewSObjectAccountDescribe();
+    });
+
+    it('should be able to generate Account faux sobject into file', async () => {
+        const destDir = ide.generateUri('.sfdx', 'sobjects', 'customObjects');
+        const testObject = new GenerateFauxSObjectsCommand({
+            cli,
+            ide
         });
 
-        expect(asString).toBe(
-            `global class Account {
-	global String Name;
-	global Id Id;
-	global Boolean IsDeleted;
-	global String Test_Url__c;
-	global Date Test_Time__c;
-	global Datetime Test_Datetime__c;
-	global Double Test_Double__c;
-	global Double Test_Percent__c;
-	global String Test_Phone__c;
-	global String Test_Picklist__c;
-	global String Test_MultiPicklist__c;
-	global String Test_TextArea__c;
-	global String Test_EncryptedString__c;
-	global Date Test_Date__c;
-	global Double Test_Currency__c;
-}`);
+        await testObject.execute({
+            targetOrg: org,
+            destDir
+        });
+
+        const accountFauxSobjectUri = Uri.join(destDir, "Account.cls");
+        const content = await ide.readFile({
+            uri: accountFauxSobjectUri
+        });
+
+        const expected = getFauxAccountSObjectClassString();
+        expect(content).toBe(expected);
     });
 });
+
+
+function getFauxAccountSObjectClassString() {
+    return `global class Account {
+	global Id Id;
+	global Boolean IsDeleted;
+	global Id MasterRecordId;
+	global Account MasterRecord;
+	global String Name;
+	global String Type;
+	global Id ParentId;
+	global Account Parent;
+	global String BillingStreet;
+	global String BillingCity;
+	global String BillingState;
+	global String BillingPostalCode;
+	global String BillingCountry;
+	global Double BillingLatitude;
+	global Double BillingLongitude;
+	global String BillingGeocodeAccuracy;
+	global String ShippingStreet;
+	global String ShippingCity;
+	global String ShippingState;
+	global String ShippingPostalCode;
+	global String ShippingCountry;
+	global Double ShippingLatitude;
+	global Double ShippingLongitude;
+	global String ShippingGeocodeAccuracy;
+	global String Phone;
+	global String Fax;
+	global String AccountNumber;
+	global String Website;
+	global String PhotoUrl;
+	global String Sic;
+	global String Industry;
+	global Double AnnualRevenue;
+	global String Ownership;
+	global String TickerSymbol;
+	global String Description;
+	global String Rating;
+	global String Site;
+	global Id OwnerId;
+	global User Owner;
+	global Datetime CreatedDate;
+	global Id CreatedById;
+	global User CreatedBy;
+	global Datetime LastModifiedDate;
+	global Id LastModifiedById;
+	global User LastModifiedBy;
+	global Datetime SystemModstamp;
+	global Date LastActivityDate;
+	global Datetime LastViewedDate;
+	global Datetime LastReferencedDate;
+	global String Jigsaw;
+	global String JigsawCompanyId;
+	global String CleanStatus;
+	global String AccountSource;
+	global String DunsNumber;
+	global String Tradestyle;
+	global String NaicsCode;
+	global String NaicsDesc;
+	global String YearStarted;
+	global String SicDesc;
+	global Id DandbCompanyId;
+	global DandBCompany DandbCompany;
+	global Id OperatingHoursId;
+	global OperatingHours OperatingHours;
+	global List<Account> ChildAccounts;
+	global List<AccountCleanInfo> AccountCleanInfos;
+	global List<AccountContactRole> AccountContactRoles;
+	global List<AccountFeed> Feeds;
+	global List<AccountHistory> Histories;
+	global List<AccountPartner> AccountPartnersFrom;
+	global List<AccountPartner> AccountPartnersTo;
+	global List<AccountShare> Shares;
+	global List<ActivityHistory> ActivityHistories;
+	global List<AlternativePaymentMethod> AlternativePaymentMethods;
+	global List<Asset> Assets;
+	global List<Asset> ProvidedAssets;
+	global List<Asset> ServicedAssets;
+	global List<AssociatedLocation> AssociatedLocations;
+	global List<AttachedContentDocument> AttachedContentDocuments;
+	global List<Attachment> Attachments;
+	global List<AuthorizationFormConsent> AuthorizationFormConsents;
+	global List<AuthorizationFormConsent> RelatedAuthorizationFormConsents;
+	global List<CardPaymentMethod> CardPaymentMethods;
+	global List<Case> Cases;
+	global List<CollaborationGroupRecord> RecordAssociatedGroups;
+	global List<CombinedAttachment> CombinedAttachments;
+	global List<CommSubscriptionConsent> CommSubscriptionConsents;
+	global List<Contact> Contacts;
+	global List<ContactPointAddress> ContactPointAddresses;
+	global List<ContactPointEmail> ContactPointEmails;
+	global List<ContactPointPhone> ContactPointPhones;
+	global List<ContactRequest> ContactRequests;
+	global List<ContentDocumentLink> ContentDocumentLinks;
+	global List<Contract> Contracts;
+	global List<CreditMemo> CreditMemos;
+	global List<DigitalWallet> DigitalWallets;
+	global List<DuplicateRecordItem> DuplicateRecordItems;
+	global List<EmailMessage> Emails;
+	global List<Entitlement> Entitlements;
+	global List<EntitySubscription> FeedSubscriptionsForEntity;
+	global List<Event> Events;
+	global List<Expense> Expenses;
+	global List<FinanceBalanceSnapshot> FinanceBalanceSnapshots;
+	global List<FinanceTransaction> FinanceTransactions;
+	global List<FlowOrchestrationWorkItem> FlowOrchestrationWorkItems;
+	global List<Invoice> Invoices;
+	global List<MaintenancePlan> MaintenancePlans;
+	global List<MessagingEndUser> MessagingEndUsers;
+	global List<MessagingSession> MessagingSessions;
+	global List<Note> Notes;
+	global List<NoteAndAttachment> NotesAndAttachments;
+	global List<OpenActivity> OpenActivities;
+	global List<Opportunity> Opportunities;
+	global List<OpportunityPartner> OpportunityPartnersTo;
+	global List<Order> Orders;
+	global List<Partner> PartnersFrom;
+	global List<Partner> PartnersTo;
+	global List<Payment> Payments;
+	global List<PaymentAuthAdjustment> PaymentAuthAdjustments;
+	global List<PaymentAuthorization> PaymentAuthorizations;
+	global List<PaymentLineInvoice> PaymentLinesInvoice;
+	global List<ProcessInstance> ProcessInstances;
+	global List<ProcessInstanceHistory> ProcessSteps;
+	global List<ProductRequest> ProductRequests;
+	global List<ProductRequestLineItem> ProductRequestLineItems;
+	global List<RecordAction> RecordActions;
+	global List<RecordActionHistory> RecordActionHistories;
+	global List<Refund> Refunds;
+	global List<RefundLinePayment> RefundLinePayments;
+	global List<ResourcePreference> ResourcePreferences;
+	global List<ReturnOrder> ReturnOrders;
+	global List<ScorecardAssociation> ScorecardAssociations;
+	global List<ServiceAppointment> ServiceAppointmentAccount;
+	global List<ServiceAppointment> ServiceAppointments;
+	global List<ServiceContract> ServiceContracts;
+	global List<ServiceResource> ServiceResources;
+	global List<Swarm> Swarms;
+	global List<SwarmMember> SwarmMembers;
+	global List<Task> Tasks;
+	global List<TopicAssignment> TopicAssignments;
+	global List<User> Users;
+	global List<WorkOrder> WorkOrders;
+	global List<WorkPlanSelectionRule> WorkPlanSelectionRules;
+}`;
+}
