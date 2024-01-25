@@ -9,7 +9,7 @@ import { getWithCustomObject, getWithFailureMessage, getWithoutResultArray } fro
 import { SObjectListResult } from '../sObjectListResult';
 import { SObjectApiName } from '../sObjectApiName';
 import { SObjectDescribeResult, SObjectFieldDescribeResult } from '../sObjectDescribeResult';
-import { getTestObjectDescribe, getSObjectDescribeWithFailureMessage } from './data/sobjectDescribeOutput';
+import { getSObjectAccountDescribe, getSObjectDescribeWithFailureMessage } from './data/sobjectDescribeOutput';
 import { Logger } from '../logger';
 import { TestLogger } from './logger.test';
 import { getDebugLevelWithDeveloperName, getDebugLogWithDeveloperNameFilter, getNoRecordsFound, getNoRecordsVariableFound } from './data/dataQueryOutput';
@@ -268,7 +268,7 @@ describe('sf salesforce cli', () => {
 
             const mockExecutor = genMockExecutor({
                 "sf org list --json": get(),
-                "sf sobject describe --sobject Test_Object__c --target-org cso --json": getTestObjectDescribe()
+                "sf sobject describe --sobject Test_Object__c --target-org cso --json": getSObjectAccountDescribe()
             });
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 

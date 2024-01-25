@@ -1168,3 +1168,15 @@ export function getWithFailureMessage() {
         }
     );
 }
+
+export function getSObjectList(sObjectTypes: string[]) {
+    return JSON.stringify(
+        {
+            "status": 0,
+            "result": [
+                ...sObjectTypes
+            ],
+            "warnings": []
+        }
+    );
+}

@@ -5,7 +5,7 @@ import { VsCode } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
-import { generateFauxSObjects } from './genFauxSObjects';
+import { GenerateFauxSObjectsCommand, generateFauxSObjects } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
@@ -59,20 +59,18 @@ export function activate(context: vscode.ExtensionContext) {
 	async function generateFauxSObject() {
 		const defaultOrg = await salesforceCli.getDefaultOrg();
 		if (defaultOrg) {
-			await ide.withProgress(async (progressToken) => {
-				try {
-					await generateFauxSObjects({
-						targetOrg: defaultOrg,
-						salesforceCli,
-						outputDir: '.sfdx//tools//sobjects//customObjects',
-						progressToken
-					});
-				} catch (e: any) {
-					ide.showErrorMessage(e.message);
-				}
-			}, {
-				title: 'Generate SObjects'
-			});
+			try {
+				const generateFauxSObjectsCommand = new GenerateFauxSObjectsCommand({
+					cli: salesforceCli,
+					ide
+				});
+				await generateFauxSObjectsCommand.execute({
+					targetOrg: defaultOrg,
+					destDir: ide.generateUri('.sfdx', 'tools', 'sobjects', 'customObjects')
+				});
+			} catch (e: any) {
+				ide.showErrorMessage(e.message);
+			}
 		}
 	}
 

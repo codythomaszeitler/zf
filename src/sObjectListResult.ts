@@ -12,4 +12,10 @@ export class SObjectListResult {
     public getSObjectApiNames(): SObjectApiName[] {
         return [...this.sObjectApiNames];
     }
+
+    public getSObjectApiNamesAsString() : string[] {
+        return this.sObjectApiNames.map(sObjectApiName => {
+            return sObjectApiName.toString();
+        }).reverse();
+    }
 }

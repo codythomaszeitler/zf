@@ -1,89 +1,18 @@
+import { Command } from "./command";
+import { Uri } from "./integratedDevelopmentEnvironment";
 import { Logger } from "./logger";
-import { ProgressToken } from "./progressToken";
+import { SObjectApiName } from "./sObjectApiName";
 import { SObjectChildRelationshipDescribeResult, SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
-import { SObjectListResult } from "./sObjectListResult";
-import { SalesforceCli } from "./salesforceCli";
 import { SalesforceOrg } from "./salesforceOrg";
-import * as fs from "fs/promises";
 
-export function fauxSObjectIntoString({ fauxApexClass }: {
+function fauxSObjectIntoString({ fauxApexClass }: {
     fauxApexClass: FauxSObjectApexClass
 }) {
     const fields = fauxApexClass.fields.map(field => '\t' + field.modifier + ' ' + field.type + ' ' + field.name + ';').join('\n');
     return `global class ${fauxApexClass.name} {\n` + fields + '\n}';
 }
 
-export async function generateFauxSObjects(params: {
-    targetOrg: SalesforceOrg,
-    salesforceCli: SalesforceCli,
-    outputDir: string,
-    progressToken: ProgressToken
-}) {
-    await fs.mkdir(params.outputDir, {
-        recursive: true
-    });
-
-    const sobjectListResult: SObjectListResult = await params.salesforceCli.sobjectList({
-        targetOrg: params.targetOrg
-    });
-
-    const names = sobjectListResult.getSObjectApiNames().reverse();
-    const total = names.length;
-    let completed = 0;
-
-    const runSObjectDescribe = async (): Promise<any> => {
-        if (params.progressToken.isCancellationRequested) {
-            return;
-        }
-
-        const apiName = names.pop();
-        if (!apiName) {
-            return;
-        }
-
-        return params.salesforceCli.sobjectDescribe({
-            targetOrg: params.targetOrg,
-            sObjectApiName: apiName
-        }).then(async (sObjectDescribeResult: SObjectDescribeResult) => {
-            params.progressToken.report({
-                progress: (completed / total) * 100,
-                title: apiName.toString()
-            });
-
-            const apexClass: FauxSObjectApexClass = generateFauxSObject({
-                describe: sObjectDescribeResult
-            });
-
-            if (apexClass.fields.length === 1) {
-                completed++;
-                return runSObjectDescribe();
-            }
-
-            const fileName = params.outputDir + '/' + apiName.toString() + ".cls";
-            const contents = fauxSObjectIntoString({
-                fauxApexClass: apexClass
-            });
-
-            await fs.writeFile(fileName, contents).then(() => {
-                completed++;
-            }).catch(e => {
-                Logger.get().warn(e.message);
-            });
-
-            return runSObjectDescribe();
-        });
-    };
-
-    const promises = [];
-    const numGenerators = 10;
-    for (let i = 0; i < numGenerators; i++) {
-        promises.push(runSObjectDescribe());
-    }
-
-    await Promise.all(promises);
-}
-
-export function generateFauxSObject(params: {
+function generateFauxSObject(params: {
     describe: SObjectDescribeResult
 }): FauxSObjectApexClass {
     const fields = mapFields(params.describe.getFields());
@@ -96,12 +25,12 @@ export function generateFauxSObject(params: {
     return output;
 }
 
-export interface FauxSObjectApexClass {
+interface FauxSObjectApexClass {
     name: string;
     fields: FauxSObjectField[];
 }
 
-export interface FauxSObjectField {
+interface FauxSObjectField {
     name: string;
     modifier: string;
     type: string;
@@ -192,4 +121,80 @@ function mapChildRelationships(childRelationships: SObjectChildRelationshipDescr
             type: `List<${childRelationship.childSObject}>`
         };
     });
+}
+
+export class GenerateFauxSObjectsCommand extends Command {
+
+    public async execute({ targetOrg, destDir }: { targetOrg: SalesforceOrg, destDir: Uri }) {
+        await this.getIde().withProgress(async (progressToken) => {
+            if (progressToken.isCancellationRequested) {
+                return;
+            }
+
+            const sObjectListResult = await this.getCli().sobjectList({
+                targetOrg
+            });
+
+            const sObjectNames = sObjectListResult.getSObjectApiNamesAsString();
+
+            let completed = 0;
+            const total = sObjectNames.length;
+
+            const queryDescribeAndWriteFauxSObjectApexClass: any = async () => {
+                if (progressToken.isCancellationRequested) {
+                    return Promise.resolve();
+                }
+                if (sObjectNames.length === 0) {
+                    return Promise.resolve();
+                }
+
+                const sObjectName = sObjectNames.pop();
+                progressToken.report({
+                    progress: (completed / total) * 100,
+                    title: sObjectName
+                });
+
+                if (!sObjectName) {
+                    return Promise.resolve();
+                }
+
+                try {
+                    const sObjectDescribeResult = await this.getCli().sobjectDescribe({
+                        targetOrg,
+                        sObjectApiName: SObjectApiName.get(sObjectName)
+                    });
+
+                    const fauxApexClass = generateFauxSObject({
+                        describe: sObjectDescribeResult
+                    });
+
+                    const uri = Uri.join(destDir, `${fauxApexClass.name}.cls`);
+                    await this.getIde().writeFile({
+                        uri,
+                        contents: fauxSObjectIntoString({
+                            fauxApexClass
+                        })
+                    });
+                    completed++;
+
+                    return queryDescribeAndWriteFauxSObjectApexClass();
+                } catch (e: any) {
+                    Logger.get().warn(e.message);
+                    this.getIde().showWarningMessage(e.message);
+                    return queryDescribeAndWriteFauxSObjectApexClass();
+                }
+            };
+
+            const promises = [];
+
+            const numGenerators = 10;
+            for (let i = 0; i < numGenerators; i++) {
+                promises.push(queryDescribeAndWriteFauxSObjectApexClass());
+            }
+
+            await Promise.all(promises);
+        }, {
+            title: 'Generate Faux SObjects'
+        });
+    }
 }
