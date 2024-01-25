@@ -5,7 +5,7 @@ import { VsCode } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
-import { GenerateFauxSObjectsCommand, generateFauxSObjects } from './genFauxSObjects';
+import { GenerateFauxSObjectsCommand } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
@@ -13,7 +13,7 @@ import { getRecentApexLogs } from './getRecentApexLogs';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
 import { RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
-import { CacheReadSfdxProjectCommand, genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
+import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
