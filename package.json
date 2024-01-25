@@ -3,7 +3,7 @@
   "displayName": "ZeitlerForce",
   "repository": "https://github.com/codythomaszeitler/sf-zsi.git",
   "description": "vscode extensions for salesforce.",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -54,7 +54,7 @@
         "title": "ZF: Run Test Under Cursor"
       },
       {
-        "command" : "sf.zsi.generateOfflineSymbolTable",
+        "command": "sf.zsi.generateOfflineSymbolTable",
         "title": "ZF: Generate Apex Offline Symbol Table"
       }
     ],
