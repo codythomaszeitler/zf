@@ -24,7 +24,7 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
-    constructor() {
+    constructor () {
         super({ currentDir: getCurrentDir() });
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection('Salesforce Apex Cody');
         this.outputChannel = vscode.window.createOutputChannel('sf-zsi', { log: true });
@@ -240,20 +240,28 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
     }
 
-    public async registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg; }): Promise<void> {
+    public async registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg?: SalesforceOrg; }): Promise<void> {
         if (params.treeView.uniqueName === 'server-side-apex-logs') {
             await this.registerServerSideApexLogProvider<T>(params);
         }
     }
 
-    private async registerServerSideApexLogProvider<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg; }) {
-        const rootNode = await params.treeView.getRootNode({
-            targetOrg: params.targetOrg
-        });
+    private async registerServerSideApexLogProvider<T>(params: { treeView: TreeView<T>; targetOrg?: SalesforceOrg; }) {
+        const getRootNode = async () => {
+            if (!params.targetOrg) {
+                return undefined;
+            }
 
-        const root: TreeNode<ApexLog> = rootNode as TreeNode<ApexLog>;
+            const rootNode = await params.treeView.getRootNode({
+                targetOrg: params.targetOrg
+            });
+
+            const root: TreeNode<ApexLog> = rootNode as TreeNode<ApexLog>;
+            return root;
+        };
+
         const apexServerSideLogTreeProvider = new ApexLogTreeProvider({
-            root
+            root: await getRootNode()
         });
 
         params.treeView.registerOnRefreshListener(apexServerSideLogTreeProvider as RefreshListener<TreeNode<T>>);
@@ -392,7 +400,7 @@ class ApexLogTreeNode extends vscode.TreeItem {
 
     public readonly treeNode: TreeNode<ApexLog>;
 
-    public constructor(params: {
+    public constructor (params: {
         treeNode: TreeNode<ApexLog>
     }) {
         super(params.treeNode.label, params.treeNode.value ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded);
@@ -407,12 +415,12 @@ class ApexLogTreeNode extends vscode.TreeItem {
 
 class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, RefreshListener<TreeNode<ApexLog>> {
 
-    private root: TreeNode<ApexLog>;
+    private root?: TreeNode<ApexLog>;
 
     private readonly eventEmitter: vscode.EventEmitter<ApexLogTreeNode | undefined>;
 
-    public constructor(params: {
-        root: TreeNode<ApexLog>
+    public constructor (params: {
+        root?: TreeNode<ApexLog>
     }) {
         this.root = params.root;
         this.eventEmitter = new vscode.EventEmitter<ApexLogTreeNode | undefined>();
@@ -431,6 +439,9 @@ class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, R
                 treeNode
             }));
         } else {
+            if (!this.root) {
+                return [];
+            }
             return [
                 new ApexLogTreeNode({
                     treeNode: this.root
