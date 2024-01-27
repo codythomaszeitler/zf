@@ -204,6 +204,7 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
                 }).then(({ isComplete }) => {
                     if (isComplete) {
                         projectDeployCommand = undefined;
+                        ide.showInformationMessage('Deployment successful!');
                     }
                 }).catch(e => {
                     ide.showErrorMessage(e.message);

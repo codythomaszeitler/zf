@@ -12,6 +12,7 @@ function nonStartedQuickPick(item: string): void {
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
 
+
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
@@ -24,6 +25,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     private _waitForShowQuickPickResolve: (value: unknown) => void;
     private shownErrorMessages: string[];
     private shownWarningMessages: string[];
+    private shownInformationMessages: string[];
     private shownWindowLoadingMessages: string[];
     private diagnostics: Map<Uri, Diagnostic[]>;
     private config: Map<string, any>;
@@ -35,7 +37,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     private activeTextEditor: ActiveTextEditor | null;
 
-    constructor(params?: {
+    constructor (params?: {
         filesystem?: MockFileSystem
     }) {
         super({
@@ -48,6 +50,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this._waitForShowQuickPickResolve = () => { };
         this.shownErrorMessages = [];
         this.shownWarningMessages = [];
+        this.shownInformationMessages = [];
         this.shownWindowLoadingMessages = [];
         this.diagnostics = new Map<Uri, Diagnostic[]>();
         this.config = new Map<string, any>();
@@ -139,6 +142,14 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     didShowWarningMessage(message: string): boolean {
         return this.shownWarningMessages.includes(message);
+    }
+
+    async showInformationMessage(message: string): Promise<void> {
+        this.shownInformationMessages.push(message);
+    }
+
+    didShowInformationMessage(message: string): boolean {
+        return this.shownInformationMessages.includes(message);
     }
 
     async findFile(glob: string, base?: Uri): Promise<Uri | null> {
