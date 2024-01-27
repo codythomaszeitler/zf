@@ -21,6 +21,7 @@ function getCurrentDir(): Uri {
 }
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
+    
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -111,6 +112,14 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
     showErrorMessage(message: string): Promise<void> {
         return new Promise(resolve => {
             vscode.window.showErrorMessage(message).then(() => {
+                resolve();
+            });
+        });
+    }
+
+    showInformationMessage(message: string): Promise<void> {
+        return new Promise(resolve => {
+            vscode.window.showInformationMessage(message).then(() => {
                 resolve();
             });
         });

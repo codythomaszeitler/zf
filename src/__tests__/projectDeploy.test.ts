@@ -283,6 +283,7 @@ describe('project deploy', () => {
         await cli.projectDeployComplete();
         await testFunctionPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(true);
+        expect(ide.didShowInformationMessage('Deployment successful!'));
     });
 
     it('should only run project deploy twice if 10 project deploys are queued', async () => {
@@ -329,7 +330,7 @@ describe('project deploy', () => {
         expect(projectDeployCounter).toBe(1);
     });
 
-    it('should not do a project deploy if there sf.zsi.vscode.deployOnSAve is false', async () => {
+    it('should not do a project deploy if there sf.zsi.vscode.deployOnSave is false', async () => {
         ide.setConfig('sf.zsi.vscode.deployOnSave', false);
 
         const mockFile = Uri.from({
