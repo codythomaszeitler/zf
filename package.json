@@ -47,7 +47,9 @@
       },
       {
         "command": "sf.zsi.refreshApexLogs",
-        "title": "ZF: Refresh Apex Logs"
+        "title": "ZF: Refresh Apex Logs",
+        "category": "Apex Logs",
+        "icon": "$(refresh)"
       },
       {
         "command": "sf.zsi.runTestUnderCursor",
@@ -68,6 +70,15 @@
         }
       ]
     },
+    "menus": {
+			"view/title": [
+				{
+					"command": "sf.zsi.refreshApexLogs",
+					"group": "navigation@0",
+          "when": "view == server-side-apex-logs"
+				}
+			]
+		},
     "configuration": {
       "title": "sf zsi",
       "properties": {

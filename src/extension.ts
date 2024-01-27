@@ -150,27 +150,29 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	salesforceCli.getDefaultOrg().then((defaultOrg) => {
-		if (defaultOrg) {
-			ide.registerTreeView({
-				treeView: apexLogTreeView,
-				targetOrg: defaultOrg
-			});
-		}
+		ide.registerTreeView({
+			treeView: apexLogTreeView,
+			targetOrg: defaultOrg ?? undefined
+		});
 	});
 
 	async function runRefreshApexLogs() {
-		try {
-			const defaultOrg = await salesforceCli.getDefaultOrg();
-			if (defaultOrg) {
-				await apexLogTreeView.refresh({
-					targetOrg: defaultOrg
-				});
-			} else {
-				ide.showWarningMessage('No default org set. Cannot refresh apex logs.');
+		await ide.withProgress(async (progress) => {
+			try {
+				const defaultOrg = await salesforceCli.getDefaultOrg();
+				if (defaultOrg) {
+					await apexLogTreeView.refresh({
+						targetOrg: defaultOrg
+					});
+				} else {
+					ide.showWarningMessage('No default org set. Cannot refresh apex logs.');
+				}
+			} catch (e: any) {
+				ide.showErrorMessage(e.message);
 			}
-		} catch (e: any) {
-			ide.showErrorMessage(e.message);
-		}
+		}, {
+			title: 'Refresh Apex Logs'
+		});
 	}
 
 	async function runTestUnderCursor() {
