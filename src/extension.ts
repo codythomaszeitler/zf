@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { VsCode, VscodeCliInputOutputTreeView } from "./vscode";
+import { VsCode, VscodeCliInputOutputTreeView, UriMapper } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
@@ -17,8 +16,10 @@ import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableC
 import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 import path = require('path');
-import { TextEncoder } from 'util';
+import { TextEncoder, TextDecoder  } from 'util';
 import { showCliOutput } from './showSalesforceCliInputOutput';
+import { ApexParser } from './apexParser';
+import { ApexTestGetResult } from './apexTestRunResult';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('.zf', 'offlineSymbolTable');
@@ -249,39 +250,95 @@ export function activate(context: vscode.ExtensionContext) {
 			if (!defaultOrg) {
 				return;
 			}
-			const promises: Promise<{
-				passed: boolean
-			}>[] = [];
+			const testsToRun = testToken.include?.map(testItem => {
+				return testItem.id;
+			}).join(" ");
 
-			testToken.include?.forEach((testItem) => {
+			if (testsToRun) {
 				const runApexTestClass = new RunApexTestClass({
 					cli: salesforceCli,
 					ide: ide
 				});
 
-				const testRunPromise = runApexTestClass.execute({
+				const result = await runApexTestClass.execute({
 					targetOrg: defaultOrg,
-					testName: testItem.id
-				}).then((result) => {
-					if (result.passed) {
+					testName: testsToRun
+				});
+				testToken.include?.forEach(testItem => {
+					if (!result.hasFailingTests()) {
 						testRun.passed(testItem);
 					} else {
-						testRun.failed(testItem, new vscode.TestMessage('This was a test failure!'));
+						if (testItem.id.includes('.')) {
+							result.getFailingTests().forEach(failingTest => {
+								const parent = controller.items.get(failingTest.getClassName());
+								if (parent) {
+									const child = parent.children.get(failingTest.getFullName());
+									if (child) {
+										testRun.failed(child, new vscode.TestMessage(failingTest.getFailureMessage() + '\n' + failingTest.getStackTrace()));
+									}
+								}
+							});
+						} else {
+							const errorMessage = result.getFailingTests().map(failingTest => {
+								return failingTest.getFullName() + ' ' + failingTest.getStackTrace();
+							}).join("\n");
+
+							testRun.failed(testItem, new vscode.TestMessage('Test Failures: \n' + errorMessage));
+						}
 					}
-
-					return result;
 				});
-
-				promises.push(testRunPromise);
-			});
-
-			await Promise.all(promises);
+			}
 			testRun.end();
 		});
+
 	});
 
-	const testItem = controller.createTestItem('SetAccountNameTest', 'SetAccountNameTest');
-	controller.items.add(testItem);
+	const alignTestMethods = (vscodeUri: vscode.Uri) => {
+		const uriMapper = new UriMapper();
+		const uri = uriMapper.intoDomainRepresentation(vscodeUri);
+
+		if (uri.isApexClass()) {
+			const apexClassName = uri.getBaseName().replace('.cls', '');
+
+			vscode.workspace.fs.readFile(vscodeUri).then(file => {
+				const testItem = controller.createTestItem(apexClassName, apexClassName);
+				const textDecoding = new TextDecoder();
+				const apexClassString = textDecoding.decode(file.buffer);
+
+				const apexParser = new ApexParser();
+				const apexClass = apexParser.parse(apexClassString);
+
+				if (apexClass.getIsTestClass()) {
+					apexClass.getTestMethods().forEach(apexMethod => {
+						testItem.children.add(controller.createTestItem(`${apexClassName}.${apexMethod.name}`, `${apexMethod.name}`));
+					});
+					controller.items.add(testItem);
+				}
+			});
+		}
+	};
+
+	vscode.workspace.textDocuments.forEach(textDocument => {
+		alignTestMethods(textDocument.uri);
+	});
+
+	vscode.workspace.onDidOpenTextDocument((e) => {
+		alignTestMethods(e.uri);
+	});
+
+	vscode.workspace.onDidChangeTextDocument((e) => {
+		alignTestMethods(e.document.uri);
+	});
+
+	vscode.workspace.onDidCloseTextDocument((e) => {
+		const uriMapper = new UriMapper();
+		const uri = uriMapper.intoDomainRepresentation(e.uri);
+		const apexClassName = uri.getBaseName().replace('.cls', '');
+
+		if (uri.isApexClass()) {
+			controller.items.delete(apexClassName);
+		}
+	});
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));

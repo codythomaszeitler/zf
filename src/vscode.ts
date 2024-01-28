@@ -338,7 +338,7 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
     }
 }
 
-class UriMapper {
+export class UriMapper {
     intoVsCodeRepresentation(uri: Uri) {
         const vscodeUri = vscode.Uri.from({
             scheme: uri.getScheme(),
