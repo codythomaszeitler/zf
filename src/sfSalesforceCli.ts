@@ -670,7 +670,8 @@ export class SfSalesforceCli extends SalesforceCli {
                 fullName: test.FullName,
                 message: test.Message || "",
                 outcome: test.Outcome,
-                location: location
+                location: location,
+                stackTrace : test.StackTrace
             });
         });
 

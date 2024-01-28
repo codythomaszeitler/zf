@@ -5,7 +5,7 @@ export class ApexTestRunResult {
 
 	private readonly testRunId: SalesforceId;
 
-	public constructor(params: {
+	public constructor (params: {
 		testRunId: SalesforceId
 	}) {
 		this.testRunId = params.testRunId;
@@ -23,7 +23,7 @@ export class ApexTestGetResult {
 	private readonly passing: number;
 	private readonly failing: number;
 
-	public constructor(params: {
+	public constructor (params: {
 		tests: ApexTestResult[],
 		testsRan: number,
 		passing: number,
@@ -33,6 +33,10 @@ export class ApexTestGetResult {
 		this.testsRan = params.testsRan;
 		this.passing = params.passing;
 		this.failing = params.failing;
+	}
+
+	public getApexTestResult(fullName: string) {
+		return this.tests.find(test => test.getFullName() === fullName);
 	}
 
 	public getPercentageCompleted(): number {
@@ -54,16 +58,18 @@ export class ApexTestResult {
 	private readonly outcome: "Pass" | "Fail" | "Pending";
 	private readonly fullName: string;
 	private readonly message: string;
+	private readonly stackTrace: string;
 	private readonly location: {
 		position: Position,
 		className: string,
 		methodName: string
 	} | undefined;
 
-	public constructor(params: {
+	public constructor (params: {
 		outcome: "Pass" | "Fail" | "Pending",
 		fullName: string,
 		message: string,
+		stackTrace : string,
 		location: {
 			position: Position,
 			className: string,
@@ -73,6 +79,7 @@ export class ApexTestResult {
 		this.message = params.message;
 		this.outcome = params.outcome;
 		this.fullName = params.fullName;
+		this.stackTrace = params.stackTrace;
 		this.location = params.location;
 	}
 
@@ -90,6 +97,18 @@ export class ApexTestResult {
 
 	public getFailureMessage() {
 		return this.message;
+	}
+
+	public getClassName() {
+		return this.location?.className ?? "";
+	}
+
+	public getMethodName() {
+		return this.location?.methodName ?? "";
+	}
+
+	public getStackTrace() {
+		return this.stackTrace;
 	}
 }
 

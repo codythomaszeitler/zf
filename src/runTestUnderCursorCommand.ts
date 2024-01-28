@@ -165,10 +165,6 @@ export class RunApexTestClass extends Command {
 				testRunId
 			});
 		}
-		apexTestGetResult.
-
-		return {
-			passed : !apexTestGetResult.hasFailingTests()
-		};
+		return apexTestGetResult;
 	}
 }
