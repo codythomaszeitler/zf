@@ -93,6 +93,12 @@ async function doProjectDeploy(params: {
     });
     await showFailuresInProblemsTab(params.ide, projectDeployReportResult);
 
+    if (didHaveAnyFailures(projectDeployReportResult)) {
+        params.ide.showErrorMessage('Deployment failed');
+    } else {
+        params.ide.showInformationMessage('Deployment successful');
+    }
+
     if (params.ide.getConfig('sf.zsi.vscode.shouldFocusProblemsWhenDeployFails', true) && didHaveAnyFailures(projectDeployReportResult)) {
         await params.ide.focusProblemsTab();
     }
@@ -204,7 +210,6 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
                 }).then(({ isComplete }) => {
                     if (isComplete) {
                         projectDeployCommand = undefined;
-                        ide.showInformationMessage('Deployment successful!');
                     }
                 }).catch(e => {
                     ide.showErrorMessage(e.message);
