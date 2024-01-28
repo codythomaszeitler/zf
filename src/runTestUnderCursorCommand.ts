@@ -140,3 +140,35 @@ export class RunTestUnderCursorCommand extends Command {
 		});
 	}
 }
+
+export class RunApexTestClass extends Command {
+
+	public async execute({
+		targetOrg,
+		testName
+	}: { targetOrg: SalesforceOrg, testName: string }) {
+		const apexTestRunResult = await this.getCli().apexTestRun({
+			targetOrg,
+			tests: [testName]
+		});
+
+		const testRunId = apexTestRunResult.getTestRunId();
+
+		let apexTestGetResult = await this.getCli().apexTestGet({
+			targetOrg,
+			testRunId
+		});
+
+		while (apexTestGetResult.getPercentageCompleted() < 100) {
+			apexTestGetResult = await this.getCli().apexTestGet({
+				targetOrg,
+				testRunId
+			});
+		}
+		apexTestGetResult.
+
+		return {
+			passed : !apexTestGetResult.hasFailingTests()
+		};
+	}
+}

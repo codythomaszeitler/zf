@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
 import { VsCode, VscodeCliInputOutputTreeView } from "./vscode";
@@ -11,7 +12,7 @@ import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
-import { RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
+import { RunApexTestClass, RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
 import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
@@ -239,6 +240,48 @@ export function activate(context: vscode.ExtensionContext) {
 		cli: salesforceCli,
 		ide
 	}));
+
+	const controller = vscode.tests.createTestController('zf-test-controller', 'ZF Apex Tests');
+	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, (testToken) => {
+		const testRun = controller.createTestRun(testToken);
+
+		salesforceCli.getDefaultOrg().then(async (defaultOrg) => {
+			if (!defaultOrg) {
+				return;
+			}
+			const promises: Promise<{
+				passed: boolean
+			}>[] = [];
+
+			testToken.include?.forEach((testItem) => {
+				const runApexTestClass = new RunApexTestClass({
+					cli: salesforceCli,
+					ide: ide
+				});
+
+				const testRunPromise = runApexTestClass.execute({
+					targetOrg: defaultOrg,
+					testName: testItem.id
+				}).then((result) => {
+					if (result.passed) {
+						testRun.passed(testItem);
+					} else {
+						testRun.failed(testItem, new vscode.TestMessage('This was a test failure!'));
+					}
+
+					return result;
+				});
+
+				promises.push(testRunPromise);
+			});
+
+			await Promise.all(promises);
+			testRun.end();
+		});
+	});
+
+	const testItem = controller.createTestItem('SetAccountNameTest', 'SetAccountNameTest');
+	controller.items.add(testItem);
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
