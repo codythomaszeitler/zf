@@ -13,79 +13,60 @@ export class ApexParser {
 		visitor.visit(context);
 
 		return new ApexClassSymbolTable({
-			methods: visitor.members.filter(member => member.apexMemberType === 'method').map(member => {
+			methods: visitor.members.map(member => {
 				const apexMethod: ApexMethod = {
-					isPublic: member.isPublic,
 					name: member.methodName,
-					returnType: member.returnType
+					isTestMethod: member.isTestMethod
 				};
 				return apexMethod;
 			}),
-			properties: visitor.members.filter(member => member.apexMemberType === 'field').map(member => {
-				const apexProperty: ApexProperty = {
-					isPublic: member.isPublic,
-					name: member.methodName,
-					type: member.returnType
-				};
-				return apexProperty;
-			}),
-			className: visitor.className
+			className: visitor.className,
+			isTestClass: visitor.isTestClass
 		});
 	}
 }
 
-export type ApexMethod = {
-	returnType: string;
+type ApexMethod = {
 	name: string;
-	isPublic: boolean;
+	isTestMethod: boolean;
 };
 
-export type ApexProperty = {
-	type: string;
-	name: string;
-	isPublic: boolean;
-};
-
-export class ApexClassSymbolTable {
+class ApexClassSymbolTable {
 
 	private readonly methods: ApexMethod[];
-	private readonly properties: ApexProperty[];
 	private readonly className: string;
+	private readonly isTestClass: boolean;
 
-	public constructor({
+	public constructor ({
 		className,
 		methods,
-		properties
+		isTestClass
 	}: {
 		methods: ApexMethod[],
-		properties: ApexProperty[],
-		className: string
+		className: string,
+		isTestClass: boolean
 	}) {
 		this.methods = methods;
-		this.properties = properties;
 		this.className = className;
+		this.isTestClass = isTestClass;
 	}
 
-	public getPublicMethods() {
-		return this.methods.filter(method => method.isPublic);
-	}
-
-	public getPublicFields() {
-		return this.properties.filter(property => property.isPublic);
+	public getTestMethods(): ApexMethod[] {
+		return this.methods.filter(method => method.isTestMethod);
 	}
 
 	public getClassName() {
 		return this.className;
 	}
+
+	public getIsTestClass() {
+		return this.isTestClass;
+	}
 }
 
-type ApexMemberType = 'method' | 'field';
-
 type VisitorResult = {
-	isPublic: boolean,
-	returnType: string,
+	isTestMethod: boolean,
 	methodName: string
-	apexMemberType: ApexMemberType;
 };
 
 class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _ApexParser.ApexParserVisitor<void> {
@@ -93,16 +74,20 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 	members: VisitorResult[] = [];
 	className: string = "";
 
+	get isTestClass() {
+		return this.members.some(member => member.isTestMethod);
+	}
+
 	visitClassDeclaration(ctx: _ApexParser.ClassDeclarationContext): void {
 		this.className = ctx.id().text;
 		super.visitChildren(ctx);
 	}
 
 	visitClassBodyDeclaration(ctx: _ApexParser.ClassBodyDeclarationContext): void {
-		const isPublicMember = () => {
-			return ctx.modifier().some(value => {
-				const tokens = value.getTokens(_ApexParser.ApexLexer.PUBLIC);
-				return !!tokens.length;
+		const isTestMethod = () => {
+			const modifiers = ctx.modifier();
+			return modifiers.some(modifier => {
+				return modifier.annotation()?.qualifiedName().text === 'IsTest';
 			});
 		};
 
@@ -112,33 +97,12 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 				const methodDecl = memberDecl.methodDeclaration();
 				if (methodDecl) {
 					const result: VisitorResult = {
-						isPublic: isPublicMember(),
-						returnType: methodDecl.typeRef()?.text ?? "",
+						isTestMethod: isTestMethod(),
 						methodName: methodDecl.id().text ?? "",
-						apexMemberType: 'method'
 					};
 					return [result];
 				}
-
-				const fieldDecl = memberDecl.fieldDeclaration();
-				if (fieldDecl) {
-					const isPublicField = (fieldDecl: _ApexParser.VariableDeclaratorContext) => {
-						return !!fieldDecl.getTokens(_ApexParser.ApexLexer.PUBLIC);
-					};
-
-					const varDecls = fieldDecl.variableDeclarators().variableDeclarator();
-					return varDecls.map(varDecl => {
-						const result: VisitorResult = {
-							isPublic: isPublicField(varDecl),
-							returnType: fieldDecl.typeRef().text,
-							apexMemberType: "field",
-							methodName: varDecl.id().text
-						};
-						return result;
-					});
-				}
 			}
-
 			return [];
 		};
 
