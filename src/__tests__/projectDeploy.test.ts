@@ -69,6 +69,7 @@ describe('project deploy', () => {
         expect(ide.didFocusProblemsTab()).toBe(true);
         expect(ide.didSetDiagnosticsFor(mockFile)).toBe(true);
         expect(cli.didResumeProjectDeployment()).toBe(true);
+        expect(ide.didShowErrorMessage('Deployment failed')).toBe(true);
     });
 
     it('should report half status if deployment is not completed', async () => {
@@ -283,7 +284,7 @@ describe('project deploy', () => {
         await cli.projectDeployComplete();
         await testFunctionPromise;
         expect(ide.didSetAnyDiagnostics()).toBe(true);
-        expect(ide.didShowInformationMessage('Deployment successful!'));
+        expect(ide.didShowInformationMessage('Deployment successful'));
     });
 
     it('should only run project deploy twice if 10 project deploys are queued', async () => {
