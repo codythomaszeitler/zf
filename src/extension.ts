@@ -243,16 +243,19 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	const controller = vscode.tests.createTestController('zf-test-controller', 'ZF Apex Tests');
-	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, (testToken) => {
-		const testRun = controller.createTestRun(testToken);
+	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, (testRunRequest) => {
+		const testRun = controller.createTestRun(testRunRequest);
 
 		salesforceCli.getDefaultOrg().then(async (defaultOrg) => {
 			if (!defaultOrg) {
 				return;
 			}
-			const testsToRun = testToken.include?.map(testItem => {
+			const testsToRun = testRunRequest.include?.map(testItem => {
 				return testItem.id;
 			}).join(" ");
+
+
+			controller.invalidateTestResults(testRunRequest.include);
 
 			if (testsToRun) {
 				const runApexTestClass = new RunApexTestClass({
@@ -264,7 +267,7 @@ export function activate(context: vscode.ExtensionContext) {
 					targetOrg: defaultOrg,
 					testName: testsToRun
 				});
-				testToken.include?.forEach(testItem => {
+				testRunRequest.include?.forEach(testItem => {
 					if (!result.hasFailingTests()) {
 						testRun.passed(testItem);
 					} else {
