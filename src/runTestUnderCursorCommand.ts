@@ -82,18 +82,24 @@ export class RunTestUnderCursorCommand extends Command {
 
 				if (apexTestGetResult.hasFailingTests()) {
 					const diagnostics: Diagnostic[] = [];
+
+					const promises: Promise<void>[] = [];
 					apexTestGetResult.getFailingTests().forEach(test => {
 						const location = test.getLocation();
 						if (location) {
-							this.getIde().findFile(`**/${location.className}.cls`, this.getIde().getCurrentDir()).then((uri) => {
+							const findFilePromise = this.getIde().findFile(`**/${location.className}.cls`, this.getIde().getCurrentDir()).then((uri) => {
 								const diagnostic = new Diagnostic(new Range(location.position), test.getFailureMessage(), DiagnosticSeverity.error);
 								diagnostics.push(diagnostic);
 								if (uri) {
 									this.getIde().setDiagnostics(uri, diagnostics);
 								}
 							});
+
+							promises.push(findFilePromise);
 						}
 					});
+
+					await Promise.all(promises);
 					this.getIde().focusProblemsTab();
 				}
 			}
