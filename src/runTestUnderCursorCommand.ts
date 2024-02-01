@@ -8,7 +8,7 @@ import { SalesforceOrg } from "./salesforceOrg";
 
 export class RunTestUnderCursorCommand extends Command {
 
-	public constructor(params: {
+	public constructor (params: {
 		ide: IntegratedDevelopmentEnvironment,
 		cli: SalesforceCli
 	}) {
@@ -85,11 +85,15 @@ export class RunTestUnderCursorCommand extends Command {
 					apexTestGetResult.getFailingTests().forEach(test => {
 						const location = test.getLocation();
 						if (location) {
-							const diagnostic = new Diagnostic(new Range(location.position), test.getFailureMessage(), DiagnosticSeverity.error);
-							diagnostics.push(diagnostic);
+							this.getIde().findFile(`**/${location.className}.cls`, this.getIde().getCurrentDir()).then((uri) => {
+								const diagnostic = new Diagnostic(new Range(location.position), test.getFailureMessage(), DiagnosticSeverity.error);
+								diagnostics.push(diagnostic);
+								if (uri) {
+									this.getIde().setDiagnostics(uri, diagnostics);
+								}
+							});
 						}
 					});
-					this.getIde().setDiagnostics(uri, diagnostics);
 					this.getIde().focusProblemsTab();
 				}
 			}

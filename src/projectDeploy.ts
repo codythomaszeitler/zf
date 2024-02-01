@@ -7,6 +7,7 @@ import { Range } from "./range";
 import { ProgressToken } from "./progressToken";
 import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCommand } from "./projectDeployCommand";
+import { parseStackTrace } from "./apexTestRunResult";
 
 export async function projectDeploy(params: {
     targetOrg?: SalesforceOrg,
@@ -147,21 +148,47 @@ async function showFailuresInProblemsTab(ide: IntegratedDevelopmentEnvironment, 
 }
 
 function showFailuresInProblemsTabForFile(ide: IntegratedDevelopmentEnvironment, fileName: string, projectDeployReportResult: ProjectDeployReportResult): Promise<void> {
-
     const componentFailures = projectDeployReportResult.getFailuresForFileName(fileName);
-    return ide.findFile(`**/${fileName}`, ide.getCurrentDir()).then(uri => {
-        if (uri) {
-            const diagnostics = componentFailures.map(intoDiagnostic);
-            ide.setDiagnostics(uri, diagnostics);
-        }
+
+    const promises = componentFailures.map(componentFailure => {
+        const getFilename = () => {
+            if (isDependentClassInvalid(componentFailure.problem)) {
+                const { className } = parseStackTrace(componentFailure.problem);
+                return className + '.cls';
+            } else {
+                return componentFailure.fileName;
+            }
+        };
+
+        return ide.findFile(`**/${getFilename()}`, ide.getCurrentDir()).then(uri => {
+            const position = new Position(componentFailure.lineNumber, componentFailure.columnNumber);
+            const range = new Range(position);
+            const diagnostic = new Diagnostic(range, componentFailure.problem, DiagnosticSeverity.error);
+            if (uri) {
+                ide.setDiagnostics(uri, [diagnostic]);
+            }
+        });
+    });
+
+    return Promise.all(promises).then(() => {
+
     });
 }
 
-function intoDiagnostic(failure: ComponentFailure) {
-    const start = new Position(failure.lineNumber, failure.columnNumber);
-    const range = new Range(start);
-    const diagnostic = new Diagnostic(range, failure.problem, DiagnosticSeverity.error);
-    return diagnostic;
+const classNameRegex = /[.\n]*Dependent class is invalid and needs recompilation:\n Class (.*) : .*$/;
+function parseStackTrace(stackTrace: string) {
+
+    const matches = stackTrace.match(classNameRegex);
+    if (!matches) {
+        throw new Error(`Could not parse stack trace apex test location string [${stackTrace}]`);
+    }
+    return {
+        className: matches[1],
+    };
+}
+
+function isDependentClassInvalid(stackTrace: string) {
+    return classNameRegex.test(stackTrace);
 }
 
 function didHaveAnyFailures(projectDeployReportResult: ProjectDeployReportResult | undefined) {
