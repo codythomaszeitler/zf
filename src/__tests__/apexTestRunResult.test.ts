@@ -39,12 +39,12 @@ describe('stack trace parser', () => {
 	});
 
 	it('should be able to parse exception thrown from body of non-test-method', () => {
-		const testString = '"StackTrace": "Class.SetAccountName.foo: line 14, column 1\nClass.SetAccountNameTest.anotherTestMethod: line 21, column 1';
+		const testString = 'Class.SetAccountName.foo: line 14, column 1\nClass.SetAccountNameTest.anotherTestMethod: line 21, column 1';
 		const result = parseStackTrace(testString);
 
-		expect(result.className).toBe('SetAccountNameTest');
-		expect(result.methodName).toBe('anotherTestMethod');
-		expect(result.position.getLineNumber()).toBe(20);
+		expect(result.className).toBe('SetAccountName');
+		expect(result.methodName).toBe('foo');
+		expect(result.position.getLineNumber()).toBe(13);
 		expect(result.position.getColumnNumber()).toBe(0);
 	});
 });

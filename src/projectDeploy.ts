@@ -5,9 +5,8 @@ import { JobId } from "./jobId";
 import { Position } from "./position";
 import { Range } from "./range";
 import { ProgressToken } from "./progressToken";
-import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
+import { ProjectDeployReportResult } from "./projectDeployReportResult";
 import { ProjectDeployCommand } from "./projectDeployCommand";
-import { parseStackTrace } from "./apexTestRunResult";
 
 export async function projectDeploy(params: {
     targetOrg?: SalesforceOrg,

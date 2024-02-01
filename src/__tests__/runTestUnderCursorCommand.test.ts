@@ -170,6 +170,9 @@ describe('run test under cursor command', () => {
 			})
 		});
 
+		const uri =ide.generateUri('force-app', 'main', 'default', 'class', 'SetAccountName.cls');
+		ide.addFile(uri);
+
 		const testRunId = genRandomId('TestRun');
 
 		let apexTestGetCounter = 0;
