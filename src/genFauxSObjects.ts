@@ -101,16 +101,24 @@ function describeResultToApexField(field: SObjectFieldDescribeResult): FauxSObje
             modifier: 'global'
         });
 
-        field.getReferenceTo().forEach(reference => {
+        if (field.getReferenceTo().length > 1) {
             fauxSObjectFields.push({
                 name: field.getRelationshipName(),
-                type: reference,
+                type: 'SObject',
                 modifier: 'global'
             });
-        });
+        } else {
+            field.getReferenceTo().forEach(reference => {
+                fauxSObjectFields.push({
+                    name: field.getRelationshipName(),
+                    type: reference,
+                    modifier: 'global'
+                });
+            });
+        }
     }
 
-    return fauxSObjectFields;
+    return fauxSObjectFields.filter(fauxSObjectField => fauxSObjectField.name);
 }
 
 function mapChildRelationships(childRelationships: SObjectChildRelationshipDescribeResult[]): FauxSObjectField[] {
