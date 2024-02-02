@@ -10,7 +10,7 @@ import { Uri } from '../integratedDevelopmentEnvironment';
 import { getNewSObjectAccountDescribe } from './data/sobjectDescribeOutput';
 import { getEventSObjectDescribeOutput } from './data/eventSObjectDescribeOutput';
 
-describe('gen faux sobjects with command like object', () => {
+describe('gen faux sobjects with command like object - account', () => {
 
 	let cli: SfSalesforceCli;
 	let ide: MockIDE;
@@ -65,7 +65,7 @@ describe('gen faux sobjects with command like object', () => {
 	});
 });
 
-describe('gen faux sobjects with command like object', () => {
+describe('gen faux sobjects with command like object - event', () => {
 
 	let cli: SfSalesforceCli;
 	let ide: MockIDE;
