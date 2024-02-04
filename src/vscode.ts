@@ -10,7 +10,7 @@ import { TreeNode } from "./treeNode";
 import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 import { TextDecoder, TextEncoder } from "util";
-import { ExecutorCommand, basename } from "./executor";
+import { ExecutorCommand, intoCliCommandString } from "./executor";
 
 function getCurrentDir(): Uri {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -480,6 +480,7 @@ export class CliInputOutput {
     private readonly output: {
         stdout: string
     };
+    private readonly date : Date;
 
     public constructor ({
         command,
@@ -492,16 +493,20 @@ export class CliInputOutput {
     }) {
         this.command = command;
         this.output = output;
+        this.date = new Date();
     }
 
     public getLabel() {
-        const date = new Date();
-        const label = `${basename(this.command)} - ${date.toLocaleString()}`;
+        const label = `${intoCliCommandString(this.command)} - ${this.date.toLocaleString()}`;
         return label;
     }
 
     public getJson(): string {
         return JSON.stringify(this.output.stdout, null, 2);
+    }
+
+    public getDate() : Date {
+        return this.date;
     }
 }
 
@@ -535,12 +540,17 @@ export class VscodeCliInputOutputTreeView implements vscode.TreeDataProvider<Vsc
         this.eventEmitter = new vscode.EventEmitter<VscodeCliInputOutputTreeNode | undefined>();
         this.onDidChangeTreeData = this.eventEmitter.event;
 
-        const savedPush = this.cliInputOutputs.push.bind(this.cliInputOutputs);
+        const savedUnshift = this.cliInputOutputs.unshift.bind(this.cliInputOutputs);
 
         const eventEmitter = this.eventEmitter;
-        this.cliInputOutputs.push = function (...items: CliInputOutput[]) {
+
+        this.cliInputOutputs.unshift = function(...items : CliInputOutput[]) {
+            if (this.length + items.length > 10) {
+                this.length = this.length - items.length;
+            }
+            const result = savedUnshift(...items);
             eventEmitter.fire(undefined);
-            return savedPush(...items);
+            return result;
         };
     }
 

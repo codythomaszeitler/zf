@@ -15,6 +15,8 @@ import { RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
 import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
+import path = require('path');
+import { TextEncoder } from 'util';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('.zf', 'offlineSymbolTable');
@@ -35,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const cliInputOutputs: CliInputOutput[] = [];
 	const salesforceCli = new SfSalesforceCli(async (command: ExecutorCommand): Promise<ExecutorResult> => {
 		const output = await runCliCommand(command);
-		cliInputOutputs.push(new CliInputOutput({
+		cliInputOutputs.unshift(new CliInputOutput({
 			command,
 			output
 		}));
@@ -47,15 +49,19 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	const treeView = vscode.window.createTreeView('salesforce-cli-input-output', {
 		treeDataProvider: cliInputOutputTreeViewProvider
-	})
+	});
 	treeView.onDidChangeSelection(async (e) => {
 		e.selection.forEach(cliInputOutput => {
-			vscode.workspace.openTextDocument({
-				language : 'json',
-				content : cliInputOutput.cliInputOutput.getJson()
-			}).then(textDoc => {
-				vscode.window.showTextDocument(textDoc);
-			});
+			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+				const fsPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+				const uri = vscode.Uri.file(path.join(fsPath, '.zf', 'cli', `${cliInputOutput.cliInputOutput.getDate().getTime()}.json`));
+				const textEncoding = new TextEncoder();
+				vscode.workspace.fs.writeFile(uri, textEncoding.encode(cliInputOutput.cliInputOutput.getJson())).then(() => {
+					vscode.workspace.openTextDocument(uri).then(textDoc => {
+						vscode.window.showTextDocument(textDoc);
+					});
+				});
+			}
 		});
 	});
 
