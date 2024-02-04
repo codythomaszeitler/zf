@@ -352,3 +352,5 @@ describe('project deploy', () => {
         expect(ide.didSetAnyDiagnostics()).toBe(false);
     });
 });
+
+// TODO: We really need to make test cases that go through SfSalesforceCli and not have it go through MockSalesforceCli

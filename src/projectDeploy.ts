@@ -96,7 +96,12 @@ async function doProjectDeploy(params: {
     if (didHaveAnyFailures(projectDeployReportResult)) {
         params.ide.showErrorMessage('Deployment failed');
     } else {
-        params.ide.showInformationMessage('Deployment successful');
+        if (params.sourceDir) {
+            const deployed = params.sourceDir.map(uri => uri.getBaseName()).join(', ');
+            params.ide.showInformationMessage(`Successfully Deployed: ${deployed}`);
+        } else {
+            params.ide.showInformationMessage('Deployment successful');
+        }
     }
 
     if (params.ide.getConfig('sf.zsi.vscode.shouldFocusProblemsWhenDeployFails', true) && didHaveAnyFailures(projectDeployReportResult)) {

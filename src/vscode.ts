@@ -10,6 +10,7 @@ import { TreeNode } from "./treeNode";
 import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 import { TextDecoder, TextEncoder } from "util";
+import { ExecutorCommand, basename } from "./executor";
 
 function getCurrentDir(): Uri {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -21,7 +22,7 @@ function getCurrentDir(): Uri {
 }
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-    
+
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -470,5 +471,99 @@ class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, R
     async onTreeViewRefresh(e: { root: TreeNode<ApexLog>; }): Promise<void> {
         this.root = e.root;
         this.eventEmitter.fire(undefined);
+    }
+}
+
+export class CliInputOutput {
+
+    private readonly command: ExecutorCommand;
+    private readonly output: {
+        stdout: string
+    };
+
+    public constructor ({
+        command,
+        output,
+    }: {
+        command: ExecutorCommand,
+        output: {
+            stdout: string
+        },
+    }) {
+        this.command = command;
+        this.output = output;
+    }
+
+    public getLabel() {
+        const date = new Date();
+        const label = `${basename(this.command)} - ${date.toLocaleString()}`;
+        return label;
+    }
+
+    public getJson(): string {
+        return JSON.stringify(this.output.stdout, null, 2);
+    }
+}
+
+class VscodeCliInputOutputTreeNode extends vscode.TreeItem {
+
+    public readonly cliInputOutput: CliInputOutput;
+
+    public constructor ({ treeNode }: {
+        treeNode: CliInputOutput
+    }) {
+        super(treeNode.getLabel(), vscode.TreeItemCollapsibleState.None);
+        this.cliInputOutput = treeNode;
+    }
+
+    iconPath = {
+        light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
+        dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
+    };
+}
+
+export class VscodeCliInputOutputTreeView implements vscode.TreeDataProvider<VscodeCliInputOutputTreeNode>{
+
+    private readonly eventEmitter: vscode.EventEmitter<VscodeCliInputOutputTreeNode | undefined>;
+
+    private readonly cliInputOutputs: CliInputOutput[];
+
+    public constructor ({ cliInputOutputs }: {
+        cliInputOutputs: CliInputOutput[]
+    }) {
+        this.cliInputOutputs = cliInputOutputs;
+        this.eventEmitter = new vscode.EventEmitter<VscodeCliInputOutputTreeNode | undefined>();
+        this.onDidChangeTreeData = this.eventEmitter.event;
+
+        const savedPush = this.cliInputOutputs.push.bind(this.cliInputOutputs);
+
+        const eventEmitter = this.eventEmitter;
+        this.cliInputOutputs.push = function (...items: CliInputOutput[]) {
+            eventEmitter.fire(undefined);
+            return savedPush(...items);
+        };
+    }
+
+    onDidChangeTreeData?: vscode.Event<void | VscodeCliInputOutputTreeNode | VscodeCliInputOutputTreeNode[] | null | undefined> | undefined;
+
+    getTreeItem(element: VscodeCliInputOutputTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
+        return element;
+    }
+    getChildren(element?: VscodeCliInputOutputTreeNode | undefined): vscode.ProviderResult<VscodeCliInputOutputTreeNode[]> {
+        if (!element) {
+            return this.cliInputOutputs.map(cliInputOutput => {
+                return new VscodeCliInputOutputTreeNode({
+                    treeNode: cliInputOutput
+                });
+            });
+        } else {
+            return [];
+        }
+    }
+    getParent?(element: VscodeCliInputOutputTreeNode): vscode.ProviderResult<VscodeCliInputOutputTreeNode> {
+        return null;
+    }
+    resolveTreeItem?(item: vscode.TreeItem, element: VscodeCliInputOutputTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
+        return item;
     }
 }
