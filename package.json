@@ -67,6 +67,12 @@
           "id": "server-side-apex-logs",
           "name": "Apex Logs",
           "icon": "media/dep.svg"
+        },
+        {
+          "title": "Salesforce Cli Input/Output",
+          "id": "salesforce-cli-input-output",
+          "name": "Salesforce Cli Input/Output",
+          "icon": "media/dep.svg"
         }
       ]
     },

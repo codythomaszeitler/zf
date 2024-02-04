@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { VsCode } from "./vscode";
+import { CliInputOutput, VsCode, VscodeCliInputOutputTreeView } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
-import { runCliCommand } from './executor';
+import { ExecutorCommand, ExecutorResult, runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
@@ -31,7 +31,33 @@ export function activate(context: vscode.ExtensionContext) {
 	Logger.setGlobalLogger(logger);
 
 	const proxy = ide.getConfig("sf.zsi.vscode.proxy", {});
-	const salesforceCli = new SfSalesforceCli(runCliCommand, proxy);
+
+	const cliInputOutputs: CliInputOutput[] = [];
+	const salesforceCli = new SfSalesforceCli(async (command: ExecutorCommand): Promise<ExecutorResult> => {
+		const output = await runCliCommand(command);
+		cliInputOutputs.push(new CliInputOutput({
+			command,
+			output
+		}));
+		return output;
+	}, proxy);
+
+	const cliInputOutputTreeViewProvider = new VscodeCliInputOutputTreeView({
+		cliInputOutputs
+	});
+	const treeView = vscode.window.createTreeView('salesforce-cli-input-output', {
+		treeDataProvider: cliInputOutputTreeViewProvider
+	})
+	treeView.onDidChangeSelection(async (e) => {
+		e.selection.forEach(cliInputOutput => {
+			vscode.workspace.openTextDocument({
+				language : 'json',
+				content : cliInputOutput.cliInputOutput.getJson()
+			}).then(textDoc => {
+				vscode.window.showTextDocument(textDoc);
+			});
+		});
+	});
 
 	async function runSfOrgOpen() {
 		try {
@@ -155,6 +181,7 @@ export function activate(context: vscode.ExtensionContext) {
 			targetOrg: defaultOrg ?? undefined
 		});
 	});
+
 
 	async function runRefreshApexLogs() {
 		await ide.withProgress(async (progress) => {
