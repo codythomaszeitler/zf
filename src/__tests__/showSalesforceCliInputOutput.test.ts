@@ -17,7 +17,6 @@ describe('show salesforce cli input output', () => {
 
 	it('should show output when input is pressed', async () => {
 		const stdout = {};
-
 		const pressed = new SalesforceCliInputOutput({
 			input: {
 				args: ['sobject', 'describe', '--sobject', 'Account', '--target-org', 'cso', '--json'],
@@ -36,7 +35,6 @@ describe('show salesforce cli input output', () => {
 		const contents = await ide.readFile({
 			uri
 		});
-
 		expect(contents).toBe(JSON.stringify(stdout));
 	});
 
