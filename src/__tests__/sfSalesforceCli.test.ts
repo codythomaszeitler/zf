@@ -17,6 +17,7 @@ import { DEBUG_LEVEL_SOBJECT_NAME } from '../debugLevelSObject';
 import { getApexListLogNominalResponse } from './data/apexListLogOutput';
 import { SalesforceId } from '../salesforceId';
 import { genCommandToStdOutput, getSfOrgListCommandString, getSfOrgListUsersCommandString } from './__mocks__/mockShell';
+import { SalesforceCliHistory } from '../salesforceCli';
 
 describe('sf salesforce cli', () => {
 
@@ -676,6 +677,26 @@ describe('sf salesforce cli', () => {
             const expectedStartTime = new Date(Date.parse("2023-12-20T07:04:17+0000"));
             expect(log.getStartTime().getTime()).toBe(expectedStartTime.getTime());
             expect(log.getStatus()).toBe("Success");
+
+            const history: SalesforceCliHistory = cli.getHistory();
+            expect(history.length).toBe(2);
+            expect(history.maxHistoryLength).toBe(25);
+
+            const sfApexLogListInputOutput = history.get(0);
+            const sfOrgListInputOutput = history.get(1);
+
+            expect(sfApexLogListInputOutput.getViewableCliInput()).toMatch(/sf apex list log --target-org cso --json - .*/);
+            expect(sfApexLogListInputOutput.getViewableOutput(false)).toBe(getApexListLogNominalResponse());
+            expect(sfOrgListInputOutput.getViewableCliInput()).toMatch(/sf org list --json - .*/);
+            expect(sfOrgListInputOutput.getViewableOutput(false)).toBe(get());
+
+            for (let i = 0; i < 100; i++) {
+                await cli.apexListLog({
+                    targetOrg
+                });
+            }
+
+            expect(history.length).toBe(25);
         });
 
         it('should return empty logs and log error message if result is missing', async () => {
