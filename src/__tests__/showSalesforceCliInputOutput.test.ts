@@ -1,5 +1,4 @@
-
-import { describe } from '@jest/globals';
+import { describe, expect } from '@jest/globals';
 import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { showCliOutput } from '../showSalesforceCliInputOutput';
