@@ -5,8 +5,8 @@ export async function showCliOutput(ide: IntegratedDevelopmentEnvironment, cliIn
 	await ide.writeFile({
 		uri,
 		contents: cliInputOutput.getViewableOutput()
-	}).then(() => {
-		ide.showTextDocument(uri);
+	}).then(async () => {
+		await ide.showTextDocument(uri);
 	}).catch((e: any) => {
 		ide.showErrorMessage(e.message);
 	});
