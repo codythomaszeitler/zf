@@ -10,7 +10,7 @@ import { TreeNode } from "./treeNode";
 import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 import { TextDecoder, TextEncoder } from "util";
-import { ExecutorCommand, intoCliCommandString } from "./executor";
+import { OnSalesforceCliRunEvent, SalesforceCliHistory, SalesforceCliInputOutput } from "./salesforceCli";
 
 function getCurrentDir(): Uri {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -474,50 +474,14 @@ class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, R
     }
 }
 
-export class CliInputOutput {
-
-    private readonly command: ExecutorCommand;
-    private readonly output: {
-        stdout: string
-    };
-    private readonly date : Date;
-
-    public constructor ({
-        command,
-        output,
-    }: {
-        command: ExecutorCommand,
-        output: {
-            stdout: string
-        },
-    }) {
-        this.command = command;
-        this.output = output;
-        this.date = new Date();
-    }
-
-    public getLabel() {
-        const label = `${intoCliCommandString(this.command)} - ${this.date.toLocaleString()}`;
-        return label;
-    }
-
-    public getJson(): string {
-        return JSON.stringify(this.output.stdout, null, 2);
-    }
-
-    public getDate() : Date {
-        return this.date;
-    }
-}
-
 class VscodeCliInputOutputTreeNode extends vscode.TreeItem {
 
-    public readonly cliInputOutput: CliInputOutput;
+    public readonly cliInputOutput: SalesforceCliInputOutput;
 
     public constructor ({ treeNode }: {
-        treeNode: CliInputOutput
+        treeNode: SalesforceCliInputOutput
     }) {
-        super(treeNode.getLabel(), vscode.TreeItemCollapsibleState.None);
+        super(treeNode.getViewableCliInput(), vscode.TreeItemCollapsibleState.None);
         this.cliInputOutput = treeNode;
     }
 
@@ -531,27 +495,18 @@ export class VscodeCliInputOutputTreeView implements vscode.TreeDataProvider<Vsc
 
     private readonly eventEmitter: vscode.EventEmitter<VscodeCliInputOutputTreeNode | undefined>;
 
-    private readonly cliInputOutputs: CliInputOutput[];
+    private readonly history: SalesforceCliHistory;
 
-    public constructor ({ cliInputOutputs }: {
-        cliInputOutputs: CliInputOutput[]
+    public constructor ({ history }: {
+        history: SalesforceCliHistory
     }) {
-        this.cliInputOutputs = cliInputOutputs;
+        this.history = history;
         this.eventEmitter = new vscode.EventEmitter<VscodeCliInputOutputTreeNode | undefined>();
         this.onDidChangeTreeData = this.eventEmitter.event;
 
-        const savedUnshift = this.cliInputOutputs.unshift.bind(this.cliInputOutputs);
-
-        const eventEmitter = this.eventEmitter;
-
-        this.cliInputOutputs.unshift = function(...items : CliInputOutput[]) {
-            if (this.length + items.length > 10) {
-                this.length = this.length - items.length;
-            }
-            const result = savedUnshift(...items);
-            eventEmitter.fire(undefined);
-            return result;
-        };
+        this.history.registerOnSalesforceCliRunListener(async (e: OnSalesforceCliRunEvent) => {
+            this.eventEmitter.fire(undefined);
+        });
     }
 
     onDidChangeTreeData?: vscode.Event<void | VscodeCliInputOutputTreeNode | VscodeCliInputOutputTreeNode[] | null | undefined> | undefined;
@@ -561,7 +516,7 @@ export class VscodeCliInputOutputTreeView implements vscode.TreeDataProvider<Vsc
     }
     getChildren(element?: VscodeCliInputOutputTreeNode | undefined): vscode.ProviderResult<VscodeCliInputOutputTreeNode[]> {
         if (!element) {
-            return this.cliInputOutputs.map(cliInputOutput => {
+            return this.history.map(cliInputOutput => {
                 return new VscodeCliInputOutputTreeNode({
                     treeNode: cliInputOutput
                 });

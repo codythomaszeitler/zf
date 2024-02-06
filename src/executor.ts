@@ -64,14 +64,3 @@ export function intoCliCommandString(command: ExecutorCommand): string {
     const toString = command.command + " " + command.args.filter(arg => arg).join(" ");
     return toString;
 }
-
-export function basename(command: ExecutorCommand): string {
-    const args = command.args.filter(arg => arg);
-    const endOfBasename = args.findIndex(arg => arg.includes('--'));
-
-    const basenames: string[] = [command.command];
-    for (let i = 0; i < endOfBasename; i++) {
-        basenames.push(args[i]);
-    }
-    return basenames.join(' ');
-}

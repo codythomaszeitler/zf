@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { CliInputOutput, VsCode, VscodeCliInputOutputTreeView } from "./vscode";
+import { VsCode, VscodeCliInputOutputTreeView } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
-import { ExecutorCommand, ExecutorResult, runCliCommand } from './executor';
+import { runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
@@ -17,6 +17,7 @@ import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 import path = require('path');
 import { TextEncoder } from 'util';
+import { showCliOutput } from './showSalesforceCliInputOutput';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('.zf', 'offlineSymbolTable');
@@ -33,35 +34,17 @@ export function activate(context: vscode.ExtensionContext) {
 	Logger.setGlobalLogger(logger);
 
 	const proxy = ide.getConfig("sf.zsi.vscode.proxy", {});
-
-	const cliInputOutputs: CliInputOutput[] = [];
-	const salesforceCli = new SfSalesforceCli(async (command: ExecutorCommand): Promise<ExecutorResult> => {
-		const output = await runCliCommand(command);
-		cliInputOutputs.unshift(new CliInputOutput({
-			command,
-			output
-		}));
-		return output;
-	}, proxy);
+	const salesforceCli = new SfSalesforceCli(runCliCommand, proxy);
 
 	const cliInputOutputTreeViewProvider = new VscodeCliInputOutputTreeView({
-		cliInputOutputs
+		history: salesforceCli.getHistory()
 	});
 	const treeView = vscode.window.createTreeView('salesforce-cli-input-output', {
 		treeDataProvider: cliInputOutputTreeViewProvider
 	});
 	treeView.onDidChangeSelection(async (e) => {
 		e.selection.forEach(cliInputOutput => {
-			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-				const fsPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-				const uri = vscode.Uri.file(path.join(fsPath, '.zf', 'cli', `${cliInputOutput.cliInputOutput.getDate().getTime()}.json`));
-				const textEncoding = new TextEncoder();
-				vscode.workspace.fs.writeFile(uri, textEncoding.encode(cliInputOutput.cliInputOutput.getJson())).then(() => {
-					vscode.workspace.openTextDocument(uri).then(textDoc => {
-						vscode.window.showTextDocument(textDoc);
-					});
-				});
-			}
+			showCliOutput(ide, cliInputOutput.cliInputOutput);
 		});
 	});
 
