@@ -378,7 +378,7 @@ class DiagnosticMapper {
     }
 }
 
-class RangeMapper {
+export class RangeMapper {
     intoVsCodeRepresentation(range: Range) {
         const positionMapper = new PositionMapper();
         const vscodePosition = positionMapper.intoVsCodeRepresentation(range.getStart());

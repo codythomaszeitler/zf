@@ -17,22 +17,29 @@ export class ApexTestRunResult {
 }
 
 export class ApexTestGetResult {
-
+	
+	private readonly testRunId : SalesforceId;
 	private readonly tests: ApexTestResult[];
 	private readonly testsRan: number;
 	private readonly passing: number;
 	private readonly failing: number;
 
 	public constructor (params: {
+		testRunId : SalesforceId,
 		tests: ApexTestResult[],
 		testsRan: number,
 		passing: number,
 		failing: number
 	}) {
+		this.testRunId = params.testRunId;
 		this.tests = params.tests;
 		this.testsRan = params.testsRan;
 		this.passing = params.passing;
 		this.failing = params.failing;
+	}
+
+	public getTestRunId() {
+		return this.testRunId;
 	}
 
 	public getApexTestResult(fullName: string) {

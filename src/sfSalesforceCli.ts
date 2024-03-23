@@ -24,6 +24,7 @@ import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
 import { SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
 import { SoqlQuery } from "./soqlQuery";
 import { Uri } from "./uri";
+import { getLogFileUri } from "./showApexLogCommand";
 
 export class SfSalesforceCli extends SalesforceCli {
 
@@ -676,6 +677,7 @@ export class SfSalesforceCli extends SalesforceCli {
         });
 
         const apexTestGetResult = new ApexTestGetResult({
+            testRunId : params.testRunId,
             tests: apexTestResults,
             failing: stdout.result.summary.failing,
             passing: stdout.result.summary.passing,
