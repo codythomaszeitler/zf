@@ -1,5 +1,7 @@
 import { AbstractParseTreeVisitor } from "antlr4ts/tree/AbstractParseTreeVisitor";
 import * as _ApexParser from 'apex-parser';
+import { Position } from "./position";
+import { Range } from "./range";
 
 export class ApexParser {
 	public parse(input: string): ApexClassSymbolTable {
@@ -16,7 +18,8 @@ export class ApexParser {
 			methods: visitor.members.map(member => {
 				const apexMethod: ApexMethod = {
 					name: member.methodName,
-					isTestMethod: member.isTestMethod
+					isTestMethod: member.isTestMethod,
+					range: member.range
 				};
 				return apexMethod;
 			}),
@@ -29,6 +32,7 @@ export class ApexParser {
 type ApexMethod = {
 	name: string;
 	isTestMethod: boolean;
+	range: Range;
 };
 
 class ApexClassSymbolTable {
@@ -66,7 +70,8 @@ class ApexClassSymbolTable {
 
 type VisitorResult = {
 	isTestMethod: boolean,
-	methodName: string
+	methodName: string,
+	range: Range;
 };
 
 class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _ApexParser.ApexParserVisitor<void> {
@@ -91,14 +96,28 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 			});
 		};
 
+		const getRangeFor = (methodDecl: _ApexParser.MethodDeclarationContext) => {
+
+		}
+
 		const getVisitorResults = () => {
 			const memberDecl = ctx.memberDeclaration();
 			if (ctx.modifier() && memberDecl) {
 				const methodDecl = memberDecl.methodDeclaration();
 				if (methodDecl) {
+					let range = undefined;
+					const start = new Position(methodDecl.start.line - 1, methodDecl.start.startIndex);
+					if (methodDecl.stop) {
+						const end = new Position(methodDecl.stop.line - 1, methodDecl.stop.stopIndex);
+						range = new Range(start, end);
+					} else {
+						range = new Range(start);
+					}
+
 					const result: VisitorResult = {
 						isTestMethod: isTestMethod(),
 						methodName: methodDecl.id().text ?? "",
+						range
 					};
 					return [result];
 				}

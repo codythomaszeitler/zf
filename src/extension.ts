@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { VsCode, VscodeCliInputOutputTreeView, UriMapper } from "./vscode";
+import { VsCode, VscodeCliInputOutputTreeView, UriMapper, PositionMapper, RangeMapper } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
@@ -11,15 +11,17 @@ import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
-import { RunApexTestClass, RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
+import { RunApexTestClass as RunApexTestCommand, RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
 import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 import path = require('path');
-import { TextEncoder, TextDecoder  } from 'util';
+import { TextEncoder, TextDecoder } from 'util';
 import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
 import { ApexTestGetResult } from './apexTestRunResult';
+import { NULL_SF_ID, SalesforceId } from './salesforceId';
+import { getLogFileUri } from './showApexLogCommand';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('.zf', 'offlineSymbolTable');
@@ -258,25 +260,89 @@ export function activate(context: vscode.ExtensionContext) {
 			controller.invalidateTestResults(testRunRequest.include);
 
 			if (testsToRun) {
-				const runApexTestClass = new RunApexTestClass({
+				const runApexTestCommand = new RunApexTestCommand({
 					cli: salesforceCli,
 					ide: ide
 				});
 
-				const result = await runApexTestClass.execute({
+				const result = await runApexTestCommand.execute({
 					targetOrg: defaultOrg,
 					testName: testsToRun
 				});
+
+
+				const records = await salesforceCli.dataQuery({
+					targetOrg: defaultOrg,
+					query: {
+						from: "ApexTestResult",
+						fields: ["ApexLogId"],
+						where: `ApexTestRunResultId IN (SELECT Id from ApexTestRunResult where AsyncApexJobId = '${result.getTestRunId()}')`
+					}
+				});
+
+				const logId = SalesforceId.get(records.getSObjects()[0]["ApexLogId"]);
+				if (logId === NULL_SF_ID) {
+					ide.showWarningMessage('There was no debug log found... there is most likely no trace flag running.');
+					testRun.end();
+					return;
+				}
+
+				await salesforceCli.apexGetLog({
+					targetOrg: defaultOrg,
+					logDir: getZfLogDir(ide),
+					logId,
+					numLogs: undefined
+				});
+
+				const logFileUri = getLogFileUri({
+					targetOrg: defaultOrg,
+					logDir: getZfLogDir(ide),
+					logId
+				});
+
+				let contents = await ide.readFile({
+					uri: logFileUri
+				});
+
+				contents = contents.replace(/\n/g, '\r\n');
+				testRun.appendOutput(contents);
+
 				testRunRequest.include?.forEach(testItem => {
 					if (!result.hasFailingTests()) {
 						testRun.passed(testItem);
 					} else {
+						// So what I really want here... is I want someway to see the entire debug log of what happened during the test run.
+						// But the test explorer makes that somewhat complicated.
+						// But in salesforce land this is a little more weird.
+						// You are really interested in the debug log more than you are interested in the 
+						// Okay... this gets slightly more complicated.
+
+						// So there are three layers here
+						// ZF Apex Tests
+						//		AnotherTestClass
+						//			methodName
+						// What should happen when you click on each one of these in the hierarchy?
+						// If you click on AnotherTestClass, you should see log file that was 
+						// associated to the test class.
+
+						// If you click on th test method...
+						// What gets interesting here... is if you should not run this log thing 
+						// until the testRun item gets clicked
+
+						// So at this point, you know that you a failing log...
+						// But this isn't just for successes..
 						if (testItem.id.includes('.')) {
 							result.getFailingTests().forEach(failingTest => {
 								const parent = controller.items.get(failingTest.getClassName());
 								if (parent) {
 									const child = parent.children.get(failingTest.getFullName());
 									if (child) {
+										// Okay... so this is interesting... 
+										// The test run takes in a list of test items and attaches a message to them...
+										// What is interesting here... 
+										// Is that 
+										// You can also have a list of test messages associated to them? 
+										// The child has a list of messages that is associated to it...
 										testRun.failed(child, new vscode.TestMessage(failingTest.getFailureMessage() + '\n' + failingTest.getStackTrace()));
 									}
 								}
@@ -289,6 +355,7 @@ export function activate(context: vscode.ExtensionContext) {
 							testRun.failed(testItem, new vscode.TestMessage('Test Failures: \n' + errorMessage));
 						}
 					}
+					// So at this point... we really need to 
 				});
 			}
 			testRun.end();
@@ -313,7 +380,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 				if (apexClass.getIsTestClass()) {
 					apexClass.getTestMethods().forEach(apexMethod => {
-						testItem.children.add(controller.createTestItem(`${apexClassName}.${apexMethod.name}`, `${apexMethod.name}`));
+						const apexMethodTestItem = controller.createTestItem(`${apexClassName}.${apexMethod.name}`, `${apexMethod.name}`, vscodeUri);
+
+						const rangeMapper = new RangeMapper();
+						apexMethodTestItem.range = rangeMapper.intoVsCodeRepresentation(apexMethod.range);
+
+						testItem.children.add(apexMethodTestItem);
 					});
 					controller.items.add(testItem);
 				}
