@@ -1,4 +1,5 @@
 import { ApexTestQueueItemSelector } from "./apexTestQueueItemSelector";
+import { ApexTestGetResult, ApexTestResult } from "./apexTestRunResult";
 import { Command } from "./command";
 import { Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
 import { Range } from "./range";
@@ -145,8 +146,11 @@ export class RunApexTestClass extends Command {
 
 	public async execute({
 		targetOrg,
-		testName
-	}: { targetOrg: SalesforceOrg, testName: string }) {
+		testName,
+		onSingleTestFailure,
+		onSingleTestSuccess
+	}: { targetOrg: SalesforceOrg, testName: string, onSingleTestFailure?: (failure: ApexTestResult) => void, onSingleTestSuccess?: (success: ApexTestResult) => void }) {
+		const notifyListeners = this.genNotifyListeners(onSingleTestFailure, onSingleTestSuccess);
 		const apexTestRunResult = await this.getCli().apexTestRun({
 			targetOrg,
 			tests: [testName]
@@ -158,13 +162,46 @@ export class RunApexTestClass extends Command {
 			targetOrg,
 			testRunId
 		});
+		notifyListeners(apexTestGetResult);
 
 		while (apexTestGetResult.getPercentageCompleted() < 100) {
 			apexTestGetResult = await this.getCli().apexTestGet({
 				targetOrg,
 				testRunId
 			});
+			notifyListeners(apexTestGetResult);
 		}
 		return apexTestGetResult;
+	}
+
+	private genNotifyListeners(onSingleTestFailure?: (failure: ApexTestResult) => void, onSingleTestSuccess?: (success: ApexTestResult) => void) {
+		const successes: string[] = [];
+		const failures: string[] = [];
+		const notifyListeners = (apexTestGetResult: ApexTestGetResult) => {
+			const notifySuccessListeners = (apexTestGetResult: ApexTestGetResult) => {
+				apexTestGetResult.getPassingTests().forEach(success => {
+					if (!successes.includes(success.getFullName())) {
+						if (onSingleTestSuccess) {
+							onSingleTestSuccess(success);
+						}
+						successes.push(success.getFullName());
+					}
+				});
+			};
+
+			const notifyFailureListeners = (apexTestGetResult: ApexTestGetResult) => {
+				apexTestGetResult.getFailingTests().forEach(failure => {
+					if (!failures.includes(failure.getFullName())) {
+						if (onSingleTestFailure) {
+							onSingleTestFailure(failure);
+						}
+						failures.push(failure.getFullName());
+					}
+				});
+			};
+			notifySuccessListeners(apexTestGetResult);
+			notifyFailureListeners(apexTestGetResult);
+		};
+		return notifyListeners;
 	}
 }

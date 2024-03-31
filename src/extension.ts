@@ -22,6 +22,7 @@ import { ApexParser } from './apexParser';
 import { ApexTestGetResult } from './apexTestRunResult';
 import { NULL_SF_ID, SalesforceId } from './salesforceId';
 import { getLogFileUri } from './showApexLogCommand';
+import { ReadApexLogCommand, ReadApexTestLogCommand } from './readApexLogCommand';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('.zf', 'offlineSymbolTable');
@@ -244,9 +245,21 @@ export function activate(context: vscode.ExtensionContext) {
 		ide
 	}));
 
+	// Hmmm I'm still trying to think this through...
+	// So in my ide... I am going to start a command that is like "run tests".
+	// So from the IDE's point of view 
 	const controller = vscode.tests.createTestController('zf-test-controller', 'ZF Apex Tests');
 	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, (testRunRequest) => {
 		const testRun = controller.createTestRun(testRunRequest);
+
+		testRunRequest.include?.forEach(testItem => {
+			testItem.busy = true;
+			if (testItem.children) {
+				testItem.children.forEach(childTestItem => {
+					childTestItem.busy = true;
+				});
+			}
+		});
 
 		salesforceCli.getDefaultOrg().then(async (defaultOrg) => {
 			if (!defaultOrg) {
@@ -267,96 +280,40 @@ export function activate(context: vscode.ExtensionContext) {
 
 				const result = await runApexTestCommand.execute({
 					targetOrg: defaultOrg,
-					testName: testsToRun
-				});
-
-
-				const records = await salesforceCli.dataQuery({
-					targetOrg: defaultOrg,
-					query: {
-						from: "ApexTestResult",
-						fields: ["ApexLogId"],
-						where: `ApexTestRunResultId IN (SELECT Id from ApexTestRunResult where AsyncApexJobId = '${result.getTestRunId()}')`
-					}
-				});
-
-				const logId = SalesforceId.get(records.getSObjects()[0]["ApexLogId"]);
-				if (logId === NULL_SF_ID) {
-					ide.showWarningMessage('There was no debug log found... there is most likely no trace flag running.');
-					testRun.end();
-					return;
-				}
-
-				await salesforceCli.apexGetLog({
-					targetOrg: defaultOrg,
-					logDir: getZfLogDir(ide),
-					logId,
-					numLogs: undefined
-				});
-
-				const logFileUri = getLogFileUri({
-					targetOrg: defaultOrg,
-					logDir: getZfLogDir(ide),
-					logId
-				});
-
-				let contents = await ide.readFile({
-					uri: logFileUri
-				});
-
-				contents = contents.replace(/\n/g, '\r\n');
-				testRun.appendOutput(contents);
-
-				testRunRequest.include?.forEach(testItem => {
-					if (!result.hasFailingTests()) {
-						testRun.passed(testItem);
-					} else {
-						// So what I really want here... is I want someway to see the entire debug log of what happened during the test run.
-						// But the test explorer makes that somewhat complicated.
-						// But in salesforce land this is a little more weird.
-						// You are really interested in the debug log more than you are interested in the 
-						// Okay... this gets slightly more complicated.
-
-						// So there are three layers here
-						// ZF Apex Tests
-						//		AnotherTestClass
-						//			methodName
-						// What should happen when you click on each one of these in the hierarchy?
-						// If you click on AnotherTestClass, you should see log file that was 
-						// associated to the test class.
-
-						// If you click on th test method...
-						// What gets interesting here... is if you should not run this log thing 
-						// until the testRun item gets clicked
-
-						// So at this point, you know that you a failing log...
-						// But this isn't just for successes..
-						if (testItem.id.includes('.')) {
-							result.getFailingTests().forEach(failingTest => {
-								const parent = controller.items.get(failingTest.getClassName());
-								if (parent) {
-									const child = parent.children.get(failingTest.getFullName());
-									if (child) {
-										// Okay... so this is interesting... 
-										// The test run takes in a list of test items and attaches a message to them...
-										// What is interesting here... 
-										// Is that 
-										// You can also have a list of test messages associated to them? 
-										// The child has a list of messages that is associated to it...
-										testRun.failed(child, new vscode.TestMessage(failingTest.getFailureMessage() + '\n' + failingTest.getStackTrace()));
-									}
-								}
-							});
-						} else {
-							const errorMessage = result.getFailingTests().map(failingTest => {
-								return failingTest.getFullName() + ' ' + failingTest.getStackTrace();
-							}).join("\n");
-
-							testRun.failed(testItem, new vscode.TestMessage('Test Failures: \n' + errorMessage));
+					testName: testsToRun,
+					onSingleTestSuccess(success) {
+						const parent = controller.items.get(success.getClassName());
+						if (parent) {
+							const child = parent.children.get(success.getFullName());
+							if (child) {
+								testRun.passed(child);
+								child.busy = false;
+							}
 						}
-					}
-					// So at this point... we really need to 
+
+					},
+					onSingleTestFailure(failure) {
+						const parent = controller.items.get(failure.getClassName());
+						if (parent) {
+							const child = parent.children.get(failure.getFullName());
+							if (child) {
+								testRun.failed(child, new vscode.TestMessage(failure.getFailureMessage() + '\n' + failure.getStackTrace()));
+								child.busy = false;
+							}
+						}
+					},
 				});
+
+				const readApexTestLogCommand = new ReadApexTestLogCommand({
+					ide,
+					cli: salesforceCli
+				});
+
+				const contents = await readApexTestLogCommand.execute({
+					logDir: getZfLogDir(ide), targetOrg: defaultOrg, apexTestRunResultId: result.getTestRunId()
+				});
+
+				testRun.appendOutput(contents);
 			}
 			testRun.end();
 		});

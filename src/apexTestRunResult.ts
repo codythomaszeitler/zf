@@ -17,15 +17,15 @@ export class ApexTestRunResult {
 }
 
 export class ApexTestGetResult {
-	
-	private readonly testRunId : SalesforceId;
+
+	private readonly testRunId: SalesforceId;
 	private readonly tests: ApexTestResult[];
 	private readonly testsRan: number;
 	private readonly passing: number;
 	private readonly failing: number;
 
 	public constructor (params: {
-		testRunId : SalesforceId,
+		testRunId: SalesforceId,
 		tests: ApexTestResult[],
 		testsRan: number,
 		passing: number,
@@ -48,6 +48,10 @@ export class ApexTestGetResult {
 
 	public getPercentageCompleted(): number {
 		return ((this.passing + this.failing) / this.testsRan) * 100;
+	}
+
+	public getPassingTests() {
+		return this.tests.filter(test => test.getOutcome() === 'Pass');
 	}
 
 	public getFailingTests() {
@@ -76,7 +80,7 @@ export class ApexTestResult {
 		outcome: "Pass" | "Fail" | "Pending",
 		fullName: string,
 		message: string,
-		stackTrace : string,
+		stackTrace: string,
 		location: {
 			position: Position,
 			className: string,
@@ -107,10 +111,18 @@ export class ApexTestResult {
 	}
 
 	public getClassName() {
+		if (!this.location) {
+			return this.fullName.split('.')[0];
+		}
+
 		return this.location?.className ?? "";
 	}
 
 	public getMethodName() {
+		if (!this.location) {
+			return this.fullName.split('.')[1];
+		}
+
 		return this.location?.methodName ?? "";
 	}
 
