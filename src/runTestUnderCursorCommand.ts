@@ -177,26 +177,31 @@ export class RunApexTestClass extends Command {
 	private genNotifyListeners(onSingleTestFailure?: (failure: ApexTestResult) => void, onSingleTestSuccess?: (success: ApexTestResult) => void) {
 		const successes: string[] = [];
 		const failures: string[] = [];
+
+		const genNotifyListener = (tests: string[], onTestNotify?: (failure: ApexTestResult) => void) => {
+			return (apexTestResult: ApexTestResult) => {
+				if (!tests.includes(apexTestResult.getFullName())) {
+					if (onTestNotify) {
+						onTestNotify(apexTestResult);
+					}
+					tests.push(apexTestResult.getFullName());
+				}
+			};
+
+		};
+
 		const notifyListeners = (apexTestGetResult: ApexTestGetResult) => {
+			const onSuccess = genNotifyListener(successes, onSingleTestSuccess);
 			const notifySuccessListeners = (apexTestGetResult: ApexTestGetResult) => {
 				apexTestGetResult.getPassingTests().forEach(success => {
-					if (!successes.includes(success.getFullName())) {
-						if (onSingleTestSuccess) {
-							onSingleTestSuccess(success);
-						}
-						successes.push(success.getFullName());
-					}
+					onSuccess(success);
 				});
 			};
 
+			const onFailure = genNotifyListener(failures, onSingleTestFailure);
 			const notifyFailureListeners = (apexTestGetResult: ApexTestGetResult) => {
 				apexTestGetResult.getFailingTests().forEach(failure => {
-					if (!failures.includes(failure.getFullName())) {
-						if (onSingleTestFailure) {
-							onSingleTestFailure(failure);
-						}
-						failures.push(failure.getFullName());
-					}
+					onFailure(failure);
 				});
 			};
 			notifySuccessListeners(apexTestGetResult);
