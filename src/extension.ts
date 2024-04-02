@@ -11,7 +11,7 @@ import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
-import { RunApexTestClass as RunApexTestCommand, RunTestUnderCursorCommand } from './runTestUnderCursorCommand';
+import { RunApexTestCommand, RunApexTestRunRequest, RunTestUnderCursorCommand, TestItem, TestItem as ZfTestItem, TestRun as ZfTestRun } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
 import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
@@ -19,7 +19,7 @@ import path = require('path');
 import { TextEncoder, TextDecoder } from 'util';
 import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
-import { ApexTestGetResult } from './apexTestRunResult';
+import { ApexTestGetResult, ApexTestResult } from './apexTestRunResult';
 import { NULL_SF_ID, SalesforceId } from './salesforceId';
 import { getLogFileUri } from './showApexLogCommand';
 import { ReadApexLogCommand, ReadApexTestLogCommand } from './readApexLogCommand';
@@ -251,26 +251,111 @@ export function activate(context: vscode.ExtensionContext) {
 	const controller = vscode.tests.createTestController('zf-test-controller', 'ZF Apex Tests');
 	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, (testRunRequest) => {
 		const testRun = controller.createTestRun(testRunRequest);
+		controller.invalidateTestResults(testRunRequest.include);
 
-		testRunRequest.include?.forEach(testItem => {
-			testItem.busy = true;
-			if (testItem.children) {
-				testItem.children.forEach(childTestItem => {
-					childTestItem.busy = true;
-				});
+		function generateTestItem(child: vscode.TestItem) {
+			const zfTestItem: ZfTestItem = {
+				set busy(_busy: boolean) {
+					if (child) {
+						child.busy = _busy;
+					}
+				},
+				get busy() {
+					return child?.busy || false;
+				},
+				id: child?.id || "",
+				get children() {
+					const _children: TestItem[] = [];
+					child.children.forEach(_child => {
+						_children.push(generateTestItem(_child));
+					});
+					return _children;
+				}
+			};
+
+			return zfTestItem;
+		}
+
+		function getVscodeTestItem(apexTestResult : ApexTestResult) {
+			const parent = controller.items.get(apexTestResult.getClassName());
+			if (parent) {
+				const child = parent.children.get(apexTestResult.getFullName());
+				if (child) {
+					return child;
+				}
 			}
-		});
+			return undefined;
+		}
+
+		const zfTestRun: ZfTestRun = {
+			appendOutput(contents: string) {
+				testRun.appendOutput(contents)
+			},
+			end() {
+				testRun.end();
+			},
+			passed(apexTestResult: ApexTestResult): void {
+
+			},
+			failed(apexTestResult: ApexTestResult) {
+				const vscodeTestItem = getVscodeTestItem(apexTestResult);
+
+				if (vscodeTestItem) {
+					testRun.failed(vscodeTestItem, )
+				}
+			},
+			getTestItem(className, methodName) {
+				const parent = controller.items.get(className);
+				if (parent) {
+					const child = parent.children.get(methodName);
+					if (child) {
+						return generateTestItem(child);
+					}
+				}
+				return undefined;
+			},
+		}
+
+
 
 		salesforceCli.getDefaultOrg().then(async (defaultOrg) => {
 			if (!defaultOrg) {
 				return;
 			}
-			const testsToRun = testRunRequest.include?.map(testItem => {
-				return testItem.id;
-			}).join(" ");
-
 
 			controller.invalidateTestResults(testRunRequest.include);
+
+			const runApexTestRunRequest = new RunApexTestRunRequest({
+				cli: salesforceCli,
+				ide: ide
+			});
+
+			runApexTestRunRequest.execute({
+				,
+				logDir: getZfLogDir(ide),
+				targetOrg: defaultOrg,
+				onSingleTestSuccess(success) {
+					const parent = controller.items.get(success.getClassName());
+					if (parent) {
+						const child = parent.children.get(success.getFullName());
+						if (child) {
+							testRun.passed(child);
+							child.busy = false;
+						}
+					}
+
+				},
+				onSingleTestFailure(failure) {
+					const parent = controller.items.get(failure.getClassName());
+					if (parent) {
+						const child = parent.children.get(failure.getFullName());
+						if (child) {
+							testRun.failed(child, new vscode.TestMessage(failure.getFailureMessage() + '\n' + failure.getStackTrace()));
+							child.busy = false;
+						}
+					}
+				},
+			})
 
 			if (testsToRun) {
 				const runApexTestCommand = new RunApexTestCommand({
@@ -281,27 +366,7 @@ export function activate(context: vscode.ExtensionContext) {
 				const result = await runApexTestCommand.execute({
 					targetOrg: defaultOrg,
 					testName: testsToRun,
-					onSingleTestSuccess(success) {
-						const parent = controller.items.get(success.getClassName());
-						if (parent) {
-							const child = parent.children.get(success.getFullName());
-							if (child) {
-								testRun.passed(child);
-								child.busy = false;
-							}
-						}
 
-					},
-					onSingleTestFailure(failure) {
-						const parent = controller.items.get(failure.getClassName());
-						if (parent) {
-							const child = parent.children.get(failure.getFullName());
-							if (child) {
-								testRun.failed(child, new vscode.TestMessage(failure.getFailureMessage() + '\n' + failure.getStackTrace()));
-								child.busy = false;
-							}
-						}
-					},
 				});
 
 				const readApexTestLogCommand = new ReadApexTestLogCommand({

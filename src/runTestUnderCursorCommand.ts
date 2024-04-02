@@ -1,8 +1,9 @@
 import { ApexTestQueueItemSelector } from "./apexTestQueueItemSelector";
 import { ApexTestGetResult, ApexTestResult } from "./apexTestRunResult";
 import { Command } from "./command";
-import { Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment } from "./integratedDevelopmentEnvironment";
+import { Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
 import { Range } from "./range";
+import { ReadApexTestLogCommand } from "./readApexLogCommand";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
@@ -142,7 +143,7 @@ export class RunTestUnderCursorCommand extends Command {
 	}
 }
 
-export class RunApexTestClass extends Command {
+export class RunApexTestCommand extends Command {
 
 	public async execute({
 		targetOrg,
@@ -209,4 +210,90 @@ export class RunApexTestClass extends Command {
 		};
 		return notifyListeners;
 	}
+}
+
+// Maybe there be a IDE interface that states
+// "Hey, make this test look busy"
+
+
+export class RunApexTestRunRequest extends Command {
+
+	public async execute({
+		testRun,
+		targetOrg,
+		logDir
+	}: {
+		testRun: TestRun,
+		targetOrg: SalesforceOrg,
+		logDir: Uri
+	}) {
+		testRun.include.forEach(testItem => {
+			testItem.busy = true;
+			if (testItem.children) {
+				testItem.children.forEach(childTestItem => {
+					childTestItem.busy = true;
+				});
+			}
+		});
+
+		const testsToRun = testRun.include.map(testItem => {
+			return testItem.id;
+		}).join(" ");
+
+
+		if (testsToRun) {
+			const runApexTestCommand = new RunApexTestCommand({
+				cli: this.getCli(),
+				ide: this.getIde()
+			});
+
+			const result = await runApexTestCommand.execute({
+				targetOrg,
+				testName: testsToRun,
+				onSingleTestSuccess(success: ApexTestResult) {
+					testRun.passed(success);
+				},
+				onSingleTestFailure(failure : ApexTestResult)  {
+					testRun.failed(failure);
+				}
+			});
+
+			const readApexTestLogCommand = new ReadApexTestLogCommand({
+				ide: this.getIde(),
+				cli: this.getCli()
+			});
+
+			const contents = await readApexTestLogCommand.execute({
+				logDir, targetOrg, apexTestRunResultId: result.getTestRunId()
+			});
+
+			return contents;
+		}
+		return 'No Tests Found';
+	}
+}
+
+export interface TestRunRequest {
+	readonly include: readonly TestItem[] | undefined;
+}
+
+export interface TestItem {
+	busy: boolean;
+	id: string;
+
+	children : TestItem[];
+}
+
+export interface TestController {
+
+}
+
+export interface TestRun {
+	include: TestItem[];
+
+	passed(apexTestResult: ApexTestResult): void;
+	failed(apexTestResult: ApexTestResult): void;
+	appendOutput(contents: string): void;
+	end(): void;
+	getTestItem(className : string, methodName : string) : TestItem | undefined;
 }
