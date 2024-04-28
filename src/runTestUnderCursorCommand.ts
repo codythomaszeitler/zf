@@ -143,18 +143,30 @@ export class RunTestUnderCursorCommand extends Command {
 	}
 }
 
+interface ApexTestStartContext {
+	className: string;
+	methodName?: string;
+}
+
 export class RunApexTestCommand extends Command {
+
 
 	public async execute({
 		targetOrg,
 		testName,
 		onSingleTestFailure,
 		onSingleTestSuccess
-	}: { targetOrg: SalesforceOrg, testName: string, onSingleTestFailure?: (failure: ApexTestResult) => void, onSingleTestSuccess?: (success: ApexTestResult) => void }) {
+	}: {
+		// So we need the ability to DI this 
+		targetOrg: SalesforceOrg, testName: string | string[],
+		onSingleTestFailure?: (failure: ApexTestResult) => void,
+		onSingleTestSuccess?: (success: ApexTestResult) => void
+		onSingleTestStart?: (context: ApexTestStartContext) => void
+	}) {
 		const notifyListeners = this.genNotifyListeners(onSingleTestFailure, onSingleTestSuccess);
 		const apexTestRunResult = await this.getCli().apexTestRun({
 			targetOrg,
-			tests: [testName]
+			tests: Array.isArray(testName) ? testName : [testName]
 		});
 
 		const testRunId = apexTestRunResult.getTestRunId();
@@ -212,11 +224,29 @@ export class RunApexTestCommand extends Command {
 	}
 }
 
-// Maybe there be a IDE interface that states
-// "Hey, make this test look busy"
-
-
+/** 
+ * 
+ * 
+ * 
+*/
 export class RunApexTestRunRequest extends Command {
+
+	// Oh I see
+	// We are basically creating a test run
+	// What is this trying to say?
+	// Why would this not be combined into the same command?
+	// We were trying to move out the fact 
+	// So the problem that I am trying to solve here is the fact
+	// that the test run is bleeding through to the 
+
+	// A test run has a collection of test items.
+	// A test item has children who are themselves test items.
+
+	// A test item can start
+	// A test item can end.
+	// A test item can pass.
+	// A test item can fail. 
+	// A test run is a collection of test items.
 
 	public async execute({
 		testRun,
@@ -227,19 +257,23 @@ export class RunApexTestRunRequest extends Command {
 		targetOrg: SalesforceOrg,
 		logDir: Uri
 	}) {
-		testRun.include.forEach(testItem => {
-			testItem.busy = true;
-			if (testItem.children) {
-				testItem.children.forEach(childTestItem => {
-					childTestItem.busy = true;
-				});
+
+		// So the test id will always be this string. 
+		// ClassName.MethodName
+		// There's nothing else to be done here?
+		const testItems = this.getTestItemsToRun(testRun);
+
+		const testsToRun: string[] = [];
+
+		const testNameToRunningTestItem: Map<String, TestItem> = new Map();
+		testItems.forEach(testItem => {
+			const testToRun = testItem.start();
+
+			if (testToRun) {
+				testsToRun.push(testToRun);
+				testNameToRunningTestItem.set(testToRun, testItem);
 			}
 		});
-
-		const testsToRun = testRun.include.map(testItem => {
-			return testItem.id;
-		}).join(" ");
-
 
 		if (testsToRun) {
 			const runApexTestCommand = new RunApexTestCommand({
@@ -249,12 +283,16 @@ export class RunApexTestRunRequest extends Command {
 
 			const result = await runApexTestCommand.execute({
 				targetOrg,
-				testName: testsToRun,
+				testName: testsToRun.join(' '),
 				onSingleTestSuccess(success: ApexTestResult) {
-					testRun.passed(success);
+					const finishedTestId = success.getTestId();
+					const testItem = testNameToRunningTestItem.get(finishedTestId);
+					testItem?.passed();
 				},
-				onSingleTestFailure(failure : ApexTestResult)  {
-					testRun.failed(failure);
+				onSingleTestFailure(failure: ApexTestResult) {
+					const finishedTestId = failure.getTestId();
+					const testItem = testNameToRunningTestItem.get(finishedTestId);
+					testItem?.failed(failure);
 				}
 			});
 
@@ -267,9 +305,29 @@ export class RunApexTestRunRequest extends Command {
 				logDir, targetOrg, apexTestRunResultId: result.getTestRunId()
 			});
 
-			return contents;
+			testRun.appendOutput(contents);
+			testRun.end();
 		}
-		return 'No Tests Found';
+	}
+
+	private getTestItemsToRun(testRun: TestRun) {
+		const testItems: TestItem[] = [];
+		testItems.push(...testRun.testItems);
+		testItems.forEach(testItem => {
+			testItems.push(...this.getTestItemHierarchy(testItem));
+		});
+		return testItems;
+	}
+
+	private getTestItemHierarchy(testItem: TestItem) {
+		const testItems: TestItem[] = [];
+
+		testItems.push(...testItem.children);
+		testItem.children.forEach((child: TestItem) => {
+			testItems.push(...this.getTestItemHierarchy(child));
+		});
+
+		return testItems;
 	}
 }
 
@@ -278,10 +336,14 @@ export interface TestRunRequest {
 }
 
 export interface TestItem {
-	busy: boolean;
-	id: string;
 
-	children : TestItem[];
+	start(): string;
+	passed(): void;
+	failed(failure: ApexTestResult): void;
+	// What does id even have to do with this?
+	// Hasn't that already been decided at a previous point.
+
+	children: TestItem[];
 }
 
 export interface TestController {
@@ -289,11 +351,8 @@ export interface TestController {
 }
 
 export interface TestRun {
-	include: TestItem[];
+	testItems: TestItem[];
 
-	passed(apexTestResult: ApexTestResult): void;
-	failed(apexTestResult: ApexTestResult): void;
 	appendOutput(contents: string): void;
 	end(): void;
-	getTestItem(className : string, methodName : string) : TestItem | undefined;
 }
