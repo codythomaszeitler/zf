@@ -110,6 +110,17 @@ export class ApexTestResult {
 		return this.message;
 	}
 
+	public getTestId() {
+		const className = this.getClassName();
+		const methodName = this.getMethodName():
+
+		if (!methodName) {
+			return className;
+		} else {
+			return className + '.' + methodName;
+		}
+	}
+
 	public getClassName() {
 		if (!this.location) {
 			return this.fullName.split('.')[0];
