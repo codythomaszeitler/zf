@@ -112,7 +112,7 @@ export class ApexTestResult {
 
 	public getTestId() {
 		const className = this.getClassName();
-		const methodName = this.getMethodName():
+		const methodName = this.getMethodName();
 
 		if (!methodName) {
 			return className;
