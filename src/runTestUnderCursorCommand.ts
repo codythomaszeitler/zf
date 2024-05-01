@@ -7,6 +7,7 @@ import { ReadApexTestLogCommand } from "./readApexLogCommand";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
+import { intersects } from "./setUtils";
 
 export class RunTestUnderCursorCommand extends Command {
 
@@ -224,29 +225,7 @@ export class RunApexTestCommand extends Command {
 	}
 }
 
-/** 
- * 
- * 
- * 
-*/
 export class RunApexTestRunRequest extends Command {
-
-	// Oh I see
-	// We are basically creating a test run
-	// What is this trying to say?
-	// Why would this not be combined into the same command?
-	// We were trying to move out the fact 
-	// So the problem that I am trying to solve here is the fact
-	// that the test run is bleeding through to the 
-
-	// A test run has a collection of test items.
-	// A test item has children who are themselves test items.
-
-	// A test item can start
-	// A test item can end.
-	// A test item can pass.
-	// A test item can fail. 
-	// A test run is a collection of test items.
 
 	public async execute({
 		testRun,
@@ -254,35 +233,37 @@ export class RunApexTestRunRequest extends Command {
 		logDir
 	}: {
 		testRun: TestRun,
-		targetOrg: SalesforceOrg,
+		targetOrg?: SalesforceOrg,
 		logDir: Uri
 	}) {
-
-		// So the test id will always be this string. 
-		// ClassName.MethodName
-		// There's nothing else to be done here?
-		const testItems = this.getTestItemsToRun(testRun);
-
-		const testsToRun: string[] = [];
-
-		const testNameToRunningTestItem: Map<String, TestItem> = new Map();
-		testItems.forEach(testItem => {
-			const testToRun = testItem.start();
-
-			if (testToRun) {
-				testsToRun.push(testToRun);
-				testNameToRunningTestItem.set(testToRun, testItem);
+		start(testRun);
+		this.getCli().getDefaultOrg().then(async (defaultOrg) => {
+			if (!defaultOrg) {
+				return;
 			}
-		});
 
-		if (testsToRun) {
+			const testItems = this.getTestItemsToRun(testRun);
+
+			const testsToRun: string[] = [];
+
+			const testNameToRunningTestItem: Map<string, TestItem> = new Map();
+			testItems.forEach(testItem => {
+				const testToRun = testItem.start();
+
+				if (testToRun) {
+					testsToRun.push(testToRun);
+					testNameToRunningTestItem.set(testToRun, testItem);
+				}
+			});
+
 			const runApexTestCommand = new RunApexTestCommand({
 				cli: this.getCli(),
 				ide: this.getIde()
 			});
 
+			const testFailureNames: Set<string> = new Set<string>();
 			const result = await runApexTestCommand.execute({
-				targetOrg,
+				targetOrg: defaultOrg,
 				testName: testsToRun.join(' '),
 				onSingleTestSuccess(success: ApexTestResult) {
 					const finishedTestId = success.getTestId();
@@ -293,6 +274,12 @@ export class RunApexTestRunRequest extends Command {
 					const finishedTestId = failure.getTestId();
 					const testItem = testNameToRunningTestItem.get(finishedTestId);
 					testItem?.failed(failure);
+
+					let iterator: TestItem | undefined = testItem;
+					while (iterator) {
+						testFailureNames.add(failure.getTestId());
+						iterator = iterator.parent;
+					}
 				}
 			});
 
@@ -302,32 +289,22 @@ export class RunApexTestRunRequest extends Command {
 			});
 
 			const contents = await readApexTestLogCommand.execute({
-				logDir, targetOrg, apexTestRunResultId: result.getTestRunId()
+				logDir, targetOrg: defaultOrg, apexTestRunResultId: result.getTestRunId()
 			});
 
 			testRun.appendOutput(contents);
 			testRun.end();
-		}
+			end(testRun, testFailureNames);
+		});
+
+
+
+
 	}
 
 	private getTestItemsToRun(testRun: TestRun) {
-		const testItems: TestItem[] = [];
-		testItems.push(...testRun.testItems);
-		testItems.forEach(testItem => {
-			testItems.push(...this.getTestItemHierarchy(testItem));
-		});
-		return testItems;
-	}
-
-	private getTestItemHierarchy(testItem: TestItem) {
-		const testItems: TestItem[] = [];
-
-		testItems.push(...testItem.children);
-		testItem.children.forEach((child: TestItem) => {
-			testItems.push(...this.getTestItemHierarchy(child));
-		});
-
-		return testItems;
+		const testItems = getTestItemsWithinTestRun(testRun);
+		return testItems.filter(testItem => isTestMethod(testItem));
 	}
 }
 
@@ -337,13 +314,19 @@ export interface TestRunRequest {
 
 export interface TestItem {
 
+	identifier: string;
+	busy: boolean;
+	parent?: TestItem;
+
 	start(): string;
 	passed(): void;
-	failed(failure: ApexTestResult): void;
-	// What does id even have to do with this?
-	// Hasn't that already been decided at a previous point.
+	failed(failure: ApexTestResult | undefined): void;
 
 	children: TestItem[];
+}
+
+function isTestMethod(testItem: TestItem) {
+	return testItem.identifier.includes('.');
 }
 
 export interface TestController {
@@ -355,4 +338,65 @@ export interface TestRun {
 
 	appendOutput(contents: string): void;
 	end(): void;
+}
+
+function start(testRun: TestRun) {
+	setBusyStatusInTestHierarchy(testRun, true);
+}
+
+function end(testRun: TestRun, testFailuresNames: Set<string>) {
+	setBusyStatusInTestHierarchy(testRun, false);
+
+	testRun.testItems.forEach(testItem => {
+		const testItems = _getTestItemsWithinTestRun(testItem);
+
+		testItems.forEach(testItem => {
+			const testIdentifiers = getDescendantsTestIdentifiers(testItem);
+
+			if (testIdentifiers.size > 0) {
+				const hasChildFailure = intersects(testFailuresNames, testIdentifiers);
+				if (hasChildFailure) {
+					testItem.failed();
+				} else {
+					testItem.passed();
+				}
+			}
+		});
+	});
+}
+
+function getDescendantsTestIdentifiers(testItem: TestItem) {
+	const testItems = _getTestItemsWithinTestRun(testItem);
+
+	const testIdentifiers = new Set<string>();
+	testItems.forEach(testItem => {
+		testIdentifiers.add(testItem.identifier);
+	});
+	return testIdentifiers;
+}
+
+function setBusyStatusInTestHierarchy(testRun: TestRun, busy: boolean) {
+	const testItems = getTestItemsWithinTestRun(testRun);
+	testItems.forEach(testItem => {
+		testItem.busy = busy;
+	});
+}
+
+function getTestItemsWithinTestRun(testRun: TestRun) {
+	const testItems: TestItem[] = [];
+	testItems.push(...testRun.testItems);
+	testItems.forEach(testItem => {
+		testItems.push(..._getTestItemsWithinTestRun(testItem));
+	});
+	return testItems;
+}
+function _getTestItemsWithinTestRun(testItem: TestItem) {
+	const testItems: TestItem[] = [];
+
+	testItems.push(...testItem.children);
+	testItem.children.forEach((child: TestItem) => {
+		testItems.push(..._getTestItemsWithinTestRun(child));
+	});
+
+	return testItems;
 }

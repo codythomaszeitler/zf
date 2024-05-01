@@ -245,25 +245,58 @@ export function activate(context: vscode.ExtensionContext) {
 		ide
 	}));
 
-	// Hmmm I'm still trying to think this through...
-	// So in my ide... I am going to start a command that is like "run tests".
-	// So from the IDE's point of view 
 	const controller = vscode.tests.createTestController('zf-test-controller', 'ZF Apex Tests');
-	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, (testRunRequest) => {
+	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, async (testRunRequest) => {
 		const testRun = controller.createTestRun(testRunRequest);
-		controller.invalidateTestResults(testRunRequest.include);
+
+		const zfTestRun: ZfTestRun = {
+			testItems: testRunRequest.include?.map(testItem => {
+				return generateTestItem(testItem);
+			}) || [],
+			appendOutput(contents: string) {
+				testRun.appendOutput(contents);
+			},
+			end() {
+				testRun.end();
+			}
+		};
+
+		const runApexTestRunRequest = new RunApexTestRunRequest({
+			cli: salesforceCli,
+			ide: ide
+		});
+		await runApexTestRunRequest.execute({
+			testRun: zfTestRun,
+			logDir: getZfLogDir(ide)
+		});
 
 		function generateTestItem(child: vscode.TestItem) {
 			const zfTestItem: ZfTestItem = {
+				get identifier() {
+					return child.id;
+				},
+				get busy() {
+					return child.busy;
+				},
+				set busy(_busy) {
+					child.busy = _busy;
+				},
 				start: function (): string {
 					child.busy = true;
 					return child.id;
 				},
 				passed: function (): void {
 					child.busy = false;
+					testRun.passed(child);
 				},
-				failed: function (failure: ApexTestResult): void {
+				failed: function (failure: ApexTestResult | undefined): void {
 					child.busy = false;
+					if (failure) {
+						testRun.failed(child, new vscode.TestMessage(failure.getFailureMessage()));
+					}
+				},
+				get parent() {
+					return child.parent && generateTestItem(child.parent);
 				},
 				get children() {
 					const _children: ZfTestItem[] = [];
@@ -276,39 +309,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 			return zfTestItem;
 		}
-
-		const testItems: ZfTestItem[] = [];
-		testRunRequest.include?.forEach(testItem => {
-			testItems.push(generateTestItem(testItem));
-		});
-
-		const zfTestRun: ZfTestRun = {
-			testItems,
-			appendOutput(contents : string) {
-				testRun.appendOutput(contents);
-			},
-			end() {
-				testRun.end();
-			}
-		};
-
-		salesforceCli.getDefaultOrg().then(async (defaultOrg) => {
-			if (!defaultOrg) {
-				return;
-			}
-			controller.invalidateTestResults(testRunRequest.include);
-
-			const runApexTestRunRequest = new RunApexTestRunRequest({
-				cli: salesforceCli,
-				ide: ide
-			});
-			await runApexTestRunRequest.execute({
-				testRun: zfTestRun,
-				logDir: getZfLogDir(ide),
-				targetOrg: defaultOrg,
-			});
-		});
-
 	});
 
 	const alignTestMethods = (vscodeUri: vscode.Uri) => {
