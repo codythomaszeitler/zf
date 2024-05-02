@@ -88,11 +88,13 @@ describe('run test under cursor command', () => {
 
 			if (apexTestGetCounter === 1) {
 				return new ApexTestGetResult({
+					testRunId,
 					failing: 0,
 					passing: 1,
 					testsRan: 2,
 					tests: [
 						new ApexTestResult({
+							stackTrace: '',
 							outcome: 'Pass',
 							fullName: testName + '.test1',
 							message: 'Test Failure Message',
@@ -103,6 +105,7 @@ describe('run test under cursor command', () => {
 							}
 						}),
 						new ApexTestResult({
+							stackTrace: '',
 							outcome: 'Pending',
 							fullName: testName + '.test2',
 							message: 'Test Failure Message',
@@ -116,11 +119,13 @@ describe('run test under cursor command', () => {
 				});
 			} else {
 				return new ApexTestGetResult({
+					testRunId,
 					failing: 0,
 					passing: 2,
 					testsRan: 2,
 					tests: [
 						new ApexTestResult({
+							stackTrace: '',
 							outcome: 'Pass',
 							fullName: testName + '.test1',
 							message: 'Test Failure Message',
@@ -131,6 +136,7 @@ describe('run test under cursor command', () => {
 							}
 						}),
 						new ApexTestResult({
+							stackTrace: '',
 							outcome: 'Pass',
 							fullName: testName + '.test2',
 							message: 'Test Failure Message',
@@ -170,7 +176,7 @@ describe('run test under cursor command', () => {
 			})
 		});
 
-		const uri =ide.generateUri('force-app', 'main', 'default', 'class', 'SetAccountName.cls');
+		const uri = ide.generateUri('force-app', 'main', 'default', 'class', 'SetAccountName.cls');
 		ide.addFile(uri);
 
 		const testRunId = genRandomId('TestRun');
@@ -182,11 +188,13 @@ describe('run test under cursor command', () => {
 
 			apexTestGetCounter++;
 			return new ApexTestGetResult({
+				testRunId,
 				failing: 1,
 				passing: 0,
 				testsRan: 1,
 				tests: [
 					new ApexTestResult({
+						stackTrace: '',
 						outcome: 'Fail',
 						fullName: testName + '.test2',
 						message: 'Test Failure Message',
@@ -248,4 +256,8 @@ describe('run test under cursor command', () => {
 			expect(apexTestQueueItem.status).toBe(expectedStatus);
 		});
 	});
+});
+
+describe('test name', () => {
+
 });

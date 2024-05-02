@@ -338,16 +338,6 @@ function end(testRun: TestRun, testFailuresNames: Set<string>) {
 	setBusyStatusInTestHierarchy(testRun, false);
 }
 
-function getDescendantsTestIdentifiers(testItem: TestItem) {
-	const testItems = _getTestItemsWithinTestRun(testItem);
-
-	const testIdentifiers = new Set<string>();
-	testItems.forEach(testItem => {
-		testIdentifiers.add(testItem.identifier);
-	});
-	return testIdentifiers;
-}
-
 function setBusyStatusInTestHierarchy(testRun: TestRun, busy: boolean) {
 	const testItems = getTestItemsWithinTestRun(testRun);
 	testItems.forEach(testItem => {

@@ -98,10 +98,6 @@ export abstract class IntegratedDevelopmentEnvironment {
         const file = await this.findFile(basename, Uri.dirname(uri));
         return !!file;
     }
-
-    runTest(testRunRequest : TestRunRequest) {
-
-    }
 }
 
 export interface OnSaveTextDocumentsEvent {
