@@ -270,6 +270,8 @@ export function activate(context: vscode.ExtensionContext) {
 			logDir: getZfLogDir(ide)
 		});
 
+		controller.invalidateTestResults();
+
 		function generateTestItem(child: vscode.TestItem) {
 			const zfTestItem: ZfTestItem = {
 				get identifier() {
@@ -283,6 +285,7 @@ export function activate(context: vscode.ExtensionContext) {
 				},
 				start: function (): string {
 					child.busy = true;
+					testRun.started(child);
 					return child.id;
 				},
 				passed: function (): void {
