@@ -11,18 +11,15 @@ import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
-import { RunApexTestCommand, RunApexTestRunRequest, RunTestUnderCursorCommand, TestItem as ZfTestItem, TestRun as ZfTestRun } from './runTestUnderCursorCommand';
+import { RunApexTestRunRequest, RunTestUnderCursorCommand, TestItem as ZfTestItem, TestRun as ZfTestRun } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
 import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
 import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 import path = require('path');
-import { TextEncoder, TextDecoder } from 'util';
+import { TextDecoder } from 'util';
 import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
-import { ApexTestGetResult, ApexTestResult } from './apexTestRunResult';
-import { NULL_SF_ID, SalesforceId } from './salesforceId';
-import { getLogFileUri } from './showApexLogCommand';
-import { ReadApexLogCommand, ReadApexTestLogCommand } from './readApexLogCommand';
+import { ApexTestResult } from './apexTestRunResult';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('.zf', 'offlineSymbolTable');
