@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { RunTestUnderCursorCommand } from "../runTestUnderCursorCommand";
+import { RunApexTestRunRequest, RunTestUnderCursorCommand, TestItem, TestRun } from "../runTestUnderCursorCommand";
 import { SalesforceOrg } from "../salesforceOrg";
 import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
@@ -12,6 +12,8 @@ import { Position } from '../position';
 import { genApexQueueItem } from './genApexQueueItemTestUtil';
 import { ApexTestQueueItemSelector } from '../apexTestQueueItemSelector';
 import { ApexTestQueueStatus } from '../apexTestQueueItem';
+import { SfSalesforceCli } from '../sfSalesforceCli';
+import { genCommandToStdOutput, genMockExecutor } from './__mocks__/mockShell';
 
 describe('run test under cursor command', () => {
 
@@ -258,6 +260,77 @@ describe('run test under cursor command', () => {
 	});
 });
 
-describe('test name', () => {
+describe('run apex test run request', () => {
 
+	let targetOrg : SalesforceOrg;
+	let cli : SfSalesforceCli;
+	let ide : MockIDE;
+	let logDir : Uri;
+
+	let commandToStdOutput : any;
+
+	beforeEach(() => {
+		ide = new MockIDE();
+		commandToStdOutput = genCommandToStdOutput();
+		cli = new SfSalesforceCli(genMockExecutor(commandToStdOutput));
+		targetOrg = new SalesforceOrg({
+			alias : 'cso', isActive : true
+		});
+		logDir = ide.generateUri('.zf', 'logs');
+	});
+
+	it('should be able to run one bottom level test', async () => {
+		// You need to set up what exactly the 
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.testMethod'
+		});
+
+		testRun.testItems.push(testItem);
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir 
+		});
+	});
+
+	function createTestRun(): TestRun & { contents: string, didEnd: boolean } {
+		return {
+			contents: '',
+			didEnd: false,
+			testItems: [],
+			appendOutput(contents: string) {
+				this.contents = contents;
+			},
+			end() {
+				this.didEnd = false;
+			},
+		};
+	}
+
+	function createTestItem({
+		identifier
+	}: { identifier: string }): TestItem & { didStart: boolean, didFail: boolean, didPass: boolean } {
+		return {
+			didFail: false,
+			didPass: false,
+			didStart: false,
+			identifier,
+			busy: false,
+			children: [],
+			start() {
+				this.didStart = true;
+				return this.identifier;
+			},
+			failed() {
+				this.didFail = true;
+			},
+			passed() {
+				this.didPass = true;
+			},
+		};
+	}
 });
