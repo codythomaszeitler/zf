@@ -237,69 +237,59 @@ export class RunApexTestRunRequest extends Command {
 		logDir: Uri
 	}) {
 		start(testRun);
-		this.getCli().getDefaultOrg().then(async (defaultOrg) => {
-			if (!defaultOrg) {
-				return;
+
+		const targetOrDefaultOrg = targetOrg || await this.getCli().getDefaultOrg();
+		if (!targetOrDefaultOrg) {
+			return;
+		}
+
+		const testItems = this.getTestItemsToRun(testRun);
+
+		const testsToRun: string[] = [];
+
+		const testNameToRunningTestItem: Map<string, TestItem> = new Map();
+		testItems.forEach(testItem => {
+			const testToRun = testItem.start();
+
+			if (testToRun) {
+				testsToRun.push(testToRun);
+				testNameToRunningTestItem.set(testToRun, testItem);
 			}
-
-			const testItems = this.getTestItemsToRun(testRun);
-
-			const testsToRun: string[] = [];
-
-			const testNameToRunningTestItem: Map<string, TestItem> = new Map();
-			testItems.forEach(testItem => {
-				const testToRun = testItem.start();
-
-				if (testToRun) {
-					testsToRun.push(testToRun);
-					testNameToRunningTestItem.set(testToRun, testItem);
-				}
-			});
-
-			const runApexTestCommand = new RunApexTestCommand({
-				cli: this.getCli(),
-				ide: this.getIde()
-			});
-
-			const testFailureNames: Set<string> = new Set<string>();
-			const result = await runApexTestCommand.execute({
-				targetOrg: defaultOrg,
-				testName: testsToRun.join(' '),
-				onSingleTestSuccess(success: ApexTestResult) {
-					const finishedTestId = success.getTestId();
-					const testItem = testNameToRunningTestItem.get(finishedTestId);
-					testItem?.passed();
-				},
-				onSingleTestFailure(failure: ApexTestResult) {
-					const finishedTestId = failure.getTestId();
-					const testItem = testNameToRunningTestItem.get(finishedTestId);
-					testItem?.failed(failure);
-
-					let iterator: TestItem | undefined = testItem;
-					while (iterator) {
-						testFailureNames.add(failure.getTestId());
-						iterator = iterator.parent;
-					}
-				}
-			});
-
-			const readApexTestLogCommand = new ReadApexTestLogCommand({
-				ide: this.getIde(),
-				cli: this.getCli()
-			});
-
-			const contents = await readApexTestLogCommand.execute({
-				logDir, targetOrg: defaultOrg, apexTestRunResultId: result.getTestRunId()
-			});
-
-			testRun.appendOutput(contents);
-			testRun.end();
-			end(testRun, testFailureNames);
 		});
 
+		const runApexTestCommand = new RunApexTestCommand({
+			cli: this.getCli(),
+			ide: this.getIde()
+		});
 
+		const testFailureNames: Set<string> = new Set<string>();
+		const result = await runApexTestCommand.execute({
+			targetOrg: targetOrDefaultOrg,
+			testName: testsToRun.join(' '),
+			onSingleTestSuccess(success: ApexTestResult) {
+				const finishedTestId = success.getTestId();
+				const testItem = testNameToRunningTestItem.get(finishedTestId);
+				testItem?.passed();
+			},
+			onSingleTestFailure(failure: ApexTestResult) {
+				const finishedTestId = failure.getTestId();
+				const testItem = testNameToRunningTestItem.get(finishedTestId);
+				testItem?.failed(failure);
+			}
+		});
 
+		const readApexTestLogCommand = new ReadApexTestLogCommand({
+			ide: this.getIde(),
+			cli: this.getCli()
+		});
 
+		const contents = await readApexTestLogCommand.execute({
+			logDir, targetOrg: targetOrDefaultOrg, apexTestRunResultId: result.getTestRunId()
+		});
+
+		testRun.appendOutput(contents);
+		testRun.end();
+		end(testRun, testFailureNames);
 	}
 
 	private getTestItemsToRun(testRun: TestRun) {
@@ -320,7 +310,7 @@ export interface TestItem {
 
 	start(): string;
 	passed(): void;
-	failed(failure: ApexTestResult | undefined): void;
+	failed(failure?: ApexTestResult): void;
 
 	children: TestItem[];
 }
@@ -346,23 +336,6 @@ function start(testRun: TestRun) {
 
 function end(testRun: TestRun, testFailuresNames: Set<string>) {
 	setBusyStatusInTestHierarchy(testRun, false);
-
-	testRun.testItems.forEach(testItem => {
-		const testItems = _getTestItemsWithinTestRun(testItem);
-
-		testItems.forEach(testItem => {
-			const testIdentifiers = getDescendantsTestIdentifiers(testItem);
-
-			if (testIdentifiers.size > 0) {
-				const hasChildFailure = intersects(testFailuresNames, testIdentifiers);
-				if (hasChildFailure) {
-					testItem.failed();
-				} else {
-					testItem.passed();
-				}
-			}
-		});
-	});
 }
 
 function getDescendantsTestIdentifiers(testItem: TestItem) {
