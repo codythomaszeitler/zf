@@ -1,6 +1,7 @@
 
 const USER_ID_PREFIX = '005';
 const DEBUG_LEVEL_ID_PREFIX = '005';
+export const ASYNC_APEX_JOB_PREFIX = '005';
 
 const NULL_SF_ID_STRING = "000000000000000";
 

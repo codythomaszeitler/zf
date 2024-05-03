@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { describe, expect, test } from '@jest/globals';
-import { RunApexTestRunRequest, RunTestUnderCursorCommand, TestItem, TestRun } from "../runTestUnderCursorCommand";
+import { RunApexTestRunRequest, RunTestUnderCursorCommand, TestItem, TestRun, getClassNameAndMethodName } from "../runTestUnderCursorCommand";
 import { SalesforceOrg } from "../salesforceOrg";
 import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
@@ -7,7 +8,7 @@ import { MockSalesforceCli } from "./__mocks__/mockSalesforceCli";
 import { Uri } from '../integratedDevelopmentEnvironment';
 import { genRandomId } from './salesforceId.test';
 import { ApexTestGetResult, ApexTestResult, ApexTestRunResult } from '../apexTestRunResult';
-import { SalesforceId } from '../salesforceId';
+import { ASYNC_APEX_JOB_PREFIX, SalesforceId } from '../salesforceId';
 import { Position } from '../position';
 import { genApexQueueItem } from './genApexQueueItemTestUtil';
 import { ApexTestQueueItemSelector } from '../apexTestQueueItemSelector';
@@ -262,39 +263,64 @@ describe('run test under cursor command', () => {
 
 describe('run apex test run request', () => {
 
-	let targetOrg : SalesforceOrg;
-	let cli : SfSalesforceCli;
-	let ide : MockIDE;
-	let logDir : Uri;
+	let targetOrg: SalesforceOrg;
+	let cli: SfSalesforceCli;
+	let ide: MockIDE;
+	let logDir: Uri;
 
-	let commandToStdOutput : any;
+	let commandToStdOutput: any;
 
 	beforeEach(() => {
 		ide = new MockIDE();
 		commandToStdOutput = genCommandToStdOutput();
 		cli = new SfSalesforceCli(genMockExecutor(commandToStdOutput));
 		targetOrg = new SalesforceOrg({
-			alias : 'cso', isActive : true
+			alias: 'cso', isActive: true
 		});
 		logDir = ide.generateUri('.zf', 'logs');
 	});
 
 	it('should be able to run one bottom level test', async () => {
-		// You need to set up what exactly the 
+
 		const testRun = createTestRun();
 		const testItem = createTestItem({
 			identifier: 'ApexTestClass.testMethod'
 		});
+		testItem.shouldPass = true;
 
 		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = genApexTestRunResult({
+			status: 0,
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestGetResult({
+			testItems: [testItem],
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestLogCommandString({
+			apexTestRunResultId: testRunId,
+			targetOrg
+		})] = genApexTestLogResult({
+			apexTestLogId: testRunId
+		});
 
 		const testObject = new RunApexTestRunRequest({
 			ide, cli
 		});
 
 		await testObject.execute({
-			testRun, targetOrg, logDir 
+			testRun, targetOrg, logDir
 		});
+
+		expect(testRun.didEnd).toBe(true);
 	});
 
 	function createTestRun(): TestRun & { contents: string, didEnd: boolean } {
@@ -309,12 +335,15 @@ describe('run apex test run request', () => {
 				this.didEnd = false;
 			},
 		};
+
 	}
 
 	function createTestItem({
 		identifier
-	}: { identifier: string }): TestItem & { didStart: boolean, didFail: boolean, didPass: boolean } {
+	}: { identifier: string }): MockTestItem {
 		return {
+			shouldFail: false,
+			shouldPass: false,
 			didFail: false,
 			didPass: false,
 			didStart: false,
@@ -334,3 +363,107 @@ describe('run apex test run request', () => {
 		};
 	}
 });
+
+type MockTestItem = TestItem & {
+	didFail: boolean,
+	didPass: boolean,
+	didStart: boolean,
+	shouldFail: boolean,
+	shouldPass: boolean
+};
+
+function genApexTestRunCommandString({ tests, targetOrg }: { tests: TestItem[], targetOrg: SalesforceOrg }) {
+	return `sf apex test run --tests ${tests.map(test => test.identifier).join(" ")} --target-org ${targetOrg.getAlias()} --json`;
+}
+
+function genApexTestRunResult({ testRunId, status }: { testRunId: SalesforceId; status: number }) {
+	return JSON.stringify({
+		"status": status,
+		"result": {
+			"testRunId": testRunId.toString()
+		},
+		"warnings": []
+	});
+}
+
+function genApexTestGetCommandString({ testRunId, targetOrg }: { testRunId: SalesforceId, targetOrg: SalesforceOrg }) {
+	return `sf apex test get --test-run-id ${testRunId.toString()} --target-org ${targetOrg.getAlias()} --json`;
+}
+
+function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceId, testItems: MockTestItem[] }) {
+	const allTestsPass = testItems.every(testItem => testItem.shouldPass);
+	const numPassed = testItems.filter(testItem => testItem.shouldPass).length;
+	const numFailed = testItems.filter(testItem => testItem.shouldFail).length;
+
+
+	const tests = testItems.map(testItem => {
+		const { className, methodName } = getClassNameAndMethodName(testItem);
+		return {
+			"Id": "07M5e00000Gg5GEEAZ",
+			"QueueItemId": "7095e000000zsmCAAQ",
+			"StackTrace": null,
+			"Message": null,
+			"AsyncApexJobId": testRunId.toString(),
+			"MethodName": methodName,
+			"Outcome": "Pass",
+			"ApexClass": {
+				"Id": "01p5e00000bd62JAAQ",
+				"Name": className,
+				"NamespacePrefix": null
+			},
+			"RunTime": 14,
+			"FullName": `${className}.${methodName}`
+		}
+	});
+
+	return JSON.stringify({
+		"status": 0,
+		"result": {
+			"summary": {
+				"outcome": allTestsPass ? "Passed" : "Failed",
+				"testsRan": testItems.length,
+				"passing": numPassed,
+				"failing": numFailed,
+				"skipped": 0,
+				"passRate": `${(numPassed / (numPassed + numFailed)) * 100}%`,
+				"failRate": "0%",
+				"testStartTime": "Thu May 02 2024 5:09:03 PM",
+				"testExecutionTime": "14 ms",
+				"testTotalTime": "14 ms",
+				"commandTime": "266 ms",
+				"hostname": "https://cunning-raccoon-bz3els-dev-ed.my.salesforce.com",
+				"orgId": "00D5e000001AcqNEAS",
+				"username": "codyzeitler12@cunning-raccoon-bz3els.com",
+				"testRunId": testRunId.toString(),
+				"userId": "0055e000002p0JRAAY"
+			},
+			"tests": tests
+		},
+		"warnings": []
+	});
+}
+
+function genApexTestLogCommandString({ apexTestRunResultId, targetOrg }: { apexTestRunResultId: SalesforceId; targetOrg: SalesforceOrg }) {
+	return `sf data query --query "SELECT Id, ApexLogId FROM ApexTestResult WHERE ApexTestRunResultId IN (SELECT Id FROM ApexTestRunResult WHERE AsyncApexJobId = '${apexTestRunResultId.toString()}')" --use-tooling-api --target-org ${targetOrg.getAlias()} --json`;
+}
+
+function genApexTestLogResult({ apexTestLogId }: { apexTestLogId: SalesforceId }) {
+	return JSON.stringify({
+		"status": 0,
+		"result": {
+			"records": [
+				{
+					"attributes": {
+						"type": "ApexTestResult",
+						"url": "/services/data/v60.0/tooling/sobjects/ApexTestResult/07M5e00000Gg5GEEAZ"
+					},
+					"Id": apexTestLogId.toString(),
+					"ApexLogId": null
+				}
+			],
+			"totalSize": 1,
+			"done": true
+		},
+		"warnings": []
+	});
+}
