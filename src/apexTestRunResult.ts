@@ -64,6 +64,11 @@ export class ApexTestGetResult {
 	}
 }
 
+export const PASS = "Pass";
+export const FAIL = "Fail";
+export const PENDING = "Pending";
+
+
 export class ApexTestResult {
 
 	private readonly outcome: "Pass" | "Fail" | "Pending";

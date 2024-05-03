@@ -56,7 +56,7 @@ export class ReadApexTestLogCommand extends Command {
 
 		const apexTestLogId = SalesforceId.get(records.getSObjects()[0]["ApexLogId"]);
 		if (apexTestLogId === NULL_SF_ID) {
-			return 'No Apex Log Found, please set a debug trace flag to see log output.';
+			return NO_APEX_LOG_FOUND_MESSAGE;
 		}
 
 		const readApexLogCommand = new ReadApexLogCommand({
@@ -69,5 +69,6 @@ export class ReadApexTestLogCommand extends Command {
 		});
 		return contents.replace(/\n/g, '\r\n');
 	}
-
 }
+
+export const NO_APEX_LOG_FOUND_MESSAGE  = 'No Apex Log Found, please set a debug trace flag to see log output.';
