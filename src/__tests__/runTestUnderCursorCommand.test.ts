@@ -7,7 +7,7 @@ import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { MockSalesforceCli } from "./__mocks__/mockSalesforceCli";
 import { Uri } from '../integratedDevelopmentEnvironment';
 import { genRandomId } from './salesforceId.test';
-import { ApexTestGetResult, ApexTestResult, ApexTestRunResult } from '../apexTestRunResult';
+import { ApexTestGetResult, ApexTestResult, ApexTestRunResult, FAIL, PASS } from '../apexTestRunResult';
 import { ASYNC_APEX_JOB_PREFIX, SalesforceId } from '../salesforceId';
 import { Position } from '../position';
 import { genApexQueueItem } from './genApexQueueItemTestUtil';
@@ -15,6 +15,7 @@ import { ApexTestQueueItemSelector } from '../apexTestQueueItemSelector';
 import { ApexTestQueueStatus } from '../apexTestQueueItem';
 import { SfSalesforceCli } from '../sfSalesforceCli';
 import { genCommandToStdOutput, genMockExecutor } from './__mocks__/mockShell';
+import { NO_APEX_LOG_FOUND_MESSAGE } from '../readApexLogCommand';
 
 describe('run test under cursor command', () => {
 
@@ -280,7 +281,7 @@ describe('run apex test run request', () => {
 		logDir = ide.generateUri('.zf', 'logs');
 	});
 
-	it('should be able to run one bottom level test', async () => {
+	it('should be able to run one bottom level test and have it pass', async () => {
 
 		const testRun = createTestRun();
 		const testItem = createTestItem({
@@ -321,6 +322,96 @@ describe('run apex test run request', () => {
 		});
 
 		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe(NO_APEX_LOG_FOUND_MESSAGE);
+		expect(testItem.didPass).toBe(true);
+	});
+
+	it('should be able to run one bottom level test and have it fail', async () => {
+
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.testMethod'
+		});
+		testItem.shouldFail = true;
+
+		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = genApexTestRunResult({
+			status: 0,
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestGetResult({
+			testItems: [testItem],
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestLogCommandString({
+			apexTestRunResultId: testRunId,
+			targetOrg
+		})] = genApexTestLogResult({
+			apexTestLogId: testRunId
+		});
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir
+		});
+
+		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe(NO_APEX_LOG_FOUND_MESSAGE);
+		expect(testItem.didFail).toBe(true);
+	});
+
+	it('should be able to put an error message into the test output on exception', async () => {
+
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.testMethod'
+		});
+		testItem.shouldFail = true;
+
+		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = genApexTestRunResult({
+			status: 0,
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestGetResult({
+			testItems: [testItem],
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestLogCommandString({
+			apexTestRunResultId: testRunId,
+			targetOrg
+		})] = 'Not JSON, throw an exception.';
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir
+		});
+
+		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe('Unexpected token N in JSON at position 0');
+		expect(testItem.didFail).toBe(true);
 	});
 
 	function createTestRun(): TestRun & { contents: string, didEnd: boolean } {
@@ -332,7 +423,7 @@ describe('run apex test run request', () => {
 				this.contents = contents;
 			},
 			end() {
-				this.didEnd = false;
+				this.didEnd = true;
 			},
 		};
 
@@ -397,6 +488,14 @@ function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceI
 
 
 	const tests = testItems.map(testItem => {
+		const getPassFileSkipped = () => {
+			if (testItem.shouldPass) {
+				return PASS;
+			} else {
+				return FAIL;
+			}
+		};
+
 		const { className, methodName } = getClassNameAndMethodName(testItem);
 		return {
 			"Id": "07M5e00000Gg5GEEAZ",
@@ -405,7 +504,7 @@ function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceI
 			"Message": null,
 			"AsyncApexJobId": testRunId.toString(),
 			"MethodName": methodName,
-			"Outcome": "Pass",
+			"Outcome": getPassFileSkipped(),
 			"ApexClass": {
 				"Id": "01p5e00000bd62JAAQ",
 				"Name": className,

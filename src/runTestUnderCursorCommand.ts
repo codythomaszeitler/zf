@@ -283,13 +283,19 @@ export class RunApexTestRunRequest extends Command {
 			cli: this.getCli()
 		});
 
-		const contents = await readApexTestLogCommand.execute({
-			logDir, targetOrg: targetOrDefaultOrg, apexTestRunResultId: result.getTestRunId()
-		});
-
-		testRun.appendOutput(contents);
-		testRun.end();
-		end(testRun, testFailureNames);
+		try {
+			const contents = await readApexTestLogCommand.execute({
+				logDir, targetOrg: targetOrDefaultOrg, apexTestRunResultId: result.getTestRunId()
+			});
+			testRun.appendOutput(contents);
+		} catch (e : unknown) {
+			if (e instanceof Error) {
+				testRun.appendOutput(e.message);
+			}
+		} finally {
+			testRun.end();
+			end(testRun, testFailureNames);
+		}
 	}
 
 	private getTestItemsToRun(testRun: TestRun) {
