@@ -315,6 +315,14 @@ export interface TestItem {
 	children: TestItem[];
 }
 
+export function getClassNameAndMethodName(testItem: TestItem) {
+	const [className, methodName] = testItem.identifier.split('.');
+	return {
+		className: className ?? "",
+		methodName: methodName ?? ""
+	};
+}
+
 function isTestMethod(testItem: TestItem) {
 	return testItem.identifier.includes('.');
 }
