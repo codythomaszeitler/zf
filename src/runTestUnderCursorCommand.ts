@@ -2,12 +2,12 @@ import { ApexTestQueueItemSelector } from "./apexTestQueueItemSelector";
 import { ApexTestGetResult, ApexTestResult } from "./apexTestRunResult";
 import { Command } from "./command";
 import { Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
+import { Logger } from "./logger";
 import { Range } from "./range";
 import { ReadApexTestLogCommand } from "./readApexLogCommand";
 import { SalesforceCli } from "./salesforceCli";
 import { SalesforceId } from "./salesforceId";
 import { SalesforceOrg } from "./salesforceOrg";
-import { intersects } from "./setUtils";
 
 export class RunTestUnderCursorCommand extends Command {
 
@@ -144,10 +144,6 @@ export class RunTestUnderCursorCommand extends Command {
 	}
 }
 
-interface ApexTestStartContext {
-	className: string;
-	methodName?: string;
-}
 
 export class RunApexTestCommand extends Command {
 
@@ -173,24 +169,22 @@ export class RunApexTestCommand extends Command {
 
 		if (apexTestRunResult.wasSkipped()) {
 			this.notifySkippedListeners(testName, onSingleTestSkipped);
+		} else {
+			const testRunId = apexTestRunResult.getTestRunId();
 
-			return apexTestRunResult;
-		}
-
-		const testRunId = apexTestRunResult.getTestRunId();
-
-		let apexTestGetResult = await this.getCli().apexTestGet({
-			targetOrg,
-			testRunId
-		});
-		notifyListeners(apexTestGetResult);
-
-		while (apexTestGetResult.getPercentageCompleted() < 100) {
-			apexTestGetResult = await this.getCli().apexTestGet({
+			let apexTestGetResult = await this.getCli().apexTestGet({
 				targetOrg,
 				testRunId
 			});
 			notifyListeners(apexTestGetResult);
+
+			while (apexTestGetResult.getPercentageCompleted() < 100) {
+				apexTestGetResult = await this.getCli().apexTestGet({
+					targetOrg,
+					testRunId
+				});
+				notifyListeners(apexTestGetResult);
+			}
 		}
 		return apexTestRunResult;
 	}
@@ -266,10 +260,13 @@ export class RunApexTestRunRequest extends Command {
 		targetOrg?: SalesforceOrg,
 		logDir: Uri
 	}) {
+		Logger.get().info(`Attempting to run ${testRun.testItems.length} tests.`);
+
 		start(testRun);
 
 		const targetOrDefaultOrg = targetOrg || await this.getCli().getDefaultOrg();
 		if (!targetOrDefaultOrg) {
+			// We need a test that if there is no default org, then we need to show a message.
 			return;
 		}
 
@@ -286,6 +283,7 @@ export class RunApexTestRunRequest extends Command {
 				testNameToRunningTestItem.set(testToRun, testItem);
 			}
 		});
+		Logger.get().info(`Running ${testsToRun}.`);
 
 		const runApexTestCommand = new RunApexTestCommand({
 			cli: this.getCli(),
@@ -298,16 +296,19 @@ export class RunApexTestRunRequest extends Command {
 				testName: testsToRun.join(' '),
 				onSingleTestSuccess(success: ApexTestResult) {
 					const finishedTestId = success.getTestId();
+					Logger.get().info(`Test with identifier: ${finishedTestId} was successful.`);
 					const testItem = testNameToRunningTestItem.get(finishedTestId);
 					testItem?.passed();
 				},
 				onSingleTestFailure(failure: ApexTestResult) {
 					const finishedTestId = failure.getTestId();
+					Logger.get().info(`Test with identifier: ${finishedTestId} failed.`);
 					const testItem = testNameToRunningTestItem.get(finishedTestId);
 					testItem?.failed(failure);
 				},
 				onSingleTestSkipped(skipped: ApexTestName) {
 					const testItem = testNameToRunningTestItem.get(skipped.identifier);
+					Logger.get().info(`Test with identifier: ${skipped.identifier} was skipped.`);
 					testItem?.skipped();
 				}
 			});
@@ -331,6 +332,7 @@ export class RunApexTestRunRequest extends Command {
 				testRun.appendOutput(e.message);
 			}
 		} finally {
+			Logger.get().info('Ending test run.');
 			testRun.end();
 			end(testRun);
 		}
