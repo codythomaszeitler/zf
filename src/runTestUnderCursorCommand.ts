@@ -151,24 +151,31 @@ interface ApexTestStartContext {
 
 export class RunApexTestCommand extends Command {
 
-
 	public async execute({
 		targetOrg,
 		testName,
 		onSingleTestFailure,
-		onSingleTestSuccess
+		onSingleTestSuccess,
+		onSingleTestSkipped
 	}: {
 		// So we need the ability to DI this 
 		targetOrg: SalesforceOrg, testName: string | string[],
 		onSingleTestFailure?: (failure: ApexTestResult) => void,
-		onSingleTestSuccess?: (success: ApexTestResult) => void
-		onSingleTestStart?: (context: ApexTestStartContext) => void
+		onSingleTestSuccess?: (success: ApexTestResult) => void,
+		onSingleTestSkipped?: (skipped: ApexTestName) => void
 	}) {
 		const notifyListeners = this.genNotifyListeners(onSingleTestFailure, onSingleTestSuccess);
+
 		const apexTestRunResult = await this.getCli().apexTestRun({
 			targetOrg,
 			tests: Array.isArray(testName) ? testName : [testName]
 		});
+
+		if (apexTestRunResult.wasSkipped()) {
+			this.notifySkippedListeners(testName, onSingleTestSkipped);
+
+			return apexTestRunResult;
+		}
 
 		const testRunId = apexTestRunResult.getTestRunId();
 
@@ -185,10 +192,10 @@ export class RunApexTestCommand extends Command {
 			});
 			notifyListeners(apexTestGetResult);
 		}
-		return apexTestGetResult;
+		return apexTestRunResult;
 	}
 
-	private genNotifyListeners(onSingleTestFailure?: (failure: ApexTestResult) => void, onSingleTestSuccess?: (success: ApexTestResult) => void) {
+	private genNotifyListeners(onSingleTestFailure?: (failure: ApexTestResult) => void, onSingleTestSuccess?: (success: ApexTestResult) => void, onSingleTestSkipped?: (success: ApexTestResult) => void) {
 		const successes: string[] = [];
 		const failures: string[] = [];
 
@@ -218,11 +225,34 @@ export class RunApexTestCommand extends Command {
 					onFailure(failure);
 				});
 			};
+
 			notifySuccessListeners(apexTestGetResult);
 			notifyFailureListeners(apexTestGetResult);
 		};
 		return notifyListeners;
 	}
+
+	private notifySkippedListeners(testName: string | string[], onSingleTestSkipped?: (skipped: ApexTestName) => void) {
+		if (!onSingleTestSkipped) {
+			return;
+		}
+
+		if (Array.isArray(testName)) {
+			testName.forEach(test => {
+				onSingleTestSkipped({
+					identifier: test
+				});
+			});
+		} else {
+			onSingleTestSkipped({
+				identifier: testName
+			});
+		}
+	}
+}
+
+interface ApexTestName {
+	identifier: string;
 }
 
 export class RunApexTestRunRequest extends Command {
@@ -262,39 +292,47 @@ export class RunApexTestRunRequest extends Command {
 			ide: this.getIde()
 		});
 
-		const testFailureNames: Set<string> = new Set<string>();
-		const result = await runApexTestCommand.execute({
-			targetOrg: targetOrDefaultOrg,
-			testName: testsToRun.join(' '),
-			onSingleTestSuccess(success: ApexTestResult) {
-				const finishedTestId = success.getTestId();
-				const testItem = testNameToRunningTestItem.get(finishedTestId);
-				testItem?.passed();
-			},
-			onSingleTestFailure(failure: ApexTestResult) {
-				const finishedTestId = failure.getTestId();
-				const testItem = testNameToRunningTestItem.get(finishedTestId);
-				testItem?.failed(failure);
-			}
-		});
-
-		const readApexTestLogCommand = new ReadApexTestLogCommand({
-			ide: this.getIde(),
-			cli: this.getCli()
-		});
-
 		try {
+			const result = await runApexTestCommand.execute({
+				targetOrg: targetOrDefaultOrg,
+				testName: testsToRun.join(' '),
+				onSingleTestSuccess(success: ApexTestResult) {
+					const finishedTestId = success.getTestId();
+					const testItem = testNameToRunningTestItem.get(finishedTestId);
+					testItem?.passed();
+				},
+				onSingleTestFailure(failure: ApexTestResult) {
+					const finishedTestId = failure.getTestId();
+					const testItem = testNameToRunningTestItem.get(finishedTestId);
+					testItem?.failed(failure);
+				},
+				onSingleTestSkipped(skipped: ApexTestName) {
+					const testItem = testNameToRunningTestItem.get(skipped.identifier);
+					testItem?.skipped();
+				}
+			});
+
+			if (result.wasSkipped()) {
+				testRun.appendOutput(`${testsToRun} was/were skipped.`);
+				return;
+			}
+
+			const readApexTestLogCommand = new ReadApexTestLogCommand({
+				ide: this.getIde(),
+				cli: this.getCli()
+			});
+
 			const contents = await readApexTestLogCommand.execute({
 				logDir, targetOrg: targetOrDefaultOrg, apexTestRunResultId: result.getTestRunId()
 			});
 			testRun.appendOutput(contents);
-		} catch (e : unknown) {
+		} catch (e: unknown) {
 			if (e instanceof Error) {
 				testRun.appendOutput(e.message);
 			}
 		} finally {
 			testRun.end();
-			end(testRun, testFailureNames);
+			end(testRun);
 		}
 	}
 
@@ -317,6 +355,7 @@ export interface TestItem {
 	start(): string;
 	passed(): void;
 	failed(failure?: ApexTestResult): void;
+	skipped(): void;
 
 	children: TestItem[];
 }
@@ -348,7 +387,7 @@ function start(testRun: TestRun) {
 	setBusyStatusInTestHierarchy(testRun, true);
 }
 
-function end(testRun: TestRun, testFailuresNames: Set<string>) {
+function end(testRun: TestRun) {
 	setBusyStatusInTestHierarchy(testRun, false);
 }
 

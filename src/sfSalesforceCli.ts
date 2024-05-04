@@ -31,7 +31,7 @@ export class SfSalesforceCli extends SalesforceCli {
     private cached: SalesforceOrg[];
     private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
 
-    constructor(executor: Executor, proxy?: {}) {
+    constructor (executor: Executor, proxy?: {}) {
         super(executor, proxy);
 
         this.cached = [];
@@ -634,6 +634,13 @@ export class SfSalesforceCli extends SalesforceCli {
 
         const { stdout } = await this.exec(command);
         if (stdout.status) {
+            if (stdout.name === "ALREADY_IN_PROCESS") {
+                const apexTestRunResult = new ApexTestRunResult({
+                    testRunId: NULL_SF_ID
+                });
+                return apexTestRunResult;
+            }
+
             throw new Error(stdout.message);
         }
 
@@ -672,12 +679,12 @@ export class SfSalesforceCli extends SalesforceCli {
                 message: test.Message || "",
                 outcome: test.Outcome,
                 location: location,
-                stackTrace : test.StackTrace
+                stackTrace: test.StackTrace
             });
         });
 
         const apexTestGetResult = new ApexTestGetResult({
-            testRunId : params.testRunId,
+            testRunId: params.testRunId,
             tests: apexTestResults,
             failing: stdout.result.summary.failing,
             passing: stdout.result.summary.passing,

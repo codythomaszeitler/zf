@@ -242,10 +242,9 @@ export function activate(context: vscode.ExtensionContext) {
 		ide
 	}));
 
-	const controller = vscode.tests.createTestController('zf-test-controller', 'ZF Apex Tests');
+	const controller = vscode.tests.createTestController('zf-test-controller', 'ZeitlerForce Apex Tests');
 	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, async (testRunRequest) => {
 		const testRun = controller.createTestRun(testRunRequest);
-
 		const zfTestRun: ZfTestRun = {
 			testItems: testRunRequest.include?.map(testItem => {
 				return generateTestItem(testItem);
