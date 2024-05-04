@@ -371,6 +371,61 @@ describe('run apex test run request', () => {
 		expect(testItem.didFail).toBe(true);
 	});
 
+	it('should respect if test is already enqueued, and just show as skipped and end tests', async () => {
+
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.testMethod'
+		});
+		testItem.shouldSkip = true;
+
+		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+
+		const apexTestRunSkippedResult = {
+			"code": 1,
+			"context": "Test",
+			"commandName": "Test",
+			"message": "Test already enqueued 01p5e00000bd62J",
+			"name": "ALREADY_IN_PROCESS",
+			"status": 1,
+			"stack": "ALREADY_IN_PROCESS: Test already enqueued 01p5e00000bd62J\n    at HttpApi.getError (C:\\Program Files\\sf\\client\\node_modules\\jsforce\\lib\\http-api.js:252:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async C:\\Program Files\\sf\\client\\node_modules\\jsforce\\lib\\http-api.js:122:23",
+			"exitCode": 1,
+			"warnings": []
+		};
+
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = JSON.stringify(apexTestRunSkippedResult);
+
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestGetResult({
+			testItems: [testItem],
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestLogCommandString({
+			apexTestRunResultId: testRunId,
+			targetOrg
+		})] = genApexTestLogResult({
+			apexTestLogId: testRunId
+		});
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir
+		});
+
+		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe(`${testItem.identifier} was/were skipped.`);
+		expect(testItem.didSkip).toBe(true);
+	});
+
 	it('should be able to put an error message into the test output on exception', async () => {
 
 		const testRun = createTestRun();
@@ -435,9 +490,11 @@ describe('run apex test run request', () => {
 		return {
 			shouldFail: false,
 			shouldPass: false,
+			shouldSkip: false,
 			didFail: false,
 			didPass: false,
 			didStart: false,
+			didSkip: false,
 			identifier,
 			busy: false,
 			children: [],
@@ -451,6 +508,9 @@ describe('run apex test run request', () => {
 			passed() {
 				this.didPass = true;
 			},
+			skipped() {
+				this.didSkip = true;
+			}
 		};
 	}
 });
@@ -458,9 +518,11 @@ describe('run apex test run request', () => {
 type MockTestItem = TestItem & {
 	didFail: boolean,
 	didPass: boolean,
+	didSkip: boolean,
 	didStart: boolean,
 	shouldFail: boolean,
-	shouldPass: boolean
+	shouldPass: boolean,
+	shouldSkip: boolean
 };
 
 function genApexTestRunCommandString({ tests, targetOrg }: { tests: TestItem[], targetOrg: SalesforceOrg }) {
@@ -512,7 +574,7 @@ function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceI
 			},
 			"RunTime": 14,
 			"FullName": `${className}.${methodName}`
-		}
+		};
 	});
 
 	return JSON.stringify({

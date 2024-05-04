@@ -1,5 +1,5 @@
 import { Position } from "./position";
-import { SalesforceId } from "./salesforceId";
+import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 
 export class ApexTestRunResult {
 
@@ -9,6 +9,10 @@ export class ApexTestRunResult {
 		testRunId: SalesforceId
 	}) {
 		this.testRunId = params.testRunId;
+	}
+
+	public wasSkipped() {
+		return this.testRunId === NULL_SF_ID;
 	}
 
 	public getTestRunId() {
