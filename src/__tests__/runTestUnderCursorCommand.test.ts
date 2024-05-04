@@ -558,7 +558,7 @@ function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceI
 			}
 		};
 
-		const { className, methodName } = getClassNameAndMethodName(testItem);
+		const { className, methodName } = getClassNameAndMethodName(testItem.identifier);
 		return {
 			"Id": "07M5e00000Gg5GEEAZ",
 			"QueueItemId": "7095e000000zsmCAAQ",

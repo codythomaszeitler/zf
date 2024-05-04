@@ -285,6 +285,8 @@ export class RunApexTestRunRequest extends Command {
 		});
 		Logger.get().info(`Running ${testsToRun}.`);
 
+		const testIdentifierToUri = await this.getTestIdentifiersToUri(testRun.testItems);
+
 		const runApexTestCommand = new RunApexTestCommand({
 			cli: this.getCli(),
 			ide: this.getIde()
@@ -304,7 +306,11 @@ export class RunApexTestRunRequest extends Command {
 					const finishedTestId = failure.getTestId();
 					Logger.get().info(`Test with identifier: ${finishedTestId} failed.`);
 					const testItem = testNameToRunningTestItem.get(finishedTestId);
-					testItem?.failed(failure);
+
+					if (testItem) {
+						const uri = testIdentifierToUri.get(testItem.identifier);
+						testItem.failed(failure, uri);
+					}
 				},
 				onSingleTestSkipped(skipped: ApexTestName) {
 					const testItem = testNameToRunningTestItem.get(skipped.identifier);
@@ -342,6 +348,26 @@ export class RunApexTestRunRequest extends Command {
 		const testItems = getTestItemsWithinTestRun(testRun);
 		return testItems.filter(testItem => isTestMethod(testItem));
 	}
+
+	private async getTestIdentifiersToUri(testItems: TestItem[]): Promise<Map<string, Uri>> {
+		const classNames = testItems.map(testItem => {
+			const { className } = getClassNameAndMethodName(testItem.identifier);
+			return className;
+		});
+
+		const classNameToUri = await this.getIde().findFilesByClassName(new Set<string>(classNames));
+
+		const identifierToUri = new Map<string, Uri>();
+		testItems.forEach(testItem => {
+			const { className } = getClassNameAndMethodName(testItem.identifier);
+			const uri = classNameToUri.get(className + '.cls');
+
+			if (uri) {
+				identifierToUri.set(testItem.identifier, uri);
+			}
+		});
+		return identifierToUri;
+	}
 }
 
 export interface TestRunRequest {
@@ -356,14 +382,14 @@ export interface TestItem {
 
 	start(): string;
 	passed(): void;
-	failed(failure?: ApexTestResult): void;
+	failed(failure?: ApexTestResult, uri?: Uri): void;
 	skipped(): void;
 
 	children: TestItem[];
 }
 
-export function getClassNameAndMethodName(testItem: TestItem) {
-	const [className, methodName] = testItem.identifier.split('.');
+export function getClassNameAndMethodName(identifier: string) {
+	const [className, methodName] = identifier.split('.');
 	return {
 		className: className ?? "",
 		methodName: methodName ?? ""
