@@ -19,7 +19,6 @@ import path = require('path');
 import { TextDecoder } from 'util';
 import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
-import { ApexTestResult } from './apexTestRunResult';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('.zf', 'offlineSymbolTable');
@@ -254,7 +253,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const testRun = controller.createTestRun(testRunRequest);
 		const zfTestRun: ZfTestRun = {
 			testItems: testRunRequest.include?.map(testItem => {
-				return generateTestItem(testItem);
+				return ide.generateTestItem(testItem, testRun);
 			}) || [],
 			appendOutput(contents: string) {
 				testRun.appendOutput(contents);
@@ -278,51 +277,6 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		controller.invalidateTestResults();
-
-		function generateTestItem(child: vscode.TestItem) {
-			const zfTestItem: ZfTestItem = {
-				get identifier() {
-					return child.id;
-				},
-				get busy() {
-					return child.busy;
-				},
-				set busy(_busy) {
-					child.busy = _busy;
-				},
-				start: function (): string {
-					child.busy = true;
-					testRun.started(child);
-					return child.id;
-				},
-				passed: function (): void {
-					child.busy = false;
-					testRun.passed(child);
-				},
-				failed: function (failure: ApexTestResult | undefined): void {
-					child.busy = false;
-					if (failure) {
-						testRun.failed(child, new vscode.TestMessage(failure.getFailureMessage()));
-					}
-				},
-				skipped() {
-					child.busy = false;
-					testRun.skipped(child);
-				},
-				get parent() {
-					return child.parent && generateTestItem(child.parent);
-				},
-				get children() {
-					const _children: ZfTestItem[] = [];
-					child.children.forEach(childTestItem => {
-						_children.push(generateTestItem(childTestItem));
-					});
-					return _children;
-				}
-			};
-
-			return zfTestItem;
-		}
 	});
 
 	const alignTestMethods = (vscodeUri: vscode.Uri) => {

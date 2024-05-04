@@ -1,4 +1,5 @@
 import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, TextLine, Uri } from "./integratedDevelopmentEnvironment";
+import { ApexTestResult } from './apexTestRunResult';
 import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
@@ -11,6 +12,7 @@ import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 import { TextDecoder, TextEncoder } from "util";
 import { OnSalesforceCliRunEvent, SalesforceCliHistory, SalesforceCliInputOutput } from "./salesforceCli";
+import { TestItem as ZfTestItem } from './runTestUnderCursorCommand';
 
 function getCurrentDir(): Uri {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -336,6 +338,64 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         const textDecoding = new TextDecoder();
         return textDecoding.decode(file.buffer);
     }
+
+    public generateTestItem(child: vscode.TestItem, testRun: vscode.TestRun) {
+        const ide = this;
+        const zfTestItem: ZfTestItem = {
+            get identifier() {
+                return child.id;
+            },
+            get busy() {
+                return child.busy;
+            },
+            set busy(_busy) {
+                child.busy = _busy;
+            },
+            start: function (): string {
+                child.busy = true;
+                testRun.started(child);
+                return child.id;
+            },
+            passed: function (): void {
+                child.busy = false;
+                testRun.passed(child);
+            },
+            failed: function (failure: ApexTestResult | undefined, uri: Uri | undefined) {
+                child.busy = false;
+                if (failure) {
+                    const testMessage = new vscode.TestMessage(failure.getFailureMessage());
+
+                    const location = failure.getLocation();
+                    if (location && uri) {
+                        const vscodeUriMapper = new UriMapper();
+                        const vscodeUri = vscodeUriMapper.intoVsCodeRepresentation(uri);
+
+                        const positionMapper = new PositionMapper();
+                        const vscodePosition = positionMapper.intoVsCodeRepresentation(location.position);
+
+                        testMessage.location = new vscode.Location(vscodeUri, vscodePosition);
+                    }
+
+                    testRun.failed(child, testMessage);
+                }
+            },
+            skipped() {
+                child.busy = false;
+                testRun.skipped(child);
+            },
+            get parent() {
+                return child.parent && ide.generateTestItem(child.parent, testRun);
+            },
+            get children() {
+                const _children: ZfTestItem[] = [];
+                child.children.forEach(childTestItem => {
+                    _children.push(ide.generateTestItem(childTestItem, testRun));
+                });
+                return _children;
+            }
+        };
+        return zfTestItem;
+    }
 }
 
 export class UriMapper {
@@ -491,7 +551,7 @@ class VscodeCliInputOutputTreeNode extends vscode.TreeItem {
     };
 }
 
-export class VscodeCliInputOutputTreeView implements vscode.TreeDataProvider<VscodeCliInputOutputTreeNode>{
+export class VscodeCliInputOutputTreeView implements vscode.TreeDataProvider<VscodeCliInputOutputTreeNode> {
 
     private readonly eventEmitter: vscode.EventEmitter<VscodeCliInputOutputTreeNode | undefined>;
 
