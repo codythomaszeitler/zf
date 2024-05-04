@@ -294,6 +294,10 @@ export function activate(context: vscode.ExtensionContext) {
 						testRun.failed(child, new vscode.TestMessage(failure.getFailureMessage()));
 					}
 				},
+				skipped() {
+					child.busy = false;
+					testRun.skipped(child);
+				},
 				get parent() {
 					return child.parent && generateTestItem(child.parent);
 				},
