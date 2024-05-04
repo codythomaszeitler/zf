@@ -242,8 +242,15 @@ export function activate(context: vscode.ExtensionContext) {
 		ide
 	}));
 
+	let isRunningTest: boolean = false;
 	const controller = vscode.tests.createTestController('zf-test-controller', 'ZeitlerForce Apex Tests');
 	controller.createRunProfile('Run', vscode.TestRunProfileKind.Run, async (testRunRequest) => {
+		if (isRunningTest) {
+			ide.showWarningMessage('A test is already running.');
+			return;
+		}
+		isRunningTest = true;
+
 		const testRun = controller.createTestRun(testRunRequest);
 		const zfTestRun: ZfTestRun = {
 			testItems: testRunRequest.include?.map(testItem => {
@@ -261,10 +268,14 @@ export function activate(context: vscode.ExtensionContext) {
 			cli: salesforceCli,
 			ide: ide
 		});
-		await runApexTestRunRequest.execute({
-			testRun: zfTestRun,
-			logDir: getZfLogDir(ide)
-		});
+		try {
+			await runApexTestRunRequest.execute({
+				testRun: zfTestRun,
+				logDir: getZfLogDir(ide)
+			});
+		} finally {
+			isRunningTest = false;
+		}
 
 		controller.invalidateTestResults();
 

@@ -16,7 +16,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     private readonly currentDir: Uri;
     private sfdxProject: SfdxProject | undefined;
 
-    constructor({ currentDir }: { currentDir: Uri; }) {
+    constructor ({ currentDir }: { currentDir: Uri; }) {
         this.bulkDocumentSaveListener = new BulkDocumentSaveListener();
         this.currentDir = currentDir;
     }
@@ -126,7 +126,7 @@ export interface CommandExecuteResult {
 export class TextLine {
     private readonly text: string;
 
-    public constructor(params: {
+    public constructor (params: {
         text: string
     }) {
         this.text = params.text;
@@ -147,7 +147,7 @@ export class Diagnostic {
     private readonly problem: string;
     private readonly severity: DiagnosticSeverity;
 
-    public constructor(range: Range, problem: string, severity: DiagnosticSeverity) {
+    public constructor (range: Range, problem: string, severity: DiagnosticSeverity) {
         this.range = range;
         this.problem = problem;
         this.severity = severity;

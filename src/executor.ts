@@ -52,7 +52,7 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
 
         cli.on('close', () => {
             const output = stdout ? JSON.parse(stdout) : {};
-            Logger.get().info(stdout);
+            Logger.get().info(intoCliCommandString(command) + ' returned successfully. Please check Salesforce CLI Input/Output for output.');
             resolve({
                 stdout: output
             });
