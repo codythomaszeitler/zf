@@ -285,14 +285,15 @@ export class RunApexTestRunRequest extends Command {
 		});
 		Logger.get().info(`Running ${testsToRun}.`);
 
-		const testIdentifierToUri = await this.getTestIdentifiersToUri(testRun.testItems);
-
 		const runApexTestCommand = new RunApexTestCommand({
 			cli: this.getCli(),
 			ide: this.getIde()
 		});
 
 		try {
+
+			const ide = this.getIde();
+
 			const result = await runApexTestCommand.execute({
 				targetOrg: targetOrDefaultOrg,
 				testName: testsToRun.join(' '),
@@ -308,8 +309,15 @@ export class RunApexTestRunRequest extends Command {
 					const testItem = testNameToRunningTestItem.get(finishedTestId);
 
 					if (testItem) {
-						const uri = testIdentifierToUri.get(testItem.identifier);
-						testItem.failed(failure, uri);
+						const offendingClassName = failure.getClassName();
+						const classNames = new Set<string>();
+						classNames.add(offendingClassName);
+						ide.findFilesByClassName(classNames).then(classNameToUri => {
+							const uri = classNameToUri.get(offendingClassName);
+							testItem.failed(failure, uri);
+						}).catch(e => {
+							Logger.get().error(e);
+						});
 					}
 				},
 				onSingleTestSkipped(skipped: ApexTestName) {
