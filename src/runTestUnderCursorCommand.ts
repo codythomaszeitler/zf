@@ -156,9 +156,9 @@ export class RunApexTestCommand extends Command {
 	}: {
 		// So we need the ability to DI this 
 		targetOrg: SalesforceOrg, testName: string | string[],
-		onSingleTestFailure?: (failure: ApexTestResult) => void,
-		onSingleTestSuccess?: (success: ApexTestResult) => void,
-		onSingleTestSkipped?: (skipped: ApexTestName) => void
+		onSingleTestFailure?: (failure: ApexTestResult) => Promise<void>,
+		onSingleTestSuccess?: (success: ApexTestResult) => Promise<void>,
+		onSingleTestSkipped?: (skipped: ApexTestName) => Promise<void>
 	}) {
 		const notifyListeners = this.genNotifyListeners(onSingleTestFailure, onSingleTestSuccess);
 
@@ -168,7 +168,7 @@ export class RunApexTestCommand extends Command {
 		});
 
 		if (apexTestRunResult.wasSkipped()) {
-			this.notifySkippedListeners(testName, onSingleTestSkipped);
+			await this.notifySkippedListeners(testName, onSingleTestSkipped);
 		} else {
 			const testRunId = apexTestRunResult.getTestRunId();
 
@@ -176,28 +176,28 @@ export class RunApexTestCommand extends Command {
 				targetOrg,
 				testRunId
 			});
-			notifyListeners(apexTestGetResult);
+			await notifyListeners(apexTestGetResult);
 
 			while (apexTestGetResult.getPercentageCompleted() < 100) {
 				apexTestGetResult = await this.getCli().apexTestGet({
 					targetOrg,
 					testRunId
 				});
-				notifyListeners(apexTestGetResult);
+				await notifyListeners(apexTestGetResult);
 			}
 		}
 		return apexTestRunResult;
 	}
 
-	private genNotifyListeners(onSingleTestFailure?: (failure: ApexTestResult) => void, onSingleTestSuccess?: (success: ApexTestResult) => void, onSingleTestSkipped?: (success: ApexTestResult) => void) {
+	private genNotifyListeners(onSingleTestFailure?: (failure: ApexTestResult) => Promise<void>, onSingleTestSuccess?: (success: ApexTestResult) => Promise<void>, onSingleTestSkipped?: (success: ApexTestResult) => void) {
 		const successes: string[] = [];
 		const failures: string[] = [];
 
-		const genNotifyListener = (tests: string[], onTestNotify?: (failure: ApexTestResult) => void) => {
-			return (apexTestResult: ApexTestResult) => {
+		const genNotifyListener = (tests: string[], onTestNotify?: (failure: ApexTestResult) => Promise<void>) => {
+			return async (apexTestResult: ApexTestResult) => {
 				if (!tests.includes(apexTestResult.getFullName())) {
 					if (onTestNotify) {
-						onTestNotify(apexTestResult);
+						await onTestNotify(apexTestResult);
 					}
 					tests.push(apexTestResult.getFullName());
 				}
@@ -205,40 +205,38 @@ export class RunApexTestCommand extends Command {
 
 		};
 
-		const notifyListeners = (apexTestGetResult: ApexTestGetResult) => {
+		const notifyListeners = async (apexTestGetResult: ApexTestGetResult) => {
 			const onSuccess = genNotifyListener(successes, onSingleTestSuccess);
-			const notifySuccessListeners = (apexTestGetResult: ApexTestGetResult) => {
-				apexTestGetResult.getPassingTests().forEach(success => {
-					onSuccess(success);
-				});
+			const notifySuccessListeners = async (apexTestGetResult: ApexTestGetResult) => {
+				const promises = apexTestGetResult.getPassingTests().map(success => onSuccess(success));
+				await Promise.all(promises);
 			};
 
 			const onFailure = genNotifyListener(failures, onSingleTestFailure);
-			const notifyFailureListeners = (apexTestGetResult: ApexTestGetResult) => {
-				apexTestGetResult.getFailingTests().forEach(failure => {
-					onFailure(failure);
-				});
+			const notifyFailureListeners = async (apexTestGetResult: ApexTestGetResult) => {
+				const promises = apexTestGetResult.getFailingTests().map(failure => onFailure(failure));
+				await Promise.all(promises);
+
 			};
 
-			notifySuccessListeners(apexTestGetResult);
-			notifyFailureListeners(apexTestGetResult);
+			await notifySuccessListeners(apexTestGetResult);
+			await notifyFailureListeners(apexTestGetResult);
 		};
 		return notifyListeners;
 	}
 
-	private notifySkippedListeners(testName: string | string[], onSingleTestSkipped?: (skipped: ApexTestName) => void) {
+	private async notifySkippedListeners(testName: string | string[], onSingleTestSkipped?: (skipped: ApexTestName) => Promise<void>) {
 		if (!onSingleTestSkipped) {
 			return;
 		}
 
 		if (Array.isArray(testName)) {
-			testName.forEach(test => {
-				onSingleTestSkipped({
-					identifier: test
-				});
-			});
+			const promises = testName.map(test => onSingleTestSkipped({
+				identifier: test
+			}));
+			await Promise.all(promises);
 		} else {
-			onSingleTestSkipped({
+			await onSingleTestSkipped({
 				identifier: testName
 			});
 		}
@@ -297,25 +295,24 @@ export class RunApexTestRunRequest extends Command {
 			const result = await runApexTestCommand.execute({
 				targetOrg: targetOrDefaultOrg,
 				testName: testsToRun.join(' '),
-				onSingleTestSuccess(success: ApexTestResult) {
+				async onSingleTestSuccess(success: ApexTestResult) {
 					const finishedTestId = success.getTestId();
 					Logger.get().info(`Test with identifier: ${finishedTestId} was successful.`);
 					const testItem = testNameToRunningTestItem.get(finishedTestId);
 					testItem?.passed();
 				},
-				onSingleTestFailure(failure: ApexTestResult) {
+				async onSingleTestFailure(failure: ApexTestResult) {
 					const finishedTestId = failure.getTestId();
 					Logger.get().info(`Test with identifier: ${finishedTestId} failed.`);
 					const testItem = testNameToRunningTestItem.get(finishedTestId);
 
 					if (testItem) {
 						const offendingClassName = failure.getClassName();
-						ide.findFileByClassName(offendingClassName).then(uri => {
-							testItem.failed(failure, uri);
-						});
+						const uri = await ide.findFileByClassName(offendingClassName);
+						testItem.failed(failure, uri);
 					}
 				},
-				onSingleTestSkipped(skipped: ApexTestName) {
+				async onSingleTestSkipped(skipped: ApexTestName) {
 					const testItem = testNameToRunningTestItem.get(skipped.identifier);
 					Logger.get().info(`Test with identifier: ${skipped.identifier} was skipped.`);
 					testItem?.skipped();
