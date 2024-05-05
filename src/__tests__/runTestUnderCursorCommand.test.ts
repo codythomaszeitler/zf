@@ -268,11 +268,13 @@ describe('run apex test run request', () => {
 	let cli: SfSalesforceCli;
 	let ide: MockIDE;
 	let logDir: Uri;
+	let fs: MockFileSystem;
 
 	let commandToStdOutput: any;
 
 	beforeEach(() => {
-		ide = new MockIDE();
+		fs = new MockFileSystem();
+		ide = new MockIDE({ filesystem: fs });
 		commandToStdOutput = genCommandToStdOutput();
 		cli = new SfSalesforceCli(genMockExecutor(commandToStdOutput));
 		targetOrg = new SalesforceOrg({
@@ -469,6 +471,110 @@ describe('run apex test run request', () => {
 		expect(testItem.didFail).toBe(true);
 	});
 
+	it('should be able to properly find class uri to failure on exception thrown', async () => {
+
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.anotherTestMethod'
+		});
+		testItem.stackTrace = `Class.CCLass.foo: line 8, column 1\nClass.BClass.<init>: line 5, column 1\nClass.AClass.<init>: line 4, column 1\nClass.${testItem.identifier}: line 18, column 1`;
+		testItem.shouldFail = true;
+
+		const uri = ide.generateUri('force-app', 'main', 'default', 'classes', 'CCLass.cls');
+		fs.create({
+			uri
+		});
+
+		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = genApexTestRunResult({
+			status: 0,
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestGetResult({
+			testItems: [testItem],
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestLogCommandString({
+			apexTestRunResultId: testRunId,
+			targetOrg
+		})] = genApexTestLogResult({
+			apexTestLogId: testRunId
+		});
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir
+		});
+
+		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe(NO_APEX_LOG_FOUND_MESSAGE);
+		expect(testItem.didFail).toBe(true);
+		expect(testItem.uriForTestFailure).toBe(uri);
+	});
+
+	it('should be able to properly find class uri to failure on assert failure', async () => {
+
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.anotherTestMethod'
+		});
+		testItem.stackTrace = `Class.${testItem.identifier}: line 10, column 1`;
+		testItem.shouldFail = true;
+
+		const uri = ide.generateUri('force-app', 'main', 'default', 'classes', 'ApexTestClass.cls');
+		fs.create({
+			uri
+		});
+
+		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = genApexTestRunResult({
+			status: 0,
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestGetResult({
+			testItems: [testItem],
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestLogCommandString({
+			apexTestRunResultId: testRunId,
+			targetOrg
+		})] = genApexTestLogResult({
+			apexTestLogId: testRunId
+		});
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir
+		});
+
+		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe(NO_APEX_LOG_FOUND_MESSAGE);
+		expect(testItem.didFail).toBe(true);
+		expect(testItem.uriForTestFailure).toBe(uri);
+	});
+
 	function createTestRun(): TestRun & { contents: string, didEnd: boolean } {
 		return {
 			contents: '',
@@ -498,12 +604,15 @@ describe('run apex test run request', () => {
 			identifier,
 			busy: false,
 			children: [],
+			uriForTestFailure: undefined,
+			stackTrace: null,
 			start() {
 				this.didStart = true;
 				return this.identifier;
 			},
-			failed() {
+			failed(failure?: ApexTestResult, uri?: Uri) {
 				this.didFail = true;
+				this.uriForTestFailure = uri;
 			},
 			passed() {
 				this.didPass = true;
@@ -522,7 +631,9 @@ type MockTestItem = TestItem & {
 	didStart: boolean,
 	shouldFail: boolean,
 	shouldPass: boolean,
-	shouldSkip: boolean
+	shouldSkip: boolean,
+	stackTrace: string | null,
+	uriForTestFailure?: Uri,
 };
 
 function genApexTestRunCommandString({ tests, targetOrg }: { tests: TestItem[], targetOrg: SalesforceOrg }) {
@@ -562,7 +673,7 @@ function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceI
 		return {
 			"Id": "07M5e00000Gg5GEEAZ",
 			"QueueItemId": "7095e000000zsmCAAQ",
-			"StackTrace": null,
+			"StackTrace": testItem.stackTrace,
 			"Message": null,
 			"AsyncApexJobId": testRunId.toString(),
 			"MethodName": methodName,
@@ -628,3 +739,4 @@ function genApexTestLogResult({ apexTestLogId }: { apexTestLogId: SalesforceId }
 		"warnings": []
 	});
 }
+

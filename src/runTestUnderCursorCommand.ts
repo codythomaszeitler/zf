@@ -310,13 +310,8 @@ export class RunApexTestRunRequest extends Command {
 
 					if (testItem) {
 						const offendingClassName = failure.getClassName();
-						const classNames = new Set<string>();
-						classNames.add(offendingClassName);
-						ide.findFilesByClassName(classNames).then(classNameToUri => {
-							const uri = classNameToUri.get(offendingClassName);
+						ide.findFileByClassName(offendingClassName).then(uri => {
 							testItem.failed(failure, uri);
-						}).catch(e => {
-							Logger.get().error(e);
 						});
 					}
 				},
@@ -355,26 +350,6 @@ export class RunApexTestRunRequest extends Command {
 	private getTestItemsToRun(testRun: TestRun) {
 		const testItems = getTestItemsWithinTestRun(testRun);
 		return testItems.filter(testItem => isTestMethod(testItem));
-	}
-
-	private async getTestIdentifiersToUri(testItems: TestItem[]): Promise<Map<string, Uri>> {
-		const classNames = testItems.map(testItem => {
-			const { className } = getClassNameAndMethodName(testItem.identifier);
-			return className;
-		});
-
-		const classNameToUri = await this.getIde().findFilesByClassName(new Set<string>(classNames));
-
-		const identifierToUri = new Map<string, Uri>();
-		testItems.forEach(testItem => {
-			const { className } = getClassNameAndMethodName(testItem.identifier);
-			const uri = classNameToUri.get(className + '.cls');
-
-			if (uri) {
-				identifierToUri.set(testItem.identifier, uri);
-			}
-		});
-		return identifierToUri;
 	}
 }
 

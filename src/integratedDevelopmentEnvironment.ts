@@ -77,16 +77,10 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract getActiveTextEditor(): Promise<ActiveTextEditor | null>;
     abstract findFile(glob: string, base?: Uri): Promise<Uri | null>;
     abstract findFiles(glob: string, base?: Uri): Promise<Uri[]>;
-    public async findFilesByClassName(classNames: Set<string>) {
-        const glob = '{' + [...classNames].map(className => `${className}.cls`).join(',') + '}'
-        const files = await this.findFiles(`**/${glob}`, this.getCurrentDir());
-
-        const classNameToUri = new Map<string, Uri>();
-        files.forEach(file => {
-            classNameToUri.set(file.getBaseName(), file);
-        });
-        return classNameToUri;
-
+    public async findFileByClassName(className: string) {
+        const glob = `{${className}.cls}`;
+        const uri = await this.findFile(`**/${glob}`, this.getCurrentDir());
+        return uri;
     }
     abstract readLineAt(params: { uri: Uri, line: number }): Promise<TextLine>;
     abstract readFile(params: { uri: Uri }): Promise<string>;
