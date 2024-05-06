@@ -29,6 +29,11 @@ describe('apex parser', () => {
 
 		const publicTestMethod1 = apexMethods[0];
 		expect(publicTestMethod1.name).toBe('testMethod1');
+
+		expect(publicTestMethod1.range.getStart().getLineNumber()).toBe(0);
+		expect(publicTestMethod1.range.getStart().getColumnNumber()).toBe(48);
+		expect(publicTestMethod1.range.getEnd().getLineNumber()).toBe(0);
+		expect(publicTestMethod1.range.getEnd().getColumnNumber()).toBe(68);
 	});
 
 	it('should be get no test methods if there are non in class', () => {

@@ -96,19 +96,15 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 			});
 		};
 
-		const getRangeFor = (methodDecl: _ApexParser.MethodDeclarationContext) => {
-
-		}
-
 		const getVisitorResults = () => {
 			const memberDecl = ctx.memberDeclaration();
 			if (ctx.modifier() && memberDecl) {
 				const methodDecl = memberDecl.methodDeclaration();
 				if (methodDecl) {
 					let range = undefined;
-					const start = new Position(methodDecl.start.line - 1, methodDecl.start.startIndex);
+					const start = new Position(methodDecl.start.line - 1, methodDecl.start.charPositionInLine);
 					if (methodDecl.stop) {
-						const end = new Position(methodDecl.stop.line - 1, methodDecl.stop.stopIndex);
+						const end = new Position(methodDecl.stop.line - 1, methodDecl.stop.charPositionInLine);
 						range = new Range(start, end);
 					} else {
 						range = new Range(start);

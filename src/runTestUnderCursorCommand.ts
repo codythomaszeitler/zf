@@ -309,7 +309,7 @@ export class RunApexTestRunRequest extends Command {
 					if (testItem) {
 						const offendingClassName = failure.getClassName();
 						const uri = await ide.findFileByClassName(offendingClassName);
-						testItem.failed(failure, uri);
+						testItem.failed(failure, uri || undefined);
 					}
 				},
 				async onSingleTestSkipped(skipped: ApexTestName) {
