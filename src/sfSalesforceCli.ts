@@ -688,6 +688,7 @@ export class SfSalesforceCli extends SalesforceCli {
             tests: apexTestResults,
             failing: stdout.result.summary.failing,
             passing: stdout.result.summary.passing,
+            skipped: stdout.result.summary.skipped,
             testsRan: stdout.result.summary.testsRan
         });
 

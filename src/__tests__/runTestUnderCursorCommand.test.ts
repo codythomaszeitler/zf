@@ -7,7 +7,7 @@ import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { MockSalesforceCli } from "./__mocks__/mockSalesforceCli";
 import { Uri } from '../integratedDevelopmentEnvironment';
 import { genRandomId } from './salesforceId.test';
-import { ApexTestGetResult, ApexTestResult, ApexTestRunResult, FAIL, PASS } from '../apexTestRunResult';
+import { ApexTestGetResult, ApexTestResult, ApexTestRunResult, FAIL, PASS, SKIPPED } from '../apexTestRunResult';
 import { ASYNC_APEX_JOB_PREFIX, SalesforceId } from '../salesforceId';
 import { Position } from '../position';
 import { genApexQueueItem } from './genApexQueueItemTestUtil';
@@ -95,6 +95,7 @@ describe('run test under cursor command', () => {
 					testRunId,
 					failing: 0,
 					passing: 1,
+					skipped: 0,
 					testsRan: 2,
 					tests: [
 						new ApexTestResult({
@@ -127,6 +128,7 @@ describe('run test under cursor command', () => {
 					failing: 0,
 					passing: 2,
 					testsRan: 2,
+					skipped: 0,
 					tests: [
 						new ApexTestResult({
 							stackTrace: '',
@@ -196,6 +198,7 @@ describe('run test under cursor command', () => {
 				failing: 1,
 				passing: 0,
 				testsRan: 1,
+				skipped: 0,
 				tests: [
 					new ApexTestResult({
 						stackTrace: '',
@@ -371,6 +374,51 @@ describe('run apex test run request', () => {
 		expect(testRun.didEnd).toBe(true);
 		expect(testRun.contents).toBe(NO_APEX_LOG_FOUND_MESSAGE);
 		expect(testItem.didFail).toBe(true);
+	});
+
+	it('should be able to run one bottom level test and have it skip and not spin infinitely', async () => {
+
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.testMethod'
+		});
+		testItem.shouldSkip = true;
+
+		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = genApexTestRunResult({
+			status: 0,
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestGetResult({
+			testItems: [testItem],
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestLogCommandString({
+			apexTestRunResultId: testRunId,
+			targetOrg
+		})] = genApexTestLogResult({
+			apexTestLogId: testRunId
+		});
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir
+		});
+
+		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe(NO_APEX_LOG_FOUND_MESSAGE);
+		expect(testItem.didSkip).toBe(true);
 	});
 
 	it('should respect if test is already enqueued, and just show as skipped and end tests', async () => {
@@ -655,17 +703,18 @@ function genApexTestGetCommandString({ testRunId, targetOrg }: { testRunId: Sale
 }
 
 function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceId, testItems: MockTestItem[] }) {
-	const allTestsPass = testItems.every(testItem => testItem.shouldPass);
 	const numPassed = testItems.filter(testItem => testItem.shouldPass).length;
 	const numFailed = testItems.filter(testItem => testItem.shouldFail).length;
-
+	const numSkipped = testItems.filter(testItem => testItem.shouldSkip).length;
 
 	const tests = testItems.map(testItem => {
 		const getPassFileSkipped = () => {
 			if (testItem.shouldPass) {
 				return PASS;
-			} else {
+			} else if (testItem.shouldFail) {
 				return FAIL;
+			} else {
+				return SKIPPED;
 			}
 		};
 
@@ -688,17 +737,27 @@ function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceI
 		};
 	});
 
+	const getOutcome = () => {
+		if (numSkipped !== 0) {
+			return 'Skipped'
+		} else if (numFailed !== 0) {
+			return 'Failed';
+		} else {
+			return 'Passed';
+		}
+	}
+
 	return JSON.stringify({
 		"status": 0,
 		"result": {
 			"summary": {
-				"outcome": allTestsPass ? "Passed" : "Failed",
+				"outcome": getOutcome(),
 				"testsRan": testItems.length,
 				"passing": numPassed,
 				"failing": numFailed,
-				"skipped": 0,
+				"skipped": numSkipped,
 				"passRate": `${(numPassed / (numPassed + numFailed)) * 100}%`,
-				"failRate": "0%",
+				"failRate": `${(numFailed / (numPassed + numFailed)) * 100}%`,
 				"testStartTime": "Thu May 02 2024 5:09:03 PM",
 				"testExecutionTime": "14 ms",
 				"testTotalTime": "14 ms",
@@ -739,4 +798,3 @@ function genApexTestLogResult({ apexTestLogId }: { apexTestLogId: SalesforceId }
 		"warnings": []
 	});
 }
-

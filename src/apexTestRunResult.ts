@@ -27,19 +27,22 @@ export class ApexTestGetResult {
 	private readonly testsRan: number;
 	private readonly passing: number;
 	private readonly failing: number;
+	private readonly skipped: number;
 
 	public constructor (params: {
 		testRunId: SalesforceId,
 		tests: ApexTestResult[],
 		testsRan: number,
 		passing: number,
-		failing: number
+		failing: number,
+		skipped: number
 	}) {
 		this.testRunId = params.testRunId;
 		this.tests = params.tests;
 		this.testsRan = params.testsRan;
 		this.passing = params.passing;
 		this.failing = params.failing;
+		this.skipped = params.skipped;
 	}
 
 	public getTestRunId() {
@@ -51,15 +54,19 @@ export class ApexTestGetResult {
 	}
 
 	public getPercentageCompleted(): number {
-		return ((this.passing + this.failing) / this.testsRan) * 100;
+		return ((this.passing + this.failing + this.skipped) / this.testsRan) * 100;
 	}
 
 	public getPassingTests() {
-		return this.tests.filter(test => test.getOutcome() === 'Pass');
+		return this.tests.filter(test => test.getOutcome() === PASS);
 	}
 
 	public getFailingTests() {
-		return this.tests.filter(test => test.getOutcome() === 'Fail');
+		return this.tests.filter(test => test.getOutcome() === FAIL);
+	}
+
+	public getSkippedTests() {
+		return this.tests.filter(test => test.getOutcome() === SKIPPED);
 	}
 
 	public hasFailingTests() {
@@ -70,12 +77,13 @@ export class ApexTestGetResult {
 
 export const PASS = "Pass";
 export const FAIL = "Fail";
+export const SKIPPED = "Skip";
 export const PENDING = "Pending";
 
 
 export class ApexTestResult {
 
-	private readonly outcome: "Pass" | "Fail" | "Pending";
+	private readonly outcome: "Pass" | "Fail" | "Pending" | "Skip";
 	private readonly fullName: string;
 	private readonly message: string;
 	private readonly stackTrace: string;
