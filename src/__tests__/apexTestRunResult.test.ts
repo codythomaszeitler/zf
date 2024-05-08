@@ -47,4 +47,14 @@ describe('stack trace parser', () => {
 		expect(result.position.getLineNumber()).toBe(13);
 		expect(result.position.getColumnNumber()).toBe(0);
 	});
+
+	it('should be able to parse a system code exception message', () => {
+		const testString = '(System Code)\nClass.TestClass.parse: line 9, column 1\nClass.Test.methodName: line 8, column 1';
+		const result = parseStackTrace(testString);
+
+		expect(result.className).toBe('TestClass');
+		expect(result.methodName).toBe('parse');
+		expect(result.position.getLineNumber()).toBe(8);
+		expect(result.position.getColumnNumber()).toBe(0);
+	});
 });
