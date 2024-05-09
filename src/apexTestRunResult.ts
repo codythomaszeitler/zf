@@ -153,7 +153,7 @@ export class ApexTestResult {
 }
 
 export function parseStackTrace(stackTrace: string): { className: string; methodName: string, position: Position } {
-	const classNameRegex = /^(\(System Code\)\n)?Class\.(.*)\.(.*): line (\d+), column (\d+)\n?.*/;
+	const classNameRegex = /^(\(System Code\)\n|External entry point\n)?Class\.(.*)\.(.*): line (\d+), column (\d+)\n?.*/;
 
 	const matches = stackTrace.match(classNameRegex);
 	if (!matches) {

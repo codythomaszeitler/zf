@@ -57,4 +57,14 @@ describe('stack trace parser', () => {
 		expect(result.position.getLineNumber()).toBe(8);
 		expect(result.position.getColumnNumber()).toBe(0);
 	});
+
+	it('should be able to parse a external entry point message', () => {
+		const testString =  "External entry point\nClass.TestClass.testMethod: line 52, column 1";
+		const result = parseStackTrace(testString);
+
+		expect(result.className).toBe('TestClass');
+		expect(result.methodName).toBe('testMethod');
+		expect(result.position.getLineNumber()).toBe(51);
+		expect(result.position.getColumnNumber()).toBe(0);
+	});
 });
