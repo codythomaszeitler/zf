@@ -153,17 +153,17 @@ export class ApexTestResult {
 }
 
 export function parseStackTrace(stackTrace: string): { className: string; methodName: string, position: Position } {
-	const classNameRegex = /^Class\.(.*)\.(.*): line (\d+), column (\d+)\n?.*/;
+	const classNameRegex = /^(\(System Code\)\n)?Class\.(.*)\.(.*): line (\d+), column (\d+)\n?.*/;
 
 	const matches = stackTrace.match(classNameRegex);
 	if (!matches) {
 		throw new Error(`Could not parse stack trace apex test location string [${stackTrace}]`);
 	}
-	const line = Number.parseInt(matches[3]);
-	const column = Number.parseInt(matches[4]);
+	const line = Number.parseInt(matches[4]);
+	const column = Number.parseInt(matches[5]);
 	return {
-		className: matches[1],
-		methodName: matches[2],
+		className: matches[2],
+		methodName: matches[3],
 		position: new Position(line - 1, column - 1)
 	};
 }
