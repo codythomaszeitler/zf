@@ -16,7 +16,7 @@ describe('apex log', () => {
 			status: 'Success'
 		});
 
-		const expectedOutput = `[${randomId.toString()}] - [${startTime.toLocaleTimeString()}] - MB: [2680] - MiS: [89]`;
+		const expectedOutput = `[${randomId.toString()}] - [${startTime.toLocaleTimeString()}] - MB: [2680] - MiS: [89] - Status: [Success]`;
 		expect(apexLog.getTreeViewString()).toBe(expectedOutput);
 	});
 });
