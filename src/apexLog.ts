@@ -57,6 +57,6 @@ export class ApexLog {
 	}
 
 	public getTreeViewString(): string {
-		return `[${this.id.toString()}] - [${this.startTime.toLocaleTimeString()}] - MB: [${this.logLength}] - MiS: [${this.duration}]`;
+		return `[${this.id.toString()}] - [${this.startTime.toLocaleTimeString()}] - MB: [${this.logLength}] - MiS: [${this.duration}] - Status: [${this.status}]`;
 	}
 }
