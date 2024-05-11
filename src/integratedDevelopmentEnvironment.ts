@@ -54,7 +54,13 @@ export abstract class IntegratedDevelopmentEnvironment {
         }
 
         const fileGlobs = "{" + uris.map(uri => uri.getBaseName()).join(",") + "}";
-        const packageDirPaths = "{" + this.sfdxProject.packageDirectories.map(packageDir => packageDir.path).join(",") + "}";
+        const packageDirPaths = "{" + this.sfdxProject.packageDirectories.map(packageDir => {
+            if (packageDir.path.startsWith('./') || packageDir.path.startsWith('.\\')) {
+                return packageDir.path.slice(2);
+            } else {
+                return packageDir.path;
+            }
+        }).join(",") + "}";
 
         const sfMetadataUris: Uri[] = [];
         const promises = this.sfdxProject.packageDirectories.map(packageDir => {

@@ -351,6 +351,131 @@ describe('project deploy', () => {
         });
         expect(ide.didSetAnyDiagnostics()).toBe(false);
     });
+
+    it('should still do deployment even if there is a ./ in dir path', async () => {
+        const mockFile = ide.generateUri("force-app", "main", "default", "classes", "TestFile.cls");
+
+        ide.setCachedSfdxProject({
+            packageDirectories: [
+                {
+                    default: true,
+                    path: './force-app'
+                }
+            ]
+        });
+
+        ide.addFile(mockFile);
+        cli.projectDeployFailure(
+            {
+                columnNumber: 1,
+                lineNumber: 1,
+                fileName: 'classes/TestFile.cls',
+                problem: 'This is an error!'
+            }
+        );
+        cli.setDefaultOrg(salesforceOrg);
+
+        const testFunction = genOnDidSaveTextDocuments({
+            cli,
+            ide
+        });
+
+        const testFunctionPromise = testFunction({
+            textDocuments: [{
+                languageId: APEX_LANGUAGE_ID,
+                uri: mockFile
+            }]
+        });
+
+        await cli.projectDeployComplete();
+        await testFunctionPromise;
+        expect(ide.didSetAnyDiagnostics()).toBe(true);
+        expect(ide.didShowInformationMessage('Deployment successful'));
+    });
+
+    it('should still do deployment even if there is a ./ in dir path, double layered path', async () => {
+        const mockFile = ide.generateUri("force-app", "main", "default", "classes", "TestFile.cls");
+
+        ide.setCachedSfdxProject({
+            packageDirectories: [
+                {
+                    default: true,
+                    path: './force-app/main'
+                }
+            ]
+        });
+
+        ide.addFile(mockFile);
+        cli.projectDeployFailure(
+            {
+                columnNumber: 1,
+                lineNumber: 1,
+                fileName: 'classes/TestFile.cls',
+                problem: 'This is an error!'
+            }
+        );
+        cli.setDefaultOrg(salesforceOrg);
+
+        const testFunction = genOnDidSaveTextDocuments({
+            cli,
+            ide
+        });
+
+        const testFunctionPromise = testFunction({
+            textDocuments: [{
+                languageId: APEX_LANGUAGE_ID,
+                uri: mockFile
+            }]
+        });
+
+        await cli.projectDeployComplete();
+        await testFunctionPromise;
+        expect(ide.didSetAnyDiagnostics()).toBe(true);
+        expect(ide.didShowInformationMessage('Deployment successful'));
+    });
+
+
+
+    it('should still do deployment even if there is a .\\ in dir path', async () => {
+        const mockFile = ide.generateUri("force-app", "main", "default", "classes", "TestFile.cls");
+
+        ide.setCachedSfdxProject({
+            packageDirectories: [
+                {
+                    default: true,
+                    path: '.\\force-app'
+                }
+            ]
+        });
+
+        ide.addFile(mockFile);
+        cli.projectDeployFailure(
+            {
+                columnNumber: 1,
+                lineNumber: 1,
+                fileName: 'classes/TestFile.cls',
+                problem: 'This is an error!'
+            }
+        );
+        cli.setDefaultOrg(salesforceOrg);
+
+        const testFunction = genOnDidSaveTextDocuments({
+            cli,
+            ide
+        });
+
+        const testFunctionPromise = testFunction({
+            textDocuments: [{
+                languageId: APEX_LANGUAGE_ID,
+                uri: mockFile
+            }]
+        });
+
+        await cli.projectDeployComplete();
+        await testFunctionPromise;
+        expect(ide.didSetAnyDiagnostics()).toBe(true);
+        expect(ide.didShowInformationMessage('Deployment successful'));
+    });
 });
 
 // TODO: We really need to make test cases that go through SfSalesforceCli and not have it go through MockSalesforceCli
