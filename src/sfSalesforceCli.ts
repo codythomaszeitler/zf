@@ -668,6 +668,9 @@ export class SfSalesforceCli extends SalesforceCli {
         };
 
         const { stdout } = await this.exec(command);
+        if (stdout.code !== 0) {
+            throw new Error(stdout.message);
+        }
 
         const apexTestResults: ApexTestResult[] = stdout.result.tests.map((test: any) => {
             let location = undefined;
