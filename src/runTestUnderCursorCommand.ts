@@ -172,20 +172,25 @@ export class RunApexTestCommand extends Command {
 		if (apexTestRunResult.wasSkipped()) {
 			await this.notifySkippedListeners(testName, onTestSuiteSkipped);
 		} else {
-			const testRunId = apexTestRunResult.getTestRunId();
+			try {
+				const testRunId = apexTestRunResult.getTestRunId();
 
-			let apexTestGetResult = await this.getCli().apexTestGet({
-				targetOrg,
-				testRunId
-			});
-			await notifyListeners(apexTestGetResult);
-
-			while (apexTestGetResult.getPercentageCompleted() < 100) {
-				apexTestGetResult = await this.getCli().apexTestGet({
+				let apexTestGetResult = await this.getCli().apexTestGet({
 					targetOrg,
 					testRunId
 				});
 				await notifyListeners(apexTestGetResult);
+
+				while (apexTestGetResult.getPercentageCompleted() < 100) {
+					apexTestGetResult = await this.getCli().apexTestGet({
+						targetOrg,
+						testRunId
+					});
+					await notifyListeners(apexTestGetResult);
+				}
+			} catch (e: unknown) {
+				await this.notifySkippedListeners(testName, onTestSuiteSkipped);
+				throw e;
 			}
 		}
 		return apexTestRunResult;

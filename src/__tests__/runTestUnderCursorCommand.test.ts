@@ -331,6 +331,42 @@ describe('run apex test run request', () => {
 		expect(testItem.didPass).toBe(true);
 	});
 
+	it('should be able to gracefully handle a connection error on test get', async () => {
+
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.testMethod'
+		});
+		testItem.shouldPass = true;
+
+		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = genApexTestRunResult({
+			status: 0,
+			testRunId
+		});
+
+		const errorMessage = "request to www.salesforce.org failed, reason: read ECONNRESET";
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestLogErrorConnectionResetResult({ errorMessage});
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir
+		});
+
+		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe(errorMessage);
+		expect(testItem.didSkip).toBe(true);
+	});
+
 	it('should be able to run one bottom level test and have it fail', async () => {
 
 		const testRun = createTestRun();
@@ -797,4 +833,20 @@ function genApexTestLogResult({ apexTestLogId }: { apexTestLogId: SalesforceId }
 		},
 		"warnings": []
 	});
+}
+
+function genApexTestLogErrorConnectionResetResult({ errorMessage }: { errorMessage: string }): string {
+	return JSON.stringify(
+		{
+			"code": 1,
+			"context": "Test",
+			"commandName": "Test",
+			"message": errorMessage,
+			"name": "FetchError",
+			"status": 1,
+			"stack": "FetchError: request to www.salesforce.org failed, reason: read ECONNRESET\n",
+			"exitCode": 1,
+			"warnings": []
+		}
+	);
 }
