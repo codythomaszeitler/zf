@@ -99,6 +99,11 @@
         "sf.zsi.vscode.proxy": {
           "type": "object",
           "description": "Proxy settings given to the shell as a JSON object"
+        },
+        "sf.zsi.vscode.getLogOnTestRun": {
+          "type": "boolean",
+          "description": "Determines if a log should be retrieved on running apex tests.",
+          "default" : true
         }
       }
     }

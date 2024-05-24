@@ -668,7 +668,7 @@ export class SfSalesforceCli extends SalesforceCli {
         };
 
         const { stdout } = await this.exec(command);
-        if (stdout.code !== 0) {
+        if (stdout.status !== 0) {
             throw new Error(stdout.message);
         }
 

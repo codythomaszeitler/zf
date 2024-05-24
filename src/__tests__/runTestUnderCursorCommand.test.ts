@@ -331,6 +331,51 @@ describe('run apex test run request', () => {
 		expect(testItem.didPass).toBe(true);
 	});
 
+	it('should be able to not get test log if configured to not to', async () => {
+
+		ide.setConfig(RunApexTestRunRequest.getTestLogConfigKey, false);
+
+		const testRun = createTestRun();
+		const testItem = createTestItem({
+			identifier: 'ApexTestClass.testMethod'
+		});
+		testItem.shouldPass = true;
+
+		testRun.testItems.push(testItem);
+		const testRunId = genRandomId(ASYNC_APEX_JOB_PREFIX);
+		commandToStdOutput[genApexTestRunCommandString({
+			tests: testRun.testItems, targetOrg: targetOrg
+		})] = genApexTestRunResult({
+			status: 0,
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestGetCommandString({
+			testRunId,
+			targetOrg
+		})] = genApexTestGetResult({
+			testItems: [testItem],
+			testRunId
+		});
+
+		commandToStdOutput[genApexTestLogCommandString({
+			apexTestRunResultId: testRunId,
+			targetOrg
+		})] = 'If this were to run, an exception would be thrown and the test would not pass.';
+
+		const testObject = new RunApexTestRunRequest({
+			ide, cli
+		});
+
+		await testObject.execute({
+			testRun, targetOrg, logDir
+		});
+
+		expect(testRun.didEnd).toBe(true);
+		expect(testRun.contents).toBe(`No apex log was retrieved since ${RunApexTestRunRequest.getTestLogConfigKey} was set to false.`);
+		expect(testItem.didPass).toBe(true);
+	});
+
 	it('should be able to gracefully handle a connection error on test get', async () => {
 
 		const testRun = createTestRun();
@@ -352,7 +397,7 @@ describe('run apex test run request', () => {
 		commandToStdOutput[genApexTestGetCommandString({
 			testRunId,
 			targetOrg
-		})] = genApexTestLogErrorConnectionResetResult({ errorMessage});
+		})] = genApexTestLogErrorConnectionResetResult({ errorMessage });
 
 		const testObject = new RunApexTestRunRequest({
 			ide, cli

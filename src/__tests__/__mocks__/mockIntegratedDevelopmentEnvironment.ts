@@ -168,7 +168,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     getConfig<T>(property: string, defaultValue: T): T {
         const value = this.config.get(property);
-        if (!value) {
+        if (value === undefined) {
             return defaultValue;
         }
         return value;

@@ -263,6 +263,8 @@ interface ApexTestName {
 
 export class RunApexTestRunRequest extends Command {
 
+	public static readonly getTestLogConfigKey = 'sf.zsi.vscode.getLogOnTestRun';
+
 	public async execute({
 		testRun,
 		targetOrg,
@@ -344,15 +346,19 @@ export class RunApexTestRunRequest extends Command {
 				return;
 			}
 
-			const readApexTestLogCommand = new ReadApexTestLogCommand({
-				ide: this.getIde(),
-				cli: this.getCli()
-			});
+			if (ide.getConfig(RunApexTestRunRequest.getTestLogConfigKey, true)) {
+				const readApexTestLogCommand = new ReadApexTestLogCommand({
+					ide: this.getIde(),
+					cli: this.getCli()
+				});
 
-			const contents = await readApexTestLogCommand.execute({
-				logDir, targetOrg: targetOrDefaultOrg, apexTestRunResultId: result.getTestRunId()
-			});
-			testRun.appendOutput(contents);
+				const contents = await readApexTestLogCommand.execute({
+					logDir, targetOrg: targetOrDefaultOrg, apexTestRunResultId: result.getTestRunId()
+				});
+				testRun.appendOutput(contents);
+			} else {
+				testRun.appendOutput(`No apex log was retrieved since ${RunApexTestRunRequest.getTestLogConfigKey} was set to false.`);
+			}
 		} catch (e: unknown) {
 			if (e instanceof Error) {
 				testRun.appendOutput(e.message);
