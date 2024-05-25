@@ -1,8 +1,8 @@
 import { ExecutorCommand, intoCliCommandString } from "../../executor";
 import { SalesforceOrg } from "../../salesforceOrg";
-import { get } from "../data/orgListOutput";
+import { get, getSfOrgListWithSkipConnectionNominalResponse } from "../data/orgListOutput";
 
-export function getSfOrgListCommandString(params? : {
+export function getSfOrgListCommandString(params?: {
 	skipConnectionStatus: boolean
 }) {
 	if (params?.skipConnectionStatus) {
@@ -22,8 +22,17 @@ export function getSfOrgListUsersCommandString({ targetOrg }: {
 	return `sf org list users --target-org ${targetOrg.getAlias()} --json`;
 }
 
-export function genCommandToStdOutput(): any {
+export function genCommandToStdOutput(params?: {
+	defaultOrg: SalesforceOrg
+}): any {
 	const commandToStdOutput: any = {};
+	if (params) {
+		commandToStdOutput[getSfOrgListCommandString({
+			skipConnectionStatus: true
+		})] = getSfOrgListWithSkipConnectionNominalResponse({
+			targetOrg: params.defaultOrg
+		});
+	}
 	commandToStdOutput[getSfOrgListCommandString()] = get();
 	return commandToStdOutput;
 }

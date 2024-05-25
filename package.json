@@ -56,6 +56,15 @@
       {
         "command": "sf.zsi.generateOfflineSymbolTable",
         "title": "ZF: Generate Apex Offline Symbol Table"
+      },
+      {
+        "command": "sf.zsi.metadataRetrieveAndShow",
+        "title": "ZF: Show Metadata",
+        "enablement": "view == zeitlerforce-metadata-explorer"
+      },
+      {
+        "command": "sf.zsi.refreshMetadataExplorer",
+        "title": "ZF: Refresh Metadata Explorer"
       }
     ],
     "views": {
@@ -72,6 +81,12 @@
           "name": "Salesforce Cli Input/Output",
           "icon": "media/dep.svg"
         }
+      ],
+      "explorer": [
+        {
+          "id": "zeitlerforce-metadata-explorer",
+          "name": "ZeitlerForce Metadata Explorer"
+        }
       ]
     },
     "menus": {
@@ -80,6 +95,17 @@
           "command": "sf.zsi.refreshApexLogs",
           "group": "navigation@0",
           "when": "view == server-side-apex-logs"
+        },  
+        {
+          "command": "sf.zsi.refreshMetadataExplorer",
+          "group": "navigation@0",
+          "when": "view == zeitlerforce-metadata-explorer"
+        }
+      ],
+      "view/item/context": [{
+          "command": "sf.zsi.metadataRetrieveAndShow",
+          "when": "view == zeitlerforce-metadata-explorer && viewItem == METADATA_NAME_NODE",
+          "group": "inline"
         }
       ]
     },
@@ -133,6 +159,7 @@
   },
   "dependencies": {
     "antlr4ts": "^0.5.0-alpha.4",
-    "apex-parser": "^2.17.0"
+    "apex-parser": "^2.17.0",
+    "fast-xml-parser": "^4.4.0"
   }
 }

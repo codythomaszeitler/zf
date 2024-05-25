@@ -18,13 +18,12 @@ import { SObject } from "./sObject";
 import { SObjectApiName } from "./sObjectApiName";
 import { SObjectChildRelationshipDescribeResult, SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
 import { SObjectListResult } from "./sObjectListResult";
-import { SalesforceCli } from "./salesforceCli";
+import { ProjectRetrieveResult, SalesforceCli } from "./salesforceCli";
 import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
 import { SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
 import { SoqlQuery } from "./soqlQuery";
 import { Uri } from "./uri";
-import { getLogFileUri } from "./showApexLogCommand";
 
 export class SfSalesforceCli extends SalesforceCli {
 
@@ -251,6 +250,44 @@ export class SfSalesforceCli extends SalesforceCli {
 
         const { stdout } = await this.exec(command);
         return new ProjectDeployResumeResult();
+    }
+
+    async projectManifestGenerate(params: { targetOrg: SalesforceOrg; outputDir: Uri; fileName: string }): Promise<{}> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'project',
+                'manifest',
+                'generate',
+                '--from-org',
+                params.targetOrg.getAlias(),
+                '--output-dir',
+                params.outputDir.getFileSystemPath(),
+                '--json'
+            ]
+        };
+        const { stdout } = await this.exec(command);
+        return {};
+    }
+
+    async projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg; outputDir: Uri; metadata: string }): Promise<ProjectRetrieveResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'project',
+                'retrieve',
+                'start',
+                '--metadata',
+                '"' + metadata + '"',
+                '--target-org',
+                targetOrg.getAlias(),
+                '--output-dir',
+                outputDir.getFileSystemPath(),
+                '--json'
+            ]
+        };
+        const { stdout } = await this.exec(command);
+        return stdout as ProjectRetrieveResult;
     }
 
     async sobjectList(params: {

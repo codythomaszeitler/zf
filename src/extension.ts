@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
-import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper } from "./vscode";
+import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
@@ -11,21 +11,26 @@ import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
 import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
-import { RunApexTestRunRequest, RunTestUnderCursorCommand, TestItem as ZfTestItem, TestRun as ZfTestRun } from './runTestUnderCursorCommand';
+import { RunApexTestRunRequest, RunTestUnderCursorCommand, TestRun as ZfTestRun } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
 import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
-import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
-import path = require('path');
+import { IntegratedDevelopmentEnvironment, Uri } from './integratedDevelopmentEnvironment';
 import { TextDecoder } from 'util';
 import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
+import { MetadataTreeView, genOnMetadataRetrieveAndShow } from './metadataExplorerTreeView';
+import { SalesforceCli } from './salesforceCli';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
-	return ide.generateUri('.zf', 'offlineSymbolTable');
+	return ide.generateUri('zf', 'offlineSymbolTable');
 }
 
 function getZfLogDir(ide: IntegratedDevelopmentEnvironment) {
-	return ide.generateUri('.zf', 'logs');
+	return ide.generateUri('zf', 'logs');
+}
+
+function getZfMetadataDir(ide: IntegratedDevelopmentEnvironment) {
+	return ide.generateUri('zf', 'metadata');
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -231,6 +236,45 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
+	async function runRefreshMetadataExplorer() {
+		await ide.withProgress(async (progressToken) => {
+			const metadataTreeViewNode = new MetadataTreeView({
+				cli: salesforceCli, ide, metadataDir: getZfMetadataDir(ide)
+			});
+
+			const defaultOrg = await salesforceCli.getDefaultOrg();
+			if (!defaultOrg) {
+				ide.showWarningMessage('No default org found.');
+				return;
+			}
+
+			const metadataTreeNode = await metadataTreeViewNode.getRootNode({
+				targetOrg: defaultOrg
+			});
+
+			const rootNode = new VscodeMetadataTreeNode({
+				metadataTreeNode
+			});
+
+			const metadataTreeViewProvider = new VscodeMetadataTreeView({
+				rootNode
+			});
+
+			vscode.window.createTreeView("zeitlerforce-metadata-explorer", {
+				treeDataProvider: metadataTreeViewProvider
+			});
+		}, {
+			title: 'Refreshing Metadata Explorer',
+			isCancellable: false
+		});
+
+	}
+
+	const metadataRetrieveAndShow = genOnMetadataRetrieveAndShow({ cli: salesforceCli, ide, metadataDir: getZfMetadataDir(ide) });
+	const vscodeMetadataRetrieveAndShowCommand = vscode.commands.registerCommand("sf.zsi.metadataRetrieveAndShow", async (node: VscodeMetadataTreeNode) => {
+		await metadataRetrieveAndShow(node.metadataTreeNode);
+	});
+
 	ide.onDidSaveTextDocuments(genCacheSfdxProjectOnSave({
 		cli: salesforceCli,
 		ide
@@ -331,6 +375,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.refreshMetadataExplorer", runRefreshMetadataExplorer));
+	context.subscriptions.push(vscodeMetadataRetrieveAndShowCommand);
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));

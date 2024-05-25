@@ -45,6 +45,10 @@ export abstract class SalesforceCli {
     abstract projectDeployResume(params: { jobId: JobId }): Promise<ProjectDeployResumeResult>;
     abstract projectDeployCancel(params: { jobId: JobId }): Promise<ProjectDeployCancelResult>;
 
+    abstract projectManifestGenerate(params: { targetOrg: SalesforceOrg, outputDir: Uri, fileName: string }): Promise<{}>;
+
+    abstract projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg, outputDir: Uri, metadata: string }): Promise<ProjectRetrieveResult>;
+
     abstract sobjectList(params: {
         targetOrg: SalesforceOrg
     }): Promise<SObjectListResult>;
@@ -198,5 +202,19 @@ export class SalesforceCliInputOutput {
 
     public getDate() {
         return this.date;
+    }
+}
+
+export interface ProjectRetrieveResult {
+    status: number,
+    result: {
+        fileProperties: {
+            type: string,
+            fullName: string,
+            fileName: string
+        }[],
+        files: {
+            filePath: string
+        }[]
     }
 }
