@@ -11,8 +11,6 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
-
-
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
@@ -66,7 +64,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this.shownTextDocuments = [];
         this.activeTextEditor = null;
     }
-
+    
     public static genDefaultForceAppSfdxProject(): SfdxProject {
         return {
             packageDirectories: [

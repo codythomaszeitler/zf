@@ -29,6 +29,7 @@ export abstract class IntegratedDevelopmentEnvironment {
         return Uri.join(this.getCurrentDir(), ...paths);
     }
 
+
     protected didSaveFile(textDocument: TextDocument) {
         this.bulkDocumentSaveListener.save({
             document: textDocument

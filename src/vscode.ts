@@ -13,6 +13,8 @@ import { SalesforceOrg } from "./salesforceOrg";
 import { TextDecoder, TextEncoder } from "util";
 import { OnSalesforceCliRunEvent, SalesforceCliHistory, SalesforceCliInputOutput } from "./salesforceCli";
 import { TestItem as ZfTestItem } from './runTestUnderCursorCommand';
+import { MetadataTreeNode } from "./metadataExplorerTreeView";
+import * as fs from 'fs/promises';
 
 function getCurrentDir(): Uri {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -24,7 +26,6 @@ function getCurrentDir(): Uri {
 }
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -591,4 +592,79 @@ export class VscodeCliInputOutputTreeView implements vscode.TreeDataProvider<Vsc
     resolveTreeItem?(item: vscode.TreeItem, element: VscodeCliInputOutputTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
         return item;
     }
+}
+
+export class VscodeMetadataTreeView implements vscode.TreeDataProvider<VscodeMetadataTreeNode> {
+
+    private readonly rootNode: VscodeMetadataTreeNode;
+
+    public constructor ({
+        rootNode
+    }: { rootNode: VscodeMetadataTreeNode }) {
+        this.rootNode = rootNode;
+    }
+
+    getTreeItem(element: VscodeMetadataTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
+        return element;
+    }
+    getChildren(element?: VscodeMetadataTreeNode): vscode.ProviderResult<VscodeMetadataTreeNode[]> {
+        if (element) {
+            return element.getChildren();
+        } else {
+            return [this.rootNode];
+        }
+    }
+}
+
+
+export class VscodeMetadataTreeNode extends vscode.TreeItem {
+    private static getTreeItemCollapsibleState(metadataTreeNode: MetadataTreeNode) {
+        if (metadataTreeNode.nodeType === 0 || metadataTreeNode.nodeType === 1) {
+            return vscode.TreeItemCollapsibleState.Collapsed;
+        } else {
+            return vscode.TreeItemCollapsibleState.None;
+        }
+    }
+
+    private static getWhenValueContext(metadataTreeNode: MetadataTreeNode) {
+        if (metadataTreeNode.nodeType === 0) {
+            return 'METADATA_ROOT_NODE';
+        } else if (metadataTreeNode.nodeType === 1) {
+            return 'METADATA_TYPE_NODE';
+        } else {
+            return 'METADATA_NAME_NODE';
+        }
+    }
+
+    public readonly metadataTreeNode: MetadataTreeNode;
+    public constructor ({
+        metadataTreeNode
+    }: { metadataTreeNode: MetadataTreeNode }) {
+        super(metadataTreeNode.name, VscodeMetadataTreeNode.getTreeItemCollapsibleState(metadataTreeNode));
+        this.metadataTreeNode = metadataTreeNode;
+        this.contextValue = VscodeMetadataTreeNode.getWhenValueContext(this.metadataTreeNode);
+    }
+
+    public getChildren() {
+        if (this.metadataTreeNode.nodeType === 0) {
+            return this.metadataTreeNode.types.map(type => {
+                return new VscodeMetadataTreeNode({
+                    metadataTreeNode: type
+                });
+            });
+        } else if (this.metadataTreeNode.nodeType === 1) {
+            return this.metadataTreeNode.members.map(member => {
+                return new VscodeMetadataTreeNode({
+                    metadataTreeNode: member
+                });
+            });
+        } else {
+            return [];
+        }
+    }
+
+    iconPath = {
+        light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
+        dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
+    };
 }

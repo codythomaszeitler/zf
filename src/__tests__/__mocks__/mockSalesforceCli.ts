@@ -4,7 +4,7 @@ import { ProjectDeployCancelResult } from "../../projectDeployCancelResult";
 import { ComponentFailure, ProjectDeployReportResult } from "../../projectDeployReportResult";
 import { ProjectDeployResumeResult } from "../../projectDeployResumeResult";
 import { ProjectDeployStartResult } from "../../projectDeployStartResult";
-import { SalesforceCli } from "../../salesforceCli";
+import { ProjectRetrieveResult, SalesforceCli } from "../../salesforceCli";
 import { SalesforceOrg } from "../../salesforceOrg";
 import { SObjectListResult } from "../../sObjectListResult";
 import { SObjectApiName } from "../../sObjectApiName";
@@ -29,6 +29,12 @@ import { ApexTestRunResult, ApexTestGetResult } from "../../apexTestRunResult";
 import { Uri } from "../../uri";
 
 export class MockSalesforceCli extends SalesforceCli {
+    projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg; outputDir: Uri; metadata: string }): Promise<ProjectRetrieveResult> {
+        throw new Error("Method not implemented.");
+    }
+    projectManifestGenerate(params: { targetOrg: SalesforceOrg; outputDir: Uri; fileName: string; }): Promise<{}> {
+        throw new Error("Method not implemented.");
+    }
 
     private readonly orgs: SalesforceOrg[];
     private readonly openedOrgs: SalesforceOrg[];
@@ -51,7 +57,7 @@ export class MockSalesforceCli extends SalesforceCli {
     private readonly orgsWithApexLogs: { org: SalesforceOrg; logs: ApexLog[] }[];
     private readonly filesystem: MockFileSystem;
 
-    constructor(params?: {
+    constructor (params?: {
         filesystem?: MockFileSystem
     }) {
         super(async (command: ExecutorCommand) => { return { stdout: '' }; });
@@ -410,7 +416,7 @@ function generateSObject(createableSObject: UpsertableSObject, recordId: Salesfo
 class RecordIdToSObject {
     private readonly records: Map<SalesforceId, SObject>;
 
-    public constructor() {
+    public constructor () {
         this.records = new Map();
     }
 
@@ -437,7 +443,7 @@ abstract class DatabaseValidation {
 
     private readonly sObjectApiName: string;
 
-    public constructor(params: {
+    public constructor (params: {
         sObjectApiName: string
     }) {
         this.sObjectApiName = params.sObjectApiName;
