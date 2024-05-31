@@ -3,7 +3,7 @@
   "displayName": "ZeitlerForce",
   "repository": "https://github.com/codythomaszeitler/sf-zsi.git",
   "description": "vscode extensions for salesforce.",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -95,14 +95,15 @@
           "command": "sf.zsi.refreshApexLogs",
           "group": "navigation@0",
           "when": "view == server-side-apex-logs"
-        },  
+        },
         {
           "command": "sf.zsi.refreshMetadataExplorer",
           "group": "navigation@0",
           "when": "view == zeitlerforce-metadata-explorer"
         }
       ],
-      "view/item/context": [{
+      "view/item/context": [
+        {
           "command": "sf.zsi.metadataRetrieveAndShow",
           "when": "view == zeitlerforce-metadata-explorer && viewItem == METADATA_NAME_NODE",
           "group": "inline"
