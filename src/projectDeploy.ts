@@ -160,7 +160,7 @@ function showFailuresInProblemsTabForFile(ide: IntegratedDevelopmentEnvironment,
                 const { className } = parseStackTrace(componentFailure.problem);
                 return className + '.cls';
             } else {
-                return componentFailure.fileName;
+                return Uri.basename(componentFailure.fileName);
             }
         };
 

@@ -27,6 +27,10 @@ export class Uri {
 		});
 	}
 
+	public static basename(filePath : string) {
+		return path.basename(filePath);
+	}
+
 	public getFileSystemPath(): string {
 		return this.fileSystemPath;
 	}

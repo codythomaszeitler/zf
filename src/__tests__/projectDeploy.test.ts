@@ -72,6 +72,35 @@ describe('project deploy', () => {
         expect(ide.didShowErrorMessage('Deployment failed')).toBe(true);
     });
 
+    it('should put an error with the matching URI if the deployment fails', async () => {
+        const mockFile = ide.generateUri("force-app", "main", "default", "classes", "subdir", "TestFile.cls");
+
+        ide.addFile(mockFile);
+
+        const projectDeployPromise = projectDeploy({
+            targetOrg: salesforceOrg,
+            cli: cli,
+            ide
+        });
+
+        cli.projectDeployFailure(
+            {
+                columnNumber: 1,
+                lineNumber: 1,
+                fileName: 'classes/TestFile.cls',
+                problem: 'This is an error!'
+            }
+        );
+
+        await cli.projectDeployComplete();
+        await projectDeployPromise;
+        expect(ide.didSetAnyDiagnostics()).toBe(true);
+        expect(ide.didFocusProblemsTab()).toBe(true);
+        expect(ide.didSetDiagnosticsFor(mockFile)).toBe(true);
+        expect(cli.didResumeProjectDeployment()).toBe(true);
+        expect(ide.didShowErrorMessage('Deployment failed')).toBe(true);
+    });
+
     it('should report half status if deployment is not completed', async () => {
         const projectDeployPromise = projectDeploy({
             targetOrg: salesforceOrg,
