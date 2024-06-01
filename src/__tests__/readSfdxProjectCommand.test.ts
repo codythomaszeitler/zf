@@ -4,7 +4,6 @@ import { MockFileSystem } from "./__mocks__/mockFileSystem";
 import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { MockSalesforceCli } from "./__mocks__/mockSalesforceCli";
 import { ReadSfdxProjectCommand, getSfdxProjectUri } from '../readSfdxProjectCommand';
-import { Uri } from '../uri';
 
 describe('read sfdx project command', () => {
 
@@ -32,9 +31,7 @@ describe('read sfdx project command', () => {
 	});
 
 	it('should read sfdx project command when commanded', async () => {
-		const sfdxProjectUri = getSfdxProjectUri({
-			currentDir: ide.getCurrentDir()
-		});
+		const sfdxProjectUri = ide.genSfdxProjectUri();
 
 		await fs.writeFile(sfdxProjectUri, genSfdxProjectJson());
 

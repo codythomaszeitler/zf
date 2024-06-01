@@ -14,12 +14,11 @@ import { ApexCleanLogsCommand } from './apexCleanLogsCommand';
 import { RunApexTestRunRequest, RunTestUnderCursorCommand, TestRun as ZfTestRun } from './runTestUnderCursorCommand';
 import { GenerateOfflineSymbolTableCommand } from './generateOfflineSymbolTableCommand';
 import { genCacheSfdxProjectOnSave } from './readSfdxProjectCommand';
-import { IntegratedDevelopmentEnvironment, Uri } from './integratedDevelopmentEnvironment';
+import { IntegratedDevelopmentEnvironment } from './integratedDevelopmentEnvironment';
 import { TextDecoder } from 'util';
 import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
 import { MetadataTreeView, genOnMetadataRetrieveAndShow } from './metadataExplorerTreeView';
-import { SalesforceCli } from './salesforceCli';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -275,6 +274,13 @@ export function activate(context: vscode.ExtensionContext) {
 		await metadataRetrieveAndShow(node.metadataTreeNode);
 	});
 
+	const metadataRetrieve = genOnMetadataRetrieveAndShow({
+		cli : salesforceCli, ide
+	});
+	const vscodeMetadataRetrieve = vscode.commands.registerCommand("sf.zsi.metadataRetrieveIntoDirectory", async (node: VscodeMetadataTreeNode) => {
+		await metadataRetrieve(node.metadataTreeNode);
+	});
+
 	ide.onDidSaveTextDocuments(genCacheSfdxProjectOnSave({
 		cli: salesforceCli,
 		ide
@@ -375,6 +381,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	context.subscriptions.push(vscodeMetadataRetrieve);
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.refreshMetadataExplorer", runRefreshMetadataExplorer));
 	context.subscriptions.push(vscodeMetadataRetrieveAndShowCommand);
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));

@@ -63,6 +63,11 @@
         "enablement": "view == zeitlerforce-metadata-explorer"
       },
       {
+        "command": "sf.zsi.metadataRetrieveIntoDirectory",
+        "title": "ZF: Retrieve Metadata",
+        "enablement": "view == zeitlerforce-metadata-explorer"
+      },
+      {
         "command": "sf.zsi.refreshMetadataExplorer",
         "title": "ZF: Refresh Metadata Explorer"
       }
@@ -105,6 +110,11 @@
       "view/item/context": [
         {
           "command": "sf.zsi.metadataRetrieveAndShow",
+          "when": "view == zeitlerforce-metadata-explorer && viewItem == METADATA_NAME_NODE",
+          "group": "inline"
+        },
+        {
+          "command": "sf.zsi.metadataRetrieveIntoDirectory",
           "when": "view == zeitlerforce-metadata-explorer && viewItem == METADATA_NAME_NODE",
           "group": "inline"
         }

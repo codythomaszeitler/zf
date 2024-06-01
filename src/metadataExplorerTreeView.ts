@@ -5,6 +5,7 @@ import { SalesforceOrg } from "./salesforceOrg";
 import { Command } from "./command";
 import { ProgressToken } from "./progressToken";
 import { ProjectRetrieveStartCommand } from "./projectRetrieveStartCommand";
+import { ListPackageDirectoriesCommand } from "./listPackageDirectoriesCommand";
 
 export class MetadataTreeView {
 	public static readonly rootNodeType: number = 0;
@@ -104,7 +105,7 @@ export class MetadataTreeView {
 
 }
 
-export function genOnMetadataRetrieveAndShow({ cli, ide, metadataDir }: { cli: SalesforceCli, ide: IntegratedDevelopmentEnvironment, metadataDir: Uri }) {
+export function genOnMetadataRetrieveAndShow({ cli, ide, metadataDir }: { cli: SalesforceCli, ide: IntegratedDevelopmentEnvironment, metadataDir?: Uri }) {
 	return async function (metadataTreeNode: MetadataTreeNode) {
 		try {
 			const name = getMetadataString(metadataTreeNode);
@@ -141,7 +142,7 @@ function getMetadataString(metadataTreeNode: MetadataTreeNode) {
 };
 
 export class MetadataRetrieveAndShowCommand extends Command {
-	public async execute({ targetOrg, metadataDir, metadataTreeNode }: { targetOrg: SalesforceOrg, metadataDir: Uri, metadataTreeNode: MetadataTreeNode }) {
+	public async execute({ targetOrg, metadataDir, metadataTreeNode }: { targetOrg: SalesforceOrg, metadataDir?: Uri, metadataTreeNode: MetadataTreeNode }) {
 
 		const metadata = getMetadataString(metadataTreeNode);
 		this.getProgressToken().report({ progress: 25, title: ` Project Retrieve Start` });

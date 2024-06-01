@@ -4,7 +4,7 @@ import { SalesforceOrg } from "./salesforceOrg";
 import { Uri } from "./uri";
 
 export class ProjectRetrieveStartCommand extends Command {
-	public async execute({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg, outputDir: Uri, metadata: string }): Promise<ProjectRetrieveStartCommandResult> {
+	public async execute({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg, outputDir?: Uri, metadata: string }): Promise<ProjectRetrieveStartCommandResult> {
 		const result = await this.getCli().projectRetrieveStart({
 			targetOrg, outputDir, metadata
 		});

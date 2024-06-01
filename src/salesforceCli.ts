@@ -47,7 +47,7 @@ export abstract class SalesforceCli {
 
     abstract projectManifestGenerate(params: { targetOrg: SalesforceOrg, outputDir: Uri, fileName: string }): Promise<{}>;
 
-    abstract projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg, outputDir: Uri, metadata: string }): Promise<ProjectRetrieveResult>;
+    abstract projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg, outputDir?: Uri, metadata: string }): Promise<ProjectRetrieveResult>;
 
     abstract sobjectList(params: {
         targetOrg: SalesforceOrg

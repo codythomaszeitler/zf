@@ -1,7 +1,7 @@
 import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
-import { SfdxProject } from "../../readSfdxProjectCommand";
+import { SfdxProject, getSfdxProjectUri } from "../../readSfdxProjectCommand";
 import { SalesforceOrg } from "../../salesforceOrg";
 import { TreeView } from "../../treeView";
 import { MockFileSystem } from "./mockFileSystem";
@@ -64,7 +64,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this.shownTextDocuments = [];
         this.activeTextEditor = null;
     }
-    
+
     public static genDefaultForceAppSfdxProject(): SfdxProject {
         return {
             packageDirectories: [
@@ -254,6 +254,13 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     public async readFile(params: { uri: Uri; }): Promise<string> {
         return this.filesystem.readFile(params.uri);
+    }
+
+    public genSfdxProjectUri() {
+        const sfdxProjectUri = getSfdxProjectUri({
+            currentDir: this.getCurrentDir()
+        });
+        return sfdxProjectUri;
     }
 }
 
