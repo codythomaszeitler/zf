@@ -51,8 +51,7 @@ export class CacheReadSfdxProjectCommand extends ReadSfdxProjectCommand {
 }
 
 export interface SfdxProject {
-	readonly packageDirectories: {
-		readonly path: string;
-		readonly default: boolean;
-	}[];
+	readonly packageDirectories: SfdxDirectories;
 }
+
+export type SfdxDirectories = { readonly path: string, readonly default: boolean }[];

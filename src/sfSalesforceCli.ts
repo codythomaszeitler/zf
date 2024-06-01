@@ -270,7 +270,12 @@ export class SfSalesforceCli extends SalesforceCli {
         return {};
     }
 
-    async projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg; outputDir: Uri; metadata: string }): Promise<ProjectRetrieveResult> {
+    async projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg; outputDir?: Uri; metadata: string }): Promise<ProjectRetrieveResult> {
+        const outputDirArgs: string[] = [];
+        if (outputDir) {
+            outputDirArgs.push('--target-org', outputDir.getFileSystemPath());
+        }
+
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -281,8 +286,7 @@ export class SfSalesforceCli extends SalesforceCli {
                 '"' + metadata + '"',
                 '--target-org',
                 targetOrg.getAlias(),
-                '--output-dir',
-                outputDir.getFileSystemPath(),
+                ...outputDirArgs,
                 '--json'
             ]
         };
