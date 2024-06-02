@@ -19,6 +19,7 @@ import { TextDecoder } from 'util';
 import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
 import { MetadataTreeView, genOnMetadataRetrieveAndShow } from './metadataExplorerTreeView';
+import { genOnlyRunOnce } from './onlyOneCommandRun';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -275,7 +276,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	const metadataRetrieve = genOnMetadataRetrieveAndShow({
-		cli : salesforceCli, ide
+		cli: salesforceCli, ide
 	});
 	const vscodeMetadataRetrieve = vscode.commands.registerCommand("sf.zsi.metadataRetrieveIntoDirectory", async (node: VscodeMetadataTreeNode) => {
 		await metadataRetrieve(node.metadataTreeNode);
@@ -382,7 +383,9 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(vscodeMetadataRetrieve);
-	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.refreshMetadataExplorer", runRefreshMetadataExplorer));
+	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.refreshMetadataExplorer", genOnlyRunOnce(runRefreshMetadataExplorer, () => {
+		ide.showWarningMessage('Command is already running.');
+	})));
 	context.subscriptions.push(vscodeMetadataRetrieveAndShowCommand);
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
