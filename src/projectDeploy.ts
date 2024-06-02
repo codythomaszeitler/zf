@@ -151,8 +151,21 @@ async function showFailuresInProblemsTab(ide: IntegratedDevelopmentEnvironment, 
     await Promise.all(promises);
 }
 
-function showFailuresInProblemsTabForFile(ide: IntegratedDevelopmentEnvironment, fileName: string, projectDeployReportResult: ProjectDeployReportResult): Promise<void> {
+async function showFailuresInProblemsTabForFile(ide: IntegratedDevelopmentEnvironment, fileName: string, projectDeployReportResult: ProjectDeployReportResult): Promise<void> {
     const componentFailures = projectDeployReportResult.getFailuresForFileName(fileName);
+
+    const uriWithDiagnostics: { uri: Uri, diagnostics: Diagnostic[] }[] = [];
+
+    const addDiagnostic = (uri: Uri, diagnostic: Diagnostic) => {
+        let found = uriWithDiagnostics.find(uriWithDiag => uriWithDiag.uri.equals(uri));
+        if (!found) {
+            found = {
+                diagnostics: [], uri
+            };
+            uriWithDiagnostics.push(found);
+        }
+        found.diagnostics.push(diagnostic);
+    };
 
     const promises = componentFailures.map(componentFailure => {
         const getFilename = () => {
@@ -169,13 +182,14 @@ function showFailuresInProblemsTabForFile(ide: IntegratedDevelopmentEnvironment,
             const range = new Range(position);
             const diagnostic = new Diagnostic(range, componentFailure.problem, DiagnosticSeverity.error);
             if (uri) {
-                ide.setDiagnostics(uri, [diagnostic]);
+                addDiagnostic(uri, diagnostic);
             }
         });
     });
 
-    return Promise.all(promises).then(() => {
-
+    await Promise.all(promises);
+    uriWithDiagnostics.forEach(urlWithDiag => {
+        ide.setDiagnostics(urlWithDiag.uri, urlWithDiag.diagnostics);
     });
 }
 
