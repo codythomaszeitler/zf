@@ -273,7 +273,7 @@ export class SfSalesforceCli extends SalesforceCli {
     async projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg; outputDir?: Uri; metadata: string }): Promise<ProjectRetrieveResult> {
         const outputDirArgs: string[] = [];
         if (outputDir) {
-            outputDirArgs.push('--target-org', outputDir.getFileSystemPath());
+            outputDirArgs.push('--output-dir', outputDir.getFileSystemPath());
         }
 
         const command: ExecutorCommand = {
