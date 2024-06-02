@@ -5,7 +5,6 @@ import { SalesforceOrg } from "./salesforceOrg";
 import { Command } from "./command";
 import { ProgressToken } from "./progressToken";
 import { ProjectRetrieveStartCommand } from "./projectRetrieveStartCommand";
-import { ListPackageDirectoriesCommand } from "./listPackageDirectoriesCommand";
 
 export class MetadataTreeView {
 	public static readonly rootNodeType: number = 0;
