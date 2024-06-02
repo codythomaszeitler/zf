@@ -46,4 +46,8 @@ export class Uri {
 	public isApexClass(): boolean {
 		return this.fileSystemPath.endsWith('.cls');
 	}
+
+	public equals(uri : Uri) {
+		return this.fileSystemPath === uri.fileSystemPath;
+	}
 }
