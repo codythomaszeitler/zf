@@ -3,7 +3,6 @@ import { openOrg } from './openOrg';
 import { SfSalesforceCli } from "./sfSalesforceCli";
 import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
-import { genOnDidSaveTextDocuments, projectDeploy } from './projectDeploy';
 import { runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand } from './genFauxSObjects';
 import { runHighlightedApex } from './apexRun';
@@ -20,6 +19,9 @@ import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
 import { MetadataTreeView, genOnMetadataRetrieveAndShow } from './metadataExplorerTreeView';
 import { genOnlyRunOnce } from './onlyOneCommandRun';
+import { genOnDidSaveTextDocuments } from './projectDeploy/queueableProjectDeployCommand';
+import { QuickDefaultOrgSfSalesforceCli } from './quickDefaultOrgSalesforceCli';
+import { ProjectDeployCommand } from './projectDeploy/projectDeployCommand';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -40,7 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 	Logger.setGlobalLogger(logger);
 
 	const proxy = ide.getConfig("sf.zsi.vscode.proxy", {});
-	const salesforceCli = new SfSalesforceCli(runCliCommand, proxy);
+	const salesforceCli = new QuickDefaultOrgSfSalesforceCli(ide, runCliCommand, proxy);
 
 	const cliInputOutputTreeViewProvider = new VscodeCliInputOutputTreeView({
 		history: salesforceCli.getHistory()
@@ -66,10 +68,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 	async function withDiagsProjectDeployStart() {
 		try {
-			await projectDeploy({
-				ide,
-				cli: salesforceCli
+			await ide.withProgress(async (progressToken) => {
+				const projectDeployCommand = new ProjectDeployCommand({
+					cli: salesforceCli,
+					ide: ide,
+					progressToken
+				});
+				await projectDeployCommand.execute({});
+			}, {
+				title: 'Project Deploy Start',
+				isCancellable: true
 			});
+
 		} catch (e: any) {
 			if (e) {
 				ide.showErrorMessage(e.message);

@@ -1,9 +1,5 @@
 import { ExecutorCommand } from "../../executor";
 import { JobId } from "../../jobId";
-import { ProjectDeployCancelResult } from "../../projectDeployCancelResult";
-import { ComponentFailure, ProjectDeployReportResult } from "../../projectDeployReportResult";
-import { ProjectDeployResumeResult } from "../../projectDeployResumeResult";
-import { ProjectDeployStartResult } from "../../projectDeployStartResult";
 import { ProjectRetrieveResult, SalesforceCli } from "../../salesforceCli";
 import { SalesforceOrg } from "../../salesforceOrg";
 import { SObjectListResult } from "../../sObjectListResult";
@@ -27,8 +23,12 @@ import { MockFileSystem } from "./mockFileSystem";
 import { getLogFileUri } from "../../showApexLogCommand";
 import { ApexTestRunResult, ApexTestGetResult } from "../../apexTestRunResult";
 import { Uri } from "../../uri";
+import { ProjectDeployCancelResult, ProjectDeployResult } from "../../projectDeploy/projectDeployResult";
 
 export class MockSalesforceCli extends SalesforceCli {
+    projectDeployPreview(params: { targetOrg: SalesforceOrg; }): Promise<{ result: { toDeploy: { path: string; }[]; toRetrieve: {}[]; toDelete: {}[]; }; status: number; } | undefined> {
+        throw new Error("Method not implemented.");
+    }
     projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg; outputDir: Uri; metadata: string }): Promise<ProjectRetrieveResult> {
         throw new Error("Method not implemented.");
     }
@@ -46,7 +46,6 @@ export class MockSalesforceCli extends SalesforceCli {
 
     private deploymentJobId: JobId | null;
     private deploymentStatus: string;
-    private failures: ComponentFailure[];
     private wasProjectDeployResumeCalled: boolean;
     private waitForDeploymentToStart: (value: unknown) => void;
     private noComponentsToDeploy: boolean;
@@ -65,7 +64,6 @@ export class MockSalesforceCli extends SalesforceCli {
         this.openedOrgs = [];
         this.deploymentJobId = null;
         this.deploymentStatus = "";
-        this.failures = [];
         this.wasProjectDeployResumeCalled = false;
         this.stopInfiniteLoopCounter = 0;
         this.waitForDeploymentToStart = () => { };
@@ -123,70 +121,17 @@ export class MockSalesforceCli extends SalesforceCli {
         return !!this.openedOrgs.find((org) => org.getAlias() === alias);
     }
 
-    async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[] }): Promise<ProjectDeployStartResult> {
-        if (this.noComponentsToDeploy) {
-            return new ProjectDeployStartResult({
-                jobId: new JobId('')
-            });
-        }
-
-        this.deploymentJobId = new JobId('OAQ1234567890');
-        this.deploymentStatus = 'started';
-
-        this.waitForDeploymentToStart(undefined);
-
-        return new ProjectDeployStartResult({ jobId: this.deploymentJobId });
+    async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[] }): Promise<ProjectDeployResult | undefined> {
+        return undefined; 
     }
 
     private stopInfiniteLoopCounter: number;
-    async projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployReportResult> {
-        this.stopInfiniteLoopCounter++;
-        if (this.stopInfiniteLoopCounter === 1000) {
-            throw new Error('Infinite loop...?');
-        }
-
-        if (this.deploymentJobId) {
-            if (this.deploymentStatus === 'started') {
-                const result = new ProjectDeployReportResult({
-                    numberComponentErrors: this.failures.length,
-                    numberComponentsDeployed: 50 - this.failures.length,
-                    numberComponentsTotal: 100,
-                    componentFailures: [...this.failures]
-                });
-                return result;
-            } else if (this.deploymentStatus === 'completed') {
-                const result = new ProjectDeployReportResult({
-                    numberComponentErrors: this.failures.length,
-                    numberComponentsDeployed: 100 - this.failures.length,
-                    numberComponentsTotal: 100,
-                    componentFailures: [...this.failures]
-                });
-                return result;
-            } else if (this.deploymentStatus === 'cancelled') {
-                throw new Error("Can't cancel deploy because it's already completed.");
-            } else {
-                throw new Error(`A job ${params.jobId} has unknown status ${this.deploymentStatus}.`);
-            }
-        } else {
-            throw new Error(`No job found for ID: ${params.jobId}.`);
-        }
+    async projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployResult | undefined> {
+        return undefined;
     }
 
-    async projectDeployCancel(params: { jobId: JobId; }): Promise<ProjectDeployCancelResult> {
-        if (this.toThrowOnProjectDeployCancel) {
-            throw this.toThrowOnProjectDeployCancel;
-        }
-
-        if (this.deploymentStatus === 'completed') {
-            throw new Error("Can't cancel deploy because it's already completed.");
-        }
-
-        if (this.deploymentJobId === params.jobId) {
-            this.deploymentStatus = "cancelled";
-            return new ProjectDeployCancelResult();
-        } else {
-            throw new Error(`No job found for ID: ${params.jobId}.`);
-        }
+    async projectDeployCancel(params: { jobId: JobId; targetOrg : SalesforceOrg}): Promise<ProjectDeployCancelResult | undefined> {
+        return undefined;
     }
 
     async projectDeployComplete(params?: { jobId: JobId }): Promise<void> {
@@ -199,10 +144,6 @@ export class MockSalesforceCli extends SalesforceCli {
             this.deploymentStatus = 'completed';
         }
     };
-
-    projectDeployFailure(failure: ComponentFailure) {
-        this.failures.push(failure);
-    }
 
     public static genProjectDeployFailure({
         uri
@@ -229,9 +170,8 @@ export class MockSalesforceCli extends SalesforceCli {
         return jobId === this.deploymentJobId && this.deploymentStatus === 'cancelled';
     }
 
-    async projectDeployResume(params: { jobId: JobId; }): Promise<ProjectDeployResumeResult> {
-        this.wasProjectDeployResumeCalled = true;
-        return new ProjectDeployResumeResult();
+    async projectDeployResume(params: { jobId: JobId; }): Promise<ProjectDeployResult | undefined> {
+        return undefined; 
     }
 
     didResumeProjectDeployment() {

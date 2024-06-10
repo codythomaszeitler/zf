@@ -1,6 +1,6 @@
-export function genOnlyRunOnce(func, onNoRun?) {
+export function genOnlyRunOnce(func : any, onNoRun?: any) {
 	let isRunning = false;
-	return async function (...args) {
+	return async function (...args : any) {
 		if (isRunning) {
 			if (onNoRun) {
 				await onNoRun();

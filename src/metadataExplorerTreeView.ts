@@ -69,7 +69,7 @@ export class MetadataTreeView {
 			return [];
 		}
 
-		const types: MetadataTypeNode[] = xml.Package.types.map(type => {
+		const types: MetadataTypeNode[] = xml.Package.types.map((type: any) => {
 			let members: MetadataMemberNode[] = [];
 			const metadataTypeNode: MetadataTypeNode = {
 				nodeType: 1,
@@ -81,7 +81,7 @@ export class MetadataTreeView {
 			};
 
 			if (Array.isArray(type.members)) {
-				metadataTypeNode.members = type.members.map(memberName => {
+				metadataTypeNode.members = type.members.map((memberName: any) => {
 					const member: MetadataMemberNode = {
 						nodeType: 2,
 						name: memberName,
@@ -144,7 +144,7 @@ export class MetadataRetrieveAndShowCommand extends Command {
 	public async execute({ targetOrg, metadataDir, metadataTreeNode }: { targetOrg: SalesforceOrg, metadataDir?: Uri, metadataTreeNode: MetadataTreeNode }) {
 
 		const metadata = getMetadataString(metadataTreeNode);
-		this.getProgressToken().report({ progress: 25, title: ` Project Retrieve Start` });
+		this.getProgressToken()?.report({ progress: 25, title: ` Project Retrieve Start` });
 
 		const projectRetrieveStartCommand = new ProjectRetrieveStartCommand({
 			cli: this.getCli(),
