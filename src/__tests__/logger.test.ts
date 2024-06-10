@@ -75,7 +75,11 @@ export class TestLogger extends Logger {
 		this.messages.push(message);
 	}
 
-	public contains(re: RegExp): boolean {
-		return !!this.messages.find(message => re.test(message));
+	public contains(re: RegExp  | string): boolean {
+		if (typeof re === 'string') {
+			return this.messages.includes(re);
+		} else {
+			return !!this.messages.find(message => re.test(message));
+		}
 	}
 }

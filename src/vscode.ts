@@ -3,7 +3,7 @@ import { ApexTestResult } from './apexTestRunResult';
 import * as vscode from 'vscode';
 import { Range } from "./range";
 import { Position } from "./position";
-import { ProgressToken } from "./progressToken";
+import { OnCancellationRequestedListener, ProgressToken } from "./progressToken";
 import { Logger } from "./logger";
 import * as path from 'path';
 import { ApexLog } from "./apexLog";
@@ -26,6 +26,7 @@ function getCurrentDir(): Uri {
 }
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
+
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -83,6 +84,8 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
             }, async (progress, cancelToken) => {
                 try {
                     let currentProgress = 0;
+
+                    const listeners: OnCancellationRequestedListener[] = [];
                     const progressToken: ProgressToken = {
                         get isCancellationRequested() {
                             return cancelToken.isCancellationRequested;
@@ -93,8 +96,15 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
                                 message: params.title || undefined
                             });
                             currentProgress = params.progress;
+                        },
+                        onCancellationRequested(listener: OnCancellationRequestedListener) {
+                            listeners.push(listener);
                         }
                     };
+                    cancelToken.onCancellationRequested(async () => {
+                        const promises = listeners.map(listener => listener());
+                        await Promise.all(promises);
+                    });
 
                     const result = await toMonitor(progressToken);
                     resolve(result);

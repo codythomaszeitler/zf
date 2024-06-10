@@ -10,10 +10,6 @@ import { Executor, ExecutorCommand, intoCliCommandString } from "./executor";
 import { JobId } from "./jobId";
 import { Logger } from "./logger";
 import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
-import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
-import { ComponentFailure, ProjectDeployReportResult } from "./projectDeployReportResult";
-import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
-import { ProjectDeployStartResult } from "./projectDeployStartResult";
 import { SObject } from "./sObject";
 import { SObjectApiName } from "./sObjectApiName";
 import { SObjectChildRelationshipDescribeResult, SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
@@ -24,6 +20,8 @@ import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
 import { SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
 import { SoqlQuery } from "./soqlQuery";
 import { Uri } from "./uri";
+import { ProjectDeployCancelResult, ProjectDeployPreviewResult, ProjectDeployResult, intoProjectDeployCancelResult, intoProjectDeployPreviewResult, intoProjectDeployResult } from "./projectDeploy/projectDeployResult";
+
 
 export class SfSalesforceCli extends SalesforceCli {
 
@@ -152,7 +150,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return defaultOrg ?? null;
     }
 
-    async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[] }): Promise<ProjectDeployStartResult> {
+    async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean }): Promise<ProjectDeployResult | undefined> {
         const getSourceDirArgsIfExist = () => {
             if (!params.sourceDir) {
                 return [];
@@ -161,6 +159,8 @@ export class SfSalesforceCli extends SalesforceCli {
             return ['--source-dir',
                 ...params.sourceDir.map(uri => '"' + uri.getFileSystemPath() + '"')];
         };
+
+        const getAsyncArgs = () => params.async ? ['--async'] : [];
 
         const command: ExecutorCommand = {
             command: 'sf',
@@ -171,21 +171,17 @@ export class SfSalesforceCli extends SalesforceCli {
                 '--target-org',
                 params.targetOrg.getAlias(),
                 ...getSourceDirArgsIfExist(),
-                '--async',
-                '--json',
-                '--ignore-conflicts'
+                '--ignore-conflicts',
+                ...getAsyncArgs(),
+                '--json'
             ]
         };
 
-        const { stdout } = await this.exec(command);
-        const result = new ProjectDeployStartResult({
-            jobId: new JobId(stdout.result.id)
-        });
-        return result;
-
+        const stdout: unknown = (await this.exec(command)).stdout;
+        return intoProjectDeployResult(stdout);
     }
 
-    async projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployReportResult> {
+    async projectDeployReport({ jobId, targetOrg }: { jobId: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployResult | undefined> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -193,49 +189,18 @@ export class SfSalesforceCli extends SalesforceCli {
                 'deploy',
                 'report',
                 '--job-id',
-                params.jobId.toString(),
+                jobId.toString(),
+                '--target-org',
+                targetOrg.getAlias(),
                 '--json'
             ]
         };
 
-        const { stdout } = await this.exec(command);
-
-        const componentFailures = stdout.result.details.componentFailures.map((failure: any) => {
-            const componentFailure: ComponentFailure = {
-                columnNumber: failure.columnNumber - 1,
-                lineNumber: failure.lineNumber - 1,
-                problem: failure.problem,
-                fileName: failure.fileName
-            };
-            return componentFailure;
-        });
-
-        const result = new ProjectDeployReportResult({
-            numberComponentErrors: stdout.result.numberComponentErrors,
-            numberComponentsDeployed: stdout.result.numberComponentsDeployed,
-            numberComponentsTotal: stdout.result.numberComponentsTotal,
-            componentFailures: componentFailures
-        });
-        return result;
+        const stdout: unknown = (await this.exec(command)).stdout;
+        return intoProjectDeployResult(stdout);
     }
 
-    async projectDeployCancel(params: { jobId: JobId; }): Promise<ProjectDeployCancelResult> {
-        const command: ExecutorCommand = {
-            command: 'sf',
-            args: [
-                'project',
-                'deploy',
-                'cancel',
-                '--job-id',
-                params.jobId.toString(),
-                '--json'
-            ]
-        };
-        const { stdout } = await this.exec(command);
-        return new ProjectDeployCancelResult();
-    }
-
-    async projectDeployResume(params: { jobId: JobId; }): Promise<ProjectDeployResumeResult> {
+    async projectDeployResume({ jobId }: { jobId: JobId }): Promise<ProjectDeployResult | undefined> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -243,13 +208,65 @@ export class SfSalesforceCli extends SalesforceCli {
                 'deploy',
                 'resume',
                 '--job-id',
-                params.jobId.toString(),
+                jobId.toString(),
                 '--json'
             ]
         };
 
-        const { stdout } = await this.exec(command);
-        return new ProjectDeployResumeResult();
+        const stdout: unknown = (await this.exec(command)).stdout;
+        return intoProjectDeployResult(stdout);
+    }
+
+    async projectDeployCancel(params: { jobId?: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployCancelResult | undefined> {
+        if (params.jobId) {
+            const command: ExecutorCommand = {
+                command: 'sf',
+                args: [
+                    'project',
+                    'deploy',
+                    'cancel',
+                    '--job-id',
+                    params.jobId.toString(),
+                    '--target-org',
+                    params.targetOrg.getAlias(),
+                    '--json'
+                ]
+            };
+            const stdout = (await this.exec(command)).stdout;
+            return intoProjectDeployCancelResult(stdout);
+        } else {
+            const command: ExecutorCommand = {
+                command: 'sf',
+                args: [
+                    'project',
+                    'deploy',
+                    'cancel',
+                    '--use-most-recent',
+                    '--target-org',
+                    params.targetOrg.getAlias(),
+                    '--json'
+                ]
+            };
+            const stdout = (await this.exec(command)).stdout;
+            return intoProjectDeployCancelResult(stdout);
+        }
+    }
+
+    async projectDeployPreview({ targetOrg }: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployPreviewResult | undefined> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'project',
+                'deploy',
+                'preview',
+                '--target-org',
+                targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const stdout = (await this.exec(command)).stdout;
+        return intoProjectDeployPreviewResult(stdout);
     }
 
     async projectManifestGenerate(params: { targetOrg: SalesforceOrg; outputDir: Uri; fileName: string }): Promise<{}> {

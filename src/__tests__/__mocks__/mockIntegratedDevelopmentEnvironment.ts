@@ -1,5 +1,5 @@
 import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
-import { ProgressToken } from "../../progressToken";
+import { OnCancellationRequestedListener, ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
 import { SfdxProject, getSfdxProjectUri } from "../../readSfdxProjectCommand";
 import { SalesforceOrg } from "../../salesforceOrg";
@@ -25,7 +25,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     private shownWarningMessages: string[];
     private shownInformationMessages: string[];
     private shownWindowLoadingMessages: string[];
-    private diagnostics: Map<Uri, Diagnostic[]>;
+    private diagnostics: Map<string, Diagnostic[]>;
     private config: Map<string, any>;
     private filesystem: MockFileSystem;
     private _didFocusProblemsTab: boolean;
@@ -34,6 +34,8 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     private shownTextDocuments: Uri[];
 
     private activeTextEditor: ActiveTextEditor | null;
+
+    private history: ProgressHistory[] = [];
 
     constructor (params?: {
         filesystem?: MockFileSystem
@@ -50,7 +52,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this.shownWarningMessages = [];
         this.shownInformationMessages = [];
         this.shownWindowLoadingMessages = [];
-        this.diagnostics = new Map<Uri, Diagnostic[]>();
+        this.diagnostics = new Map<string, Diagnostic[]>();
         this.config = new Map<string, any>();
 
         if (!params || !params.filesystem) {
@@ -87,19 +89,13 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     async withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; isCancellable?: boolean }): Promise<T> {
         this.shownWindowLoadingMessages.push(options.title);
 
-        this.currentProgressToken = {
-            isCancellationRequested: false,
-            report: function (params: { progress: number; title?: string }): void {
-                this.progress = params.progress;
-                if (params.title) {
-                    this.title = params.title;
-                }
-            },
-            progress: 0,
-            title: ''
-        };
+        this.currentProgressToken = generateProgressToken();
         const result = await toMonitor(this.currentProgressToken);
         return result;
+    }
+
+    getProgressHistoryAt(index: number) {
+        return this.currentProgressToken?.getProgressHistoryAt(index);
     }
 
     getCurrentProgressToken(): MockProgressToken | null {
@@ -185,11 +181,11 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 
     setDiagnostics(uri: Uri, diagnostics: Diagnostic[]): void {
-        this.diagnostics.set(uri, diagnostics);
+        this.diagnostics.set(uri.getFileSystemPath(), diagnostics);
     }
 
     didSetDiagnosticsFor(uri: Uri): boolean {
-        const diagnostics = this.diagnostics.get(uri);
+        const diagnostics = this.diagnostics.get(uri.getFileSystemPath());
         if (!diagnostics) {
             return false;
         }
@@ -201,7 +197,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 
     getDiagnosticsFor(uri: Uri): Diagnostic[] {
-        const diagnostics = this.diagnostics.get(uri);
+        const diagnostics = this.diagnostics.get(uri.getFileSystemPath());
         if (!diagnostics) {
             return [];
         }
@@ -264,7 +260,48 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 }
 
+export function generateProgressToken() {
+    const history: ProgressHistory[] = [];
+
+    const listeners: OnCancellationRequestedListener[] = [];
+
+    const currentProgressToken: MockProgressToken = {
+        isCancellationRequested: false,
+        report: function (params: { progress: number; title?: string }): void {
+            history.push({
+                progress: params.progress,
+                title: params.title
+            });
+            this.progress = params.progress;
+            if (params.title) {
+                this.title = params.title;
+            }
+        },
+        onCancellationRequested(listener) {
+            listeners.push(listener);
+        },
+        progress: 0,
+        title: '',
+        getProgressHistoryAt(index) {
+            return history[index];
+        },
+        async cancel() {
+            this.isCancellationRequested = true;
+            const promises = listeners.map(listener => listener());
+            await Promise.all(promises);
+        }
+    };
+    return currentProgressToken;
+}
+
+export interface ProgressHistory {
+    progress: number;
+    title?: string;
+}
+
 export interface MockProgressToken extends ProgressToken {
     progress: number;
     title: string;
+    getProgressHistoryAt(index: number): ProgressHistory | undefined;
+    cancel: () => Promise<void>;
 }

@@ -16,8 +16,10 @@ import { getDebugLevelWithDeveloperName, getDebugLogWithDeveloperNameFilter, get
 import { DEBUG_LEVEL_SOBJECT_NAME } from '../debugLevelSObject';
 import { getApexListLogNominalResponse } from './data/apexListLogOutput';
 import { SalesforceId } from '../salesforceId';
-import { genCommandToStdOutput, getSfOrgListCommandString, getSfOrgListUsersCommandString } from './__mocks__/mockShell';
+import { genCommandToStdOutput, genMockExecutor, getSfOrgListCommandString, getSfOrgListUsersCommandString } from './__mocks__/mockShell';
 import { SalesforceCliHistory } from '../salesforceCli';
+import { genProjectDeployStartCommandString } from './projectDeploy/data/projectDeployStartOutput';
+import { Uri } from '../uri';
 
 describe('sf salesforce cli', () => {
 
@@ -722,5 +724,51 @@ describe('sf salesforce cli', () => {
             const re = /.*Missing result in apex list logs\. Returning empty log list\..*/;
             expect(testLogger.contains(re)).toBeTruthy();
         });
+    });
+});
+
+describe('sf salesforce cli - project deploy start', () => {
+
+    let targetOrg: SalesforceOrg;
+    let inputOutput: any;
+    let uri: Uri;
+
+    let testObject: SfSalesforceCli;
+
+    let logger: TestLogger;
+
+
+    beforeEach(() => {
+        targetOrg = new SalesforceOrg({
+            alias: 'cso',
+            isActive: true,
+            isScratchOrg: false
+        });
+
+        inputOutput = genCommandToStdOutput({ defaultOrg: targetOrg });
+
+        const mockExecutor = genMockExecutor(inputOutput);
+
+        testObject = new SfSalesforceCli(mockExecutor);
+        uri = Uri.from({
+            scheme: 'file', fileSystemPath: '/User/SalesforceTestingProject/force-app/main/default/classes/Test.cls'
+        });
+
+        logger = new TestLogger();
+        Logger.setGlobalLogger(logger);
+    });
+
+    it('should return undefined and log an exception if the salesforce cli returns an object with a result whose status is not Succeeded, Failed, or Queued', async () => {
+        inputOutput[genProjectDeployStartCommandString({
+            targetOrg, uris: [uri], async: false
+        })] = JSON.stringify({
+            result: {
+                status: ''
+            }
+        });
+
+        const result = await testObject.projectDeployStart({ targetOrg, sourceDir: [uri], async: false });
+        expect(result).toBeFalsy();
+        expect(logger.contains(/.*Invalid discriminator value. Expected 'Queued' | 'Succeeded' | 'Failed'.*/)).toBeTruthy();
     });
 });

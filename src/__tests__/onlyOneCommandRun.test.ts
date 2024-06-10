@@ -3,8 +3,8 @@ import { genOnlyRunOnce } from "../onlyOneCommandRun";
 describe('only one function can be run', () => {
 
 	it('should only run the given function once if it has not completed yet', async () => {
-		let capturedResolve = null;
-		const promise = new Promise(resolve => {
+		let capturedResolve: (() => void) | null = () => undefined;
+		const promise = new Promise<void>((resolve: () => void) => {
 			capturedResolve = resolve;
 		});
 
@@ -12,7 +12,7 @@ describe('only one function can be run', () => {
 		let callCount = 0;
 		const testFunction = async () => {
 			callCount++;
-			await promise; // 
+			await promise;
 		};
 
 		const onlyRunOnce = genOnlyRunOnce(testFunction);
@@ -23,7 +23,9 @@ describe('only one function can be run', () => {
 
 		expect(callCount).toBe(1);
 
-		capturedResolve();
+		if (capturedResolve) {
+			capturedResolve();
+		}
 		await waitForMe;
 
 		onlyRunOnce();
@@ -31,8 +33,8 @@ describe('only one function can be run', () => {
 	});
 
 	it('should only run the given function once if it has not completed yet', async () => {
-		let capturedResolve = null;
-		const promise = new Promise(resolve => {
+		let capturedResolve: (() => void) | null = () => undefined;
+		const promise = new Promise<void>(resolve => {
 			capturedResolve = resolve;
 		});
 
@@ -55,6 +57,8 @@ describe('only one function can be run', () => {
 
 		expect(didRunNoRun).toBe(true);
 
-		capturedResolve();
+		if(capturedResolve) {
+			capturedResolve();
+		}
 	});
 });

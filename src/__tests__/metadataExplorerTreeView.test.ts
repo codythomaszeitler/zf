@@ -20,7 +20,7 @@ describe('metadata tree view', () => {
 
 	let metadataDir: Uri;
 
-	let aClassUri;
+	let aClassUri : Uri;
 
 	beforeEach(() => {
 		org = new SalesforceOrg({
@@ -104,15 +104,19 @@ describe('metadata tree view', () => {
 		if (node.nodeType === 0) {
 			expect(node.types).toHaveLength(52);
 			const apexClassTypeNode = node.getTypeNodeFor('ApexClass');
-			expect(apexClassTypeNode.members).toHaveLength(13);
+			expect(apexClassTypeNode?.members).toHaveLength(13);
 
-			const apexClassMemberNode = apexClassTypeNode.getMemberNodeFor('AClass');
+			const apexClassMemberNode = apexClassTypeNode?.getMemberNodeFor('AClass');
 
 			const testFunction = genOnMetadataRetrieveAndShow({
 				cli, ide, metadataDir
 			});
 
-			await testFunction(apexClassMemberNode);
+			if (apexClassMemberNode) {
+				await testFunction(apexClassMemberNode);
+			} else {
+				expect(true).toBe(false);
+			}
 
 			expect(ide.toHaveShownTextDocument(aClassUri)).toBe(true);
 		}

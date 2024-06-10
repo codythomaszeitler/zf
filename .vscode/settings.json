@@ -50,13 +50,15 @@
     ],
     "salesforcedx-vscode-slds.basic.mobileValidation": false,
     "jest.jestCommandLine": "jest",
-    "typescript.inlayHints.enumMemberValues.enabled": true,
-    "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+    "typescript.inlayHints.enumMemberValues.enabled": false,
+    "typescript.inlayHints.functionLikeReturnTypes.enabled": false,
     "typescript.inlayHints.parameterTypes.enabled": false,
     "typescript.inlayHints.propertyDeclarationTypes.enabled": false,
-    "typescript.inlayHints.variableTypes.enabled": true,
+    "typescript.inlayHints.variableTypes.enabled": false,
     "typescript.inlayHints.parameterNames.enabled": "literals",
     "typescript.referencesCodeLens.enabled": true,
     "typescript.referencesCodeLens.showOnAllFunctions": true,
-    "typescript.format.insertSpaceAfterConstructor": true
+    "typescript.format.insertSpaceAfterConstructor": true,
+    "typescript.inlayHints.variableTypes.suppressWhenTypeMatchesName": false,
+    "typescript.inlayHints.parameterNames.suppressWhenArgumentMatchesName": false
 }

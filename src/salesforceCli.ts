@@ -1,10 +1,6 @@
 import { SalesforceOrg } from "./salesforceOrg";
 import { JobId } from "./jobId";
-import { ProjectDeployStartResult } from "./projectDeployStartResult";
-import { ProjectDeployReportResult } from "./projectDeployReportResult";
-import { ProjectDeployCancelResult } from "./projectDeployCancelResult";
 import { Executor, ExecutorCommand, ExecutorResult, intoCliCommandString } from "./executor";
-import { ProjectDeployResumeResult } from "./projectDeployResumeResult";
 import { SObjectListResult } from "./sObjectListResult";
 import { SObjectDescribeResult } from "./sObjectDescribeResult";
 import { SObjectApiName } from "./sObjectApiName";
@@ -19,6 +15,7 @@ import { ApexListLogResult } from "./apexListLogResult";
 import { SalesforceId } from "./salesforceId";
 import { ApexTestGetResult, ApexTestRunResult } from "./apexTestRunResult";
 import { Uri } from "./uri";
+import { ProjectDeployCancelResult, ProjectDeployPreviewResult, ProjectDeployResult } from "./projectDeploy/projectDeployResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -40,10 +37,12 @@ export abstract class SalesforceCli {
     abstract getDefaultOrg(): Promise<SalesforceOrg | null>;
     abstract openOrg(alias: string): Promise<void>;
 
-    abstract projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[] }): Promise<ProjectDeployStartResult>;
-    abstract projectDeployReport(params: { jobId: JobId }): Promise<ProjectDeployReportResult>;
-    abstract projectDeployResume(params: { jobId: JobId }): Promise<ProjectDeployResumeResult>;
-    abstract projectDeployCancel(params: { jobId: JobId }): Promise<ProjectDeployCancelResult>;
+    abstract projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean }): Promise<ProjectDeployResult | undefined>;
+    abstract projectDeployReport(params: { jobId: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployResult | undefined>;
+    abstract projectDeployResume(params: { jobId: JobId }): Promise<ProjectDeployResult | undefined>;
+    abstract projectDeployCancel(params: { jobId?: JobId; targetOrg : SalesforceOrg }): Promise<ProjectDeployCancelResult | undefined>;
+
+    abstract projectDeployPreview(params: { targetOrg: SalesforceOrg }): Promise<ProjectDeployPreviewResult | undefined>;
 
     abstract projectManifestGenerate(params: { targetOrg: SalesforceOrg, outputDir: Uri, fileName: string }): Promise<{}>;
 

@@ -1,6 +1,6 @@
 import { ExecutorCommand, intoCliCommandString } from "../../executor";
 import { SalesforceOrg } from "../../salesforceOrg";
-import { get, getSfOrgListWithSkipConnectionNominalResponse } from "../data/orgListOutput";
+import { get, getNoSandboxesAndNoScratches, getSfOrgListWithSkipConnectionNominalResponse, getSfOrgListWithSkipConnectionNominalResponseSandbox } from "../data/orgListOutput";
 
 export function getSfOrgListCommandString(params?: {
 	skipConnectionStatus: boolean
@@ -27,11 +27,23 @@ export function genCommandToStdOutput(params?: {
 }): any {
 	const commandToStdOutput: any = {};
 	if (params) {
+		if (params.defaultOrg.getIsScratchOrg()) {
+			commandToStdOutput[getSfOrgListCommandString({
+				skipConnectionStatus: true
+			})] = getSfOrgListWithSkipConnectionNominalResponse({
+				targetOrg: params.defaultOrg
+			});
+		} else {
+			commandToStdOutput[getSfOrgListCommandString({
+				skipConnectionStatus: true
+			})] = getSfOrgListWithSkipConnectionNominalResponseSandbox({
+				targetOrg: params.defaultOrg
+			});
+		}
+	} else {
 		commandToStdOutput[getSfOrgListCommandString({
 			skipConnectionStatus: true
-		})] = getSfOrgListWithSkipConnectionNominalResponse({
-			targetOrg: params.defaultOrg
-		});
+		})] = getNoSandboxesAndNoScratches();
 	}
 	commandToStdOutput[getSfOrgListCommandString()] = get();
 	return commandToStdOutput;
@@ -41,8 +53,15 @@ export function genMockExecutor(commandToStdOutput: any) {
 	return async function (command: ExecutorCommand) {
 		const asString = intoCliCommandString(command);
 		const stdout = commandToStdOutput[asString];
+
+		if (!stdout) {
+			throw new Error(`Could not find output for command string: [${asString}]`);
+		}		
+
 		return {
 			stdout: JSON.parse(stdout)
 		};
 	};
 }
+
+// It would be cool if you could add commands right here?
