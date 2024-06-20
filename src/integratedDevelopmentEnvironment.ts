@@ -49,8 +49,6 @@ export abstract class IntegratedDevelopmentEnvironment {
     }
 
     public async getSalesforceMetadataUris(uris: Uri[]): Promise<Uri[]> {
-        // What exactly is this trying to do? 
-        // Given a list of uris, return the ones that are within an sfdx-project.json directory.
         if (!this.sfdxProject) {
             Logger.get().warn(`Tried to run 'isSalesforceMetadata' without sfdx-project loaded into IDE.`);
             return [];
@@ -66,7 +64,6 @@ export abstract class IntegratedDevelopmentEnvironment {
         }).join(",") + "}";
 
         const sfMetadataUris: Uri[] = [];
-        // I wonder if there is some way to cache this...
         const promises = this.sfdxProject.packageDirectories.map(packageDir => {
             return this.findFiles(`${packageDirPaths}/**/${fileGlobs}`, this.getCurrentDir()).then((uris: Uri[]) => {
                 sfMetadataUris.push(...uris);
