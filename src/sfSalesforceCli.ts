@@ -22,7 +22,6 @@ import { SoqlQuery } from "./soqlQuery";
 import { Uri } from "./uri";
 import { ProjectDeployCancelResult, ProjectDeployPreviewResult, ProjectDeployResult, intoProjectDeployCancelResult, intoProjectDeployPreviewResult, intoProjectDeployResult } from "./projectDeploy/projectDeployResult";
 
-
 export class SfSalesforceCli extends SalesforceCli {
 
     private cached: SalesforceOrg[];
@@ -77,7 +76,6 @@ export class SfSalesforceCli extends SalesforceCli {
         const orgs: SalesforceOrg[] = [...sandboxes, ...scratches];
         return orgs;
     }
-
 
     private parseOrgsFromSandboxes(orgListResult: SfOrgListResult): SalesforceOrg[] {
         const isSandboxConnected = (sandbox: SandboxOrgListResult) => {
@@ -756,3 +754,5 @@ export class SfSalesforceCli extends SalesforceCli {
         return apexTestGetResult;
     }
 }
+
+// Ugh this is going to screw up so many tests...

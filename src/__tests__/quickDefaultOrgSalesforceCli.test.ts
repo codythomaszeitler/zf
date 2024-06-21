@@ -5,7 +5,7 @@ import { MockIDE } from "./__mocks__/mockIntegratedDevelopmentEnvironment";
 import { genCommandToStdOutput, genMockExecutor } from './__mocks__/mockShell';
 import { QuickDefaultOrgSfSalesforceCli, SalesforceSfConfig, getDefaultSfConfigUri } from '../quickDefaultOrgSalesforceCli';
 import { ExecutorCommand, intoCliCommandString } from '../executor';
-import { getSfOrgListWithSkipConnectionNominalResponseSandbox } from './data/orgListOutput';
+import { getSfOrgListWithSkipConnectionNominalResponse } from './data/orgListOutput';
 
 describe('quick default sf org salesforce cli', () => {
 
@@ -23,7 +23,8 @@ describe('quick default sf org salesforce cli', () => {
 
 		org = new SalesforceOrg({
 			alias: 'cso',
-			isActive: true
+			isActive: true,
+			isScratchOrg : true
 		});
 
 		fs = new MockFileSystem();
@@ -104,9 +105,9 @@ describe('quick default sf org salesforce cli', () => {
 			alias: 'another',
 			isActive: true,
 			isDefaultOrg: true,
-			isScratchOrg: false
+			isScratchOrg: true
 		});
-		inputOutput['sf org list --skip-connection-status --json'] = getSfOrgListWithSkipConnectionNominalResponseSandbox({
+		inputOutput['sf org list --skip-connection-status --json'] = getSfOrgListWithSkipConnectionNominalResponse({
 			targetOrg
 		});
 
