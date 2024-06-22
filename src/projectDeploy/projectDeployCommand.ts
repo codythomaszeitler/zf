@@ -8,11 +8,9 @@ import { ProjectDeployFileFailure, ProjectDeployResult } from "./projectDeployRe
 import { SalesforceId } from "../salesforceId";
 import { Logger } from "../logger";
 import { JobId } from "../jobId";
-import { OnCancellationRequestedListener } from "../progressToken";
 
-export const SYNC_DEPLOYMENT_FILE_LIMIT_KEY = 'sf.zsi.deploymentLimit';
-
-// What deployment opens... should determine 
+export const NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY = 'sf.zsi.numFilesToTriggerDeploymentProgress';
+export const NEVER_SHOW_DEPLOYMENT_PROGRESS_KEY = 'sf.zsi.neverShowDeploymentProgress';
 
 export class ProjectDeployCommand extends Command {
 
@@ -35,7 +33,12 @@ export class ProjectDeployCommand extends Command {
 	}
 
 	private async getDeploymentStrategy(uris: Uri[] | undefined, targetOrg: SalesforceOrg): Promise<'ERROR' | 'ASYNC' | 'SYNC'> {
-		const syncDeploymentFileLimit = this.getIde().getConfig(SYNC_DEPLOYMENT_FILE_LIMIT_KEY, 10);
+		const neverShowDeploymentProgress = this.getIde().getConfig(NEVER_SHOW_DEPLOYMENT_PROGRESS_KEY, false);
+		if (neverShowDeploymentProgress) {
+			return 'SYNC';
+		}
+
+		const syncDeploymentFileLimit = this.getIde().getConfig(NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, 10);
 		if (targetOrg.getIsScratchOrg()) {
 			const projectDeployPreviewResult = await this.getCli().projectDeployPreview({ targetOrg });
 			if (!projectDeployPreviewResult) {
@@ -156,7 +159,6 @@ export class ProjectDeployCommand extends Command {
 		const filePathToDiagnostics = new Map<string, Diagnostic[]>();
 
 		projectDeployResult.result.files.forEach(failure => {
-			// You really should be able to parse the list of URIs from the list itself... right?
 			if (failure.state === 'Failed') {
 				if (isDependentClassInvalid(failure.error)) {
 					dependents.push(failure);

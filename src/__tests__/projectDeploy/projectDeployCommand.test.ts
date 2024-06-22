@@ -4,7 +4,7 @@ import { MockFileSystem } from "./../__mocks__/mockFileSystem";
 import { MockIDE, generateProgressToken } from "./../__mocks__/mockIntegratedDevelopmentEnvironment";
 import { SfSalesforceCli } from '../../sfSalesforceCli';
 import { genCommandToStdOutput, genMockExecutor } from './../__mocks__/mockShell';
-import { ProjectDeployCommand, SYNC_DEPLOYMENT_FILE_LIMIT_KEY } from '../../projectDeploy/projectDeployCommand';
+import { ProjectDeployCommand, NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, NEVER_SHOW_DEPLOYMENT_PROGRESS_KEY } from '../../projectDeploy/projectDeployCommand';
 import { genProjectDeployStartCommandString, genProjectDeployStartResult, genProjectDeployReportCommandString, genProjectDeployReportResult, genProjectDeployResumeCommandString, ProjectDeployFileReport } from './data/projectDeployStartOutput';
 import { SalesforceId } from '../../salesforceId';
 import { Uri } from '../../uri';
@@ -74,7 +74,7 @@ describe('quick project deploy against - no default org set', () => {
 	});
 });
 
-describe('quick project deploy against', () => {
+describe('quick project deploy against sandbox', () => {
 
 	let fs: MockFileSystem;
 	let cli: SfSalesforceCli;
@@ -256,7 +256,42 @@ describe('quick project deploy against', () => {
 			files, jobId
 		));
 
-		ide.setConfig(SYNC_DEPLOYMENT_FILE_LIMIT_KEY, 1);
+		ide.setConfig(NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, 1);
+
+		const testObject = new ProjectDeployCommand({
+			ide,
+			cli
+		});
+
+		await testObject.execute({ targetOrg: sandbox, uris });
+
+		const aClassUri = ide.generateUri(...aClassRelativePath);
+		const diagnostics = ide.getDiagnosticsFor(aClassUri);
+		expect(diagnostics).toHaveLength(2);
+
+		const bClassUri = ide.generateUri(...bClassRelativePath);
+		const bDiagnostics = ide.getDiagnosticsFor(bClassUri);
+		expect(bDiagnostics).toHaveLength(1);
+
+		const dClassUri = ide.generateUri('classes', 'DClass.cls');
+		const dDiagnostics = ide.getDiagnosticsFor(dClassUri);
+		expect(dDiagnostics).toHaveLength(1);
+	});
+
+	it('should do an synchronous deployment if the number of files deployed if over some configurable amount AND an always sync deploy flag is on', async () => {
+		const files: ProjectDeployFileReport[] = genFailureFiles(ide);
+		addToFileSystem(fs, files);
+		fs.create({ uri: ide.generateUri('classes', 'DClass.cls') });
+
+		const uris = [ide.generateUri(...aClassRelativePath), ide.generateUri(...bClassRelativePath), ide.generateUri(...cClassRelativePath)];
+
+		const projectDeployStartResult = genProjectDeployStartResult(files, false);
+		inputOutput[genProjectDeployStartCommandString({
+			targetOrg: sandbox, async: false, uris
+		})] = JSON.stringify(projectDeployStartResult);
+
+		ide.setConfig(NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, 1);
+		ide.setConfig(NEVER_SHOW_DEPLOYMENT_PROGRESS_KEY, true);
 
 		const testObject = new ProjectDeployCommand({
 			ide,
@@ -366,7 +401,7 @@ describe('quick project deploy against', () => {
 			}
 		};
 
-		ide.setConfig(SYNC_DEPLOYMENT_FILE_LIMIT_KEY, 1);
+		ide.setConfig(NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, 1);
 
 		const testObject = new ProjectDeployCommand({
 			ide,
@@ -556,7 +591,7 @@ describe('quick project deploy against - scratch org', () => {
 
 		const uris = files.map(file => (Uri.from({ scheme: 'file', fileSystemPath: file.filePath })));
 
-		ide.setConfig(SYNC_DEPLOYMENT_FILE_LIMIT_KEY, 1);
+		ide.setConfig(NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, 1);
 
 		inputOutput[`sf project deploy preview --target-org ${sandbox.getAlias()} --json`] = JSON.stringify(projectDeployResumeResult);
 
@@ -575,6 +610,54 @@ describe('quick project deploy against - scratch org', () => {
 		})] = JSON.stringify(genProjectDeployReportResult(
 			files, jobId
 		));
+
+		const testObject = new ProjectDeployCommand({
+			cli, ide
+		});
+
+		await testObject.execute({
+			targetOrg: sandbox, uris: uris.slice(0, 1)
+		});
+
+		const aClassUri = ide.generateUri(...aClassRelativePath);
+		const diagnostics = ide.getDiagnosticsFor(aClassUri);
+		expect(diagnostics).toHaveLength(2);
+
+		const bClassUri = ide.generateUri(...bClassRelativePath);
+		const bDiagnostics = ide.getDiagnosticsFor(bClassUri);
+		expect(bDiagnostics).toHaveLength(1);
+
+		const dClassUri = ide.generateUri('classes', 'DClass.cls');
+		const dDiagnostics = ide.getDiagnosticsFor(dClassUri);
+		expect(dDiagnostics).toHaveLength(1);
+	});
+
+	it('should be able to do a deployment against a scratch org using an synchronous deployment when file limit reached BUT always sync flag is set to true', async () => {
+
+		// So we are doing something wrong here.
+		const files = genFailureFiles(ide);
+		const projectDeployResumeResult: ProjectDeployPreviewResult = {
+			status: 0,
+			result: {
+				toDeploy: files.map(file => ({ path: file.filePath })),
+				toDelete: [],
+				toRetrieve: []
+			}
+		};
+
+		fs.create({ uri: ide.generateUri('classes', 'DClass.cls') });
+
+		const uris = files.map(file => (Uri.from({ scheme: 'file', fileSystemPath: file.filePath })));
+
+		ide.setConfig(NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, 1);
+		ide.setConfig(NEVER_SHOW_DEPLOYMENT_PROGRESS_KEY, true);
+
+		inputOutput[`sf project deploy preview --target-org ${sandbox.getAlias()} --json`] = JSON.stringify(projectDeployResumeResult);
+
+		const projectDeployStartResult = genProjectDeployStartResult(files, false);
+		inputOutput[genProjectDeployStartCommandString({
+			targetOrg: sandbox, async: false
+		})] = JSON.stringify(projectDeployStartResult);
 
 		const testObject = new ProjectDeployCommand({
 			cli, ide
