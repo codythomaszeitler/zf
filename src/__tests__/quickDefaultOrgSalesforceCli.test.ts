@@ -6,6 +6,8 @@ import { genCommandToStdOutput, genMockExecutor } from './__mocks__/mockShell';
 import { QuickDefaultOrgSfSalesforceCli, SalesforceSfConfig, getDefaultSfConfigUri } from '../quickDefaultOrgSalesforceCli';
 import { ExecutorCommand, intoCliCommandString } from '../executor';
 import { getSfOrgListWithSkipConnectionNominalResponse } from './data/orgListOutput';
+import { Logger } from '../logger';
+import { TestLogger } from './logger.test';
 
 describe('quick default sf org salesforce cli', () => {
 
@@ -20,6 +22,7 @@ describe('quick default sf org salesforce cli', () => {
 	let spy: Map<string, number>;
 
 	beforeEach(() => {
+		Logger.setGlobalLogger(new TestLogger());
 
 		org = new SalesforceOrg({
 			alias: 'cso',
