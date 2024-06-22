@@ -141,6 +141,17 @@
           "type": "boolean",
           "description": "Determines if a log should be retrieved on running apex tests.",
           "default": true
+        },
+        "sf.zsi.numFilesToTriggerDeploymentProgress": {
+          "type": "number",
+          "description": "Determines the number of files that are needed to be changed in order to track deployment progress.",
+          "default": 10,
+          "minimum": 0
+        },
+        "sf.zsi.neverShowDeploymentProgress": {
+          "type": "boolean",
+          "description": "If set to true, deployment progress will never be shown (this will ensure that your deployment will go as fast as possible, but you will not be able to see any progress on it). If this is set to true, the value within sf.zsi.numFilesToTriggerDeploymentProgress has no effect.",
+          "default": false
         }
       }
     }
