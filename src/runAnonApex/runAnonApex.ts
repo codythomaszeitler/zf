@@ -3,6 +3,7 @@ import { Command, CommandParams } from '../command';
 import { SalesforceOrg } from '../salesforceOrg';
 import { Logger } from '../logger';
 import { Uri } from '../integratedDevelopmentEnvironment';
+import { info } from 'console';
 
 const apexRunSuccessSchema = z.object({
 	status: z.literal(0),
@@ -67,37 +68,33 @@ export class RunHighlightedAnonApex extends Command {
 		});
 
 		if (result.status === 0) {
-			const selection = await this.getIde().showInformationMessage('Anonymous Apex Ran Successfully', [
-				{ label: 'Show' }
-			]);
-
-			if (selection === 'Show') {
-				const basename = Date.now() + '.txt';
-				const uri = Uri.join(this.anonApexOutputDir, basename);
-
-				await this.getIde().writeFile({
-					uri, contents: result.result.logs
-				});
-				await this.getIde().showTextDocument(uri);
-			}
+			await this.promptUserAndShowContents('Anonymous Apex Ran Successfully', result.result.logs);
 		} else if (result.status === 1) {
 			if (result.data.compiled) {
-				const selection = await this.getIde().showInformationMessage('Anonymous Apex Run Failed', [
-					{ label: 'Show' }
-				]);
-
-				if (selection === 'Show') {
-					const basename = Date.now() + '.txt';
-					const uri = Uri.join(this.anonApexOutputDir, basename);
-
-					await this.getIde().writeFile({
-						uri, contents: result.data.logs
-					});
-					await this.getIde().showTextDocument(uri);
-				}
+				await this.promptUserAndShowContents('Anonymous Apex Run Failed', result.data.logs);
 			} else {
 				this.getIde().showErrorMessage(result.message);
 			}
 		}
+	}
+
+	private async promptUserAndShowContents(informationMessage: string, fileContents: string) {
+		const selection = await this.getIde().showInformationMessage(informationMessage, [
+			{ label: 'Show' }
+		]);
+
+		if (selection === 'Show') {
+			await this.createAndShowFileWithContents(fileContents);
+		}
+	}
+
+	private async createAndShowFileWithContents(contents: string) {
+		const basename = Date.now() + '.txt';
+		const uri = Uri.join(this.anonApexOutputDir, basename);
+
+		await this.getIde().writeFile({
+			uri, contents
+		});
+		await this.getIde().showTextDocument(uri);
 	}
 }
