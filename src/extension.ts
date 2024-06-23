@@ -1,11 +1,9 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
-import { SfSalesforceCli } from "./sfSalesforceCli";
 import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand } from './genFauxSObjects';
-import { runHighlightedApex } from './apexRun';
 import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
@@ -22,6 +20,7 @@ import { genOnlyRunOnce } from './onlyOneCommandRun';
 import { genOnDidSaveTextDocuments } from './projectDeploy/queueableProjectDeployCommand';
 import { QuickDefaultOrgSfSalesforceCli } from './quickDefaultOrgSalesforceCli';
 import { ProjectDeployCommand } from './projectDeploy/projectDeployCommand';
+import { RunHighlightedAnonApex } from './runAnonApex/runAnonApex';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -106,13 +105,22 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function runHighlightedApexCommand() {
+		const runAnonApexCommand = new RunHighlightedAnonApex({
+			cli: salesforceCli, ide, anonApexOutputDir: ide.generateUri('zf', 'anonApex')
+		});
+
 		const defaultOrg = await salesforceCli.getDefaultOrg();
 		if (defaultOrg) {
-			await runHighlightedApex({
-				ide,
-				salesforceCli,
-				targetOrg: defaultOrg
-			});
+			try {
+				await runAnonApexCommand.execute({
+					targetOrg: defaultOrg
+				});
+			} catch (e) {
+				if (e instanceof Error) {
+					Logger.get().error(e);
+					ide.showErrorMessage(e.message);
+				}
+			}
 		}
 	}
 

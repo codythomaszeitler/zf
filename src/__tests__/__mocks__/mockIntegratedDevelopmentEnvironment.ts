@@ -138,8 +138,12 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return this.shownWarningMessages.includes(message);
     }
 
-    async showInformationMessage(message: string): Promise<void> {
+    public showInformationMessageSelection: string | undefined;
+    async showInformationMessage(message: string, options?: [{
+        label: string
+    }]): Promise<string> {
         this.shownInformationMessages.push(message);
+        return this.showInformationMessageSelection;
     }
 
     didShowInformationMessage(message: string): boolean {
@@ -220,8 +224,13 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         throw new Error("Method not implemented.");
     }
 
-    getHighlightedText(): Promise<string> {
-        throw new Error("Method not implemented.");
+    private highlightedText: string = '';
+    setHighlightedText(highlightedText: string) {
+        this.highlightedText = highlightedText;
+    }
+
+    async getHighlightedText(): Promise<string> {
+        return this.highlightedText;
     }
 
     readLineAt(params: { uri: Uri; line: number; }): Promise<TextLine> {
@@ -242,6 +251,10 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     toHaveShownTextDocument(uri: Uri): boolean {
         return !!this.shownTextDocuments.find((_uri) => _uri.getFileSystemPath() === uri.getFileSystemPath());
+    }
+
+    getShownTextDocuments() {
+        return [...this.shownTextDocuments];
     }
 
     public async writeFile(params: { uri: Uri; contents: string; }): Promise<void> {

@@ -131,10 +131,20 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
     }
 
-    showInformationMessage(message: string): Promise<void> {
+    showInformationMessage(message: string, options?: [{
+        label: string
+    }]): Promise<string> {
+        const choices = () => {
+            if (options) {
+                return options?.map(option => option.label);
+            } else {
+                return [];
+            }
+        };
+
         return new Promise(resolve => {
-            vscode.window.showInformationMessage(message).then(() => {
-                resolve();
+            vscode.window.showInformationMessage(message, ...choices()).then((result) => {
+                resolve(result);
             });
         });
     }
