@@ -5,7 +5,6 @@ import { SalesforceOrg } from "../../salesforceOrg";
 import { SObjectListResult } from "../../sObjectListResult";
 import { SObjectApiName } from "../../sObjectApiName";
 import { SObjectDescribeResult } from "../../sObjectDescribeResult";
-import { ApexRunResult } from "../../apexRunResult";
 import { UpsertableSObject } from "../../upsertableSObject";
 import { DataCreateRecordResult } from "../../dataCreateRecordResult";
 import { OrgListUsersResult } from "../../orgListUsersResult";
@@ -24,6 +23,7 @@ import { getLogFileUri } from "../../showApexLogCommand";
 import { ApexTestRunResult, ApexTestGetResult } from "../../apexTestRunResult";
 import { Uri } from "../../uri";
 import { ProjectDeployCancelResult, ProjectDeployResult } from "../../projectDeploy/projectDeployResult";
+import { ApexRunResult } from "../../runAnonApex/runAnonApex";
 
 export class MockSalesforceCli extends SalesforceCli {
     projectDeployPreview(params: { targetOrg: SalesforceOrg; }): Promise<{ result: { toDeploy: { path: string; }[]; toRetrieve: {}[]; toDelete: {}[]; }; status: number; } | undefined> {

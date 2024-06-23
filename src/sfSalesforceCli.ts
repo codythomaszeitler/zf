@@ -1,7 +1,6 @@
 import { ApexGetLogResult } from "./apexGetLogResult";
 import { ApexListLogResult } from "./apexListLogResult";
 import { ApexLog } from "./apexLog";
-import { ApexRunResult } from "./apexRunResult";
 import { ApexTestGetResult, ApexTestResult, ApexTestRunResult, parseStackTrace } from "./apexTestRunResult";
 import { UpsertableSObject } from "./upsertableSObject";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
@@ -21,6 +20,7 @@ import { SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./s
 import { SoqlQuery } from "./soqlQuery";
 import { Uri } from "./uri";
 import { ProjectDeployCancelResult, ProjectDeployPreviewResult, ProjectDeployResult, intoProjectDeployCancelResult, intoProjectDeployPreviewResult, intoProjectDeployResult } from "./projectDeploy/projectDeployResult";
+import { ApexRunResult, intoApexRunResult } from "./runAnonApex/runAnonApex";
 
 export class SfSalesforceCli extends SalesforceCli {
 
@@ -386,30 +386,22 @@ export class SfSalesforceCli extends SalesforceCli {
         return result;
     }
 
-    async apexRun(params: { targetOrg: SalesforceOrg; apexCode: string; }): Promise<ApexRunResult> {
+    async apexRun({ targetOrg, apexCode }: { targetOrg: SalesforceOrg; apexCode: string; }): Promise<ApexRunResult> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
                 'apex',
                 'run',
                 '--target-org',
-                params.targetOrg.getAlias(),
+                targetOrg.getAlias(),
                 '--json'
             ],
-            standardInput: params.apexCode,
+            standardInput: apexCode,
             prompt: 'Start typing Apex code. Press the Enter key after each line, then press CTRL+D when finished.\n'
         };
 
-        const { stdout } = await this.exec(command);
-        if (stdout.status) {
-            throw new Error(stdout.message);
-        }
-
-        return new ApexRunResult({
-            compiled: stdout.result.compiled,
-            success: stdout.result.success,
-            logs: stdout.result.logs
-        });
+        const stdout: unknown = (await this.exec(command)).stdout;
+        return intoApexRunResult(stdout);
     }
 
     async dataUpsertRecord(params: { targetOrg: SalesforceOrg; sObject: UpsertableSObject; }): Promise<DataCreateRecordResult> {

@@ -4,7 +4,6 @@ import { Executor, ExecutorCommand, ExecutorResult, intoCliCommandString } from 
 import { SObjectListResult } from "./sObjectListResult";
 import { SObjectDescribeResult } from "./sObjectDescribeResult";
 import { SObjectApiName } from "./sObjectApiName";
-import { ApexRunResult } from "./apexRunResult";
 import { DataCreateRecordResult as DataUpsertRecordResult } from "./dataCreateRecordResult";
 import { UpsertableSObject } from "./upsertableSObject";
 import { OrgListUsersResult } from "./orgListUsersResult";
@@ -16,6 +15,7 @@ import { SalesforceId } from "./salesforceId";
 import { ApexTestGetResult, ApexTestRunResult } from "./apexTestRunResult";
 import { Uri } from "./uri";
 import { ProjectDeployCancelResult, ProjectDeployPreviewResult, ProjectDeployResult } from "./projectDeploy/projectDeployResult";
+import { ApexRunResult } from "./runAnonApex/runAnonApex";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;

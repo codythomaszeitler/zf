@@ -1,5 +1,6 @@
 import { Position } from "./position";
 import { NULL_SF_ID, SalesforceId } from "./salesforceId";
+export { parseStackTrace } from "./stackTrace";
 
 export class ApexTestRunResult {
 
@@ -150,20 +151,4 @@ export class ApexTestResult {
 	public getStackTrace() {
 		return this.stackTrace;
 	}
-}
-
-export function parseStackTrace(stackTrace: string): { className: string; methodName: string, position: Position } {
-	const classNameRegex = /^(\(System Code\)\n|External entry point\n)?Class\.(.*)\.(.*): line (\d+), column (\d+)\n?.*/;
-
-	const matches = stackTrace.match(classNameRegex);
-	if (!matches) {
-		throw new Error(`Could not parse stack trace apex test location string [${stackTrace}]`);
-	}
-	const line = Number.parseInt(matches[4]);
-	const column = Number.parseInt(matches[5]);
-	return {
-		className: matches[2],
-		methodName: matches[3],
-		position: new Position(line - 1, column - 1)
-	};
 }
