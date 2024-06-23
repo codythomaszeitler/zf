@@ -64,7 +64,8 @@ export class RunHighlightedAnonApex extends Command {
 				apexCode
 			});
 		}, {
-			title: 'Running Anonymous Apex'
+			title: 'Running Anonymous Apex',
+			isCancellable : false
 		});
 
 		if (result.status === 0) {
