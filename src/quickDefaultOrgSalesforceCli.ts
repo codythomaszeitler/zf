@@ -62,6 +62,9 @@ export class QuickDefaultOrgSfSalesforceCli extends SfSalesforceCli {
 					found = alias;
 				}
 			});
+			if (!found) {
+				return targetOrg.getAlias();
+			}
 			return found;
 		} else {
 			return undefined;
