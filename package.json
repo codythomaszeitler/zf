@@ -50,10 +50,6 @@
         "title": "ZF: Refresh Apex Logs"
       },
       {
-        "command": "sf.zsi.runTestUnderCursor",
-        "title": "ZF: Run Test Under Cursor"
-      },
-      {
         "command": "sf.zsi.generateOfflineSymbolTable",
         "title": "ZF: Generate Apex Offline Symbol Table"
       },
