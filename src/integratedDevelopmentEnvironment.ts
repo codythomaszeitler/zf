@@ -79,12 +79,9 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract showTextDocument(uri: Uri): Promise<void>;
     abstract deleteTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
-    abstract showInformationMessage(message: string, options?: [{
-        label: string,
-        options?: [{
-            label: string
-        }]
-    }]): Promise<string>;
+    abstract showInformationMessage(message: string, options?: {
+        label: string
+    }[]): Promise<string>;
     abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string, isCancellable?: boolean }): Promise<T>;
     abstract getActiveTextEditor(): Promise<ActiveTextEditor | null>;
     abstract findFile(glob: string, base?: Uri): Promise<Uri | null>;

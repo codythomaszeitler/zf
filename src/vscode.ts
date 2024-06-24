@@ -131,9 +131,9 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
     }
 
-    showInformationMessage(message: string, options?: [{
+    showInformationMessage(message: string, options?: {
         label: string
-    }]): Promise<string> {
+    }[]): Promise<string> {
         const choices = () => {
             if (options) {
                 return options?.map(option => option.label);

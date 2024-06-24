@@ -10,7 +10,7 @@ export class ApexLog {
 	private readonly status: string;
 	private readonly startTime: Date;
 
-	public constructor(params: {
+	public constructor (params: {
 		id: SalesforceId;
 		application: string;
 		duration: number;
@@ -59,4 +59,8 @@ export class ApexLog {
 	public getTreeViewString(): string {
 		return `[${this.id.toString()}] - [${this.startTime.toLocaleTimeString()}] - MB: [${this.logLength}] - MiS: [${this.duration}] - Status: [${this.status}]`;
 	}
+}
+
+export function filterUserDebugs(log: string) {
+	return log.split('\n').filter(line => line.includes('USER_DEBUG')).join('\n');
 }

@@ -139,9 +139,17 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     }
 
     public showInformationMessageSelection: string | undefined;
-    async showInformationMessage(message: string, options?: [{
+    async showInformationMessage(message: string, options?: {
         label: string
-    }]): Promise<string> {
+    }[]): Promise<string> {
+        if (options && this.showInformationMessageSelection) {
+            const labels = options.map(opt => opt.label);
+            const matching = labels.find(label => label === this.showInformationMessageSelection);
+            if (!matching) {
+                throw new Error(`Tried to make a selection that was not present on the information message [${this.showInformationMessageSelection}] - [${labels}].`);
+            }
+        }
+
         this.shownInformationMessages.push(message);
         return this.showInformationMessageSelection;
     }
