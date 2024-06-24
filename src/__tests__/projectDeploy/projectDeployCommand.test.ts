@@ -4,7 +4,7 @@ import { MockFileSystem } from "./../__mocks__/mockFileSystem";
 import { MockIDE, generateProgressToken } from "./../__mocks__/mockIntegratedDevelopmentEnvironment";
 import { SfSalesforceCli } from '../../sfSalesforceCli';
 import { genCommandToStdOutput, genMockExecutor } from './../__mocks__/mockShell';
-import { ProjectDeployCommand, NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, NEVER_SHOW_DEPLOYMENT_PROGRESS_KEY } from '../../projectDeploy/projectDeployCommand';
+import { ProjectDeployCommand, NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY, NEVER_SHOW_DEPLOYMENT_PROGRESS_KEY, SHOULD_FOCUS_PROBLEMS_WHEN_DEPLOYED_FAILS_KEY } from '../../projectDeploy/projectDeployCommand';
 import { genProjectDeployStartCommandString, genProjectDeployStartResult, genProjectDeployReportCommandString, genProjectDeployReportResult, genProjectDeployResumeCommandString, ProjectDeployFileReport } from './data/projectDeployStartOutput';
 import { SalesforceId } from '../../salesforceId';
 import { Uri } from '../../uri';
@@ -198,6 +198,76 @@ describe('quick project deploy against sandbox', () => {
 
 		const dSuccessDiagnostics = ide.getDiagnosticsFor(dClassUri);
 		expect(dSuccessDiagnostics).toHaveLength(0);
+
+		expect(ide.didFocusProblemsTab()).toBe(true);
+	});
+
+	it('should put an apex class failures onto diagnostics (but should not focus if config\'d not to)', async () => {
+
+		ide.setConfig(SHOULD_FOCUS_PROBLEMS_WHEN_DEPLOYED_FAILS_KEY, false);
+
+		const files: ProjectDeployFileReport[] = genFailureFiles(ide);
+		addToFileSystem(fs, files);
+
+		fs.create({ uri: ide.generateUri('classes', 'DClass.cls') });
+
+		const uris = [ide.generateUri(...aClassRelativePath), ide.generateUri(...bClassRelativePath), ide.generateUri(...cClassRelativePath)];
+
+		inputOutput[genProjectDeployStartCommandString({
+			targetOrg: sandbox, async: false, uris
+		})] = JSON.stringify(genProjectDeployStartResult(files));
+
+		const testObject = new ProjectDeployCommand({
+			ide,
+			cli
+		});
+
+		await testObject.execute({ targetOrg: sandbox, uris });
+
+		const aClassUri = ide.generateUri(...aClassRelativePath);
+		const aDiagnostics = ide.getDiagnosticsFor(aClassUri);
+		expect(aDiagnostics).toHaveLength(2);
+
+		const bClassUri = ide.generateUri(...bClassRelativePath);
+		const bDiagnostics = ide.getDiagnosticsFor(bClassUri);
+		expect(bDiagnostics).toHaveLength(1);
+
+		const dClassUri = ide.generateUri('classes', 'DClass.cls');
+		const dDiagnostics = ide.getDiagnosticsFor(dClassUri);
+		expect(dDiagnostics).toHaveLength(1);
+		expect(ide.didFocusProblemsTab()).toBeFalsy();
+		expect(ide.didShowErrorMessage('Deployment failed.')).toBe(true);
+
+		const nowSuccesses = files.map(file => {
+			return {
+				state: 'Changed',
+				filePath: file.filePath,
+				type: file.type
+			} as ProjectDeployFile;
+		});
+
+		inputOutput[genProjectDeployStartCommandString({
+			targetOrg: sandbox, async: false, uris
+		})] = JSON.stringify(genProjectDeployStartResult(nowSuccesses));
+
+		const anotherTestObject = new ProjectDeployCommand({
+			ide, cli
+		});
+
+		await anotherTestObject.execute({
+			targetOrg: sandbox, uris
+		});
+
+		const aSuccessDiagnostics = ide.getDiagnosticsFor(aClassUri);
+		expect(aSuccessDiagnostics).toHaveLength(0);
+
+		const bSuccessDiagnostics = ide.getDiagnosticsFor(bClassUri);
+		expect(bSuccessDiagnostics).toHaveLength(0);
+
+		const dSuccessDiagnostics = ide.getDiagnosticsFor(dClassUri);
+		expect(dSuccessDiagnostics).toHaveLength(0);
+
+		expect(ide.didFocusProblemsTab()).toBe(false);
 	});
 
 	it('should use the default org if none is provided', async () => {
