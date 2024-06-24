@@ -215,26 +215,6 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
-	async function runTestUnderCursor() {
-		try {
-			const defaultOrg = await salesforceCli.getDefaultOrg();
-			if (defaultOrg) {
-				const runTestUnderCursorCommand = new RunTestUnderCursorCommand({
-					ide: ide,
-					cli: salesforceCli
-				});
-
-				await runTestUnderCursorCommand.execute({
-					targetOrg: defaultOrg
-				});
-			} else {
-				ide.showWarningMessage('No default org set. Cannot refresh apex logs.');
-			}
-		} catch (e: any) {
-			ide.showErrorMessage(e.message);
-		}
-	}
-
 	const zfOfflineSymbolTableDir = getZfOfflineSymbolTableDir(ide);
 	async function runGeneratorOfflineSymbolTable() {
 		ide.withProgress(async (progressToken) => {
@@ -413,7 +393,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.refreshApexLogs', runRefreshApexLogs));
-	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runTestUnderCursor', runTestUnderCursor));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateOfflineSymbolTable', runGeneratorOfflineSymbolTable));
 }
 
