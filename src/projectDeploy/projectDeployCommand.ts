@@ -11,10 +11,11 @@ import { JobId } from "../jobId";
 
 export const NUM_FILES_TO_TRIGGER_DEPLOYMENT_PROGRESS_KEY = 'sf.zsi.numFilesToTriggerDeploymentProgress';
 export const NEVER_SHOW_DEPLOYMENT_PROGRESS_KEY = 'sf.zsi.neverShowDeploymentProgress';
+export const SHOULD_FOCUS_PROBLEMS_WHEN_DEPLOYED_FAILS_KEY = 'sf.zsi.vscode.shouldFocusProblemsWhenDeployFails';
 
 export class ProjectDeployCommand extends Command {
 
-	public async execute({targetOrg, uris}: { targetOrg?: SalesforceOrg; uris?: Uri[] }) {
+	public async execute({ targetOrg, uris }: { targetOrg?: SalesforceOrg; uris?: Uri[] }) {
 		this.getIde().clearDiagnostics();
 
 		const defaultOrTargetOrg = await this.getTargetOrDefaultOrg(targetOrg);
@@ -202,7 +203,10 @@ export class ProjectDeployCommand extends Command {
 		});
 
 		if (filePathToDiagnostics.size !== 0) {
-			await this.getIde().focusProblemsTab();
+			const shouldFocusProblemsTab = this.getIde().getConfig(SHOULD_FOCUS_PROBLEMS_WHEN_DEPLOYED_FAILS_KEY, true);
+			if (shouldFocusProblemsTab) {
+				await this.getIde().focusProblemsTab();
+			}
 			this.getIde().showErrorMessage('Deployment failed.');
 		}
 		else {
