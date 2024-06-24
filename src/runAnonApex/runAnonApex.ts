@@ -4,6 +4,7 @@ import { SalesforceOrg } from '../salesforceOrg';
 import { Logger } from '../logger';
 import { Uri } from '../integratedDevelopmentEnvironment';
 import { info } from 'console';
+import { filterUserDebugs } from '../apexLog';
 
 const apexRunSuccessSchema = z.object({
 	status: z.literal(0),
@@ -65,7 +66,7 @@ export class RunHighlightedAnonApex extends Command {
 			});
 		}, {
 			title: 'Running Anonymous Apex',
-			isCancellable : false
+			isCancellable: false
 		});
 
 		if (result.status === 0) {
@@ -81,11 +82,15 @@ export class RunHighlightedAnonApex extends Command {
 
 	private async promptUserAndShowContents(informationMessage: string, fileContents: string) {
 		const selection = await this.getIde().showInformationMessage(informationMessage, [
-			{ label: 'Show' }
+			{ label: 'Show' }, { label: 'Debugs' }
 		]);
 
 		if (selection === 'Show') {
 			await this.createAndShowFileWithContents(fileContents);
+		}
+
+		if (selection === 'Debugs') {
+			await this.createAndShowFileWithContents(filterUserDebugs(fileContents));
 		}
 	}
 
