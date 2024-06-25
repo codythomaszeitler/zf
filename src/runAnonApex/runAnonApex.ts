@@ -95,12 +95,6 @@ export class RunHighlightedAnonApex extends Command {
 	}
 
 	private async createAndShowFileWithContents(contents: string) {
-		const basename = Date.now() + '.txt';
-		const uri = Uri.join(this.anonApexOutputDir, basename);
-
-		await this.getIde().writeFile({
-			uri, contents
-		});
-		await this.getIde().showTextDocument(uri);
+		await this.getIde().showTempFileWith(this.anonApexOutputDir, contents);
 	}
 }

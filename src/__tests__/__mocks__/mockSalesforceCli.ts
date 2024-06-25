@@ -122,7 +122,7 @@ export class MockSalesforceCli extends SalesforceCli {
     }
 
     async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[] }): Promise<ProjectDeployResult | undefined> {
-        return undefined; 
+        return undefined;
     }
 
     private stopInfiniteLoopCounter: number;
@@ -130,7 +130,7 @@ export class MockSalesforceCli extends SalesforceCli {
         return undefined;
     }
 
-    async projectDeployCancel(params: { jobId: JobId; targetOrg : SalesforceOrg}): Promise<ProjectDeployCancelResult | undefined> {
+    async projectDeployCancel(params: { jobId: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployCancelResult | undefined> {
         return undefined;
     }
 
@@ -171,7 +171,7 @@ export class MockSalesforceCli extends SalesforceCli {
     }
 
     async projectDeployResume(params: { jobId: JobId; }): Promise<ProjectDeployResult | undefined> {
-        return undefined; 
+        return undefined;
     }
 
     didResumeProjectDeployment() {
@@ -311,7 +311,10 @@ export class MockSalesforceCli extends SalesforceCli {
             });
         }
 
-        return new ApexGetLogResult();
+        return {
+            status: 0,
+            result: []
+        };
     }
 
     async apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {

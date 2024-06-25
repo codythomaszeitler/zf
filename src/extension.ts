@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { openOrg } from './openOrg';
-import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView } from "./vscode";
+import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, ApexLogTreeNode } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand } from './genFauxSObjects';
@@ -21,6 +21,7 @@ import { genOnDidSaveTextDocuments } from './projectDeploy/queueableProjectDeplo
 import { QuickDefaultOrgSfSalesforceCli } from './quickDefaultOrgSalesforceCli';
 import { ProjectDeployCommand } from './projectDeploy/projectDeployCommand';
 import { RunHighlightedAnonApex } from './runAnonApex/runAnonApex';
+import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -394,6 +395,22 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.refreshApexLogs', runRefreshApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateOfflineSymbolTable', runGeneratorOfflineSymbolTable));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.showLogDebugsOnly', (logNode: ApexLogTreeNode) => {
+		const apexLog = logNode.treeNode.value;
+
+		const showApexLogDebugsOnlyCommand = new ShowApexLogDebugsOnlyCommand({
+			cli: salesforceCli,
+			ide
+		});
+
+		salesforceCli.getDefaultOrg().then(async defaultOrg => {
+			await showApexLogDebugsOnlyCommand.execute({
+				logDir: getZfLogDir(ide),
+				logId: apexLog.getId(),
+				targetOrg: defaultOrg
+			});
+		});
+	}));
 }
 
 // this method is called when your extension is deactivated

@@ -14,7 +14,6 @@ import { TextDecoder, TextEncoder } from "util";
 import { OnSalesforceCliRunEvent, SalesforceCliHistory, SalesforceCliInputOutput } from "./salesforceCli";
 import { TestItem as ZfTestItem } from './runTestUnderCursorCommand';
 import { MetadataTreeNode } from "./metadataExplorerTreeView";
-import * as fs from 'fs/promises';
 
 function getCurrentDir(): Uri {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -487,15 +486,25 @@ class DiagnosticSeverityMapper {
     }
 }
 
-class ApexLogTreeNode extends vscode.TreeItem {
+export class ApexLogTreeNode extends vscode.TreeItem {
 
     public readonly treeNode: TreeNode<ApexLog>;
 
     public constructor (params: {
-        treeNode: TreeNode<ApexLog>
+        treeNode: TreeNode<ApexLog>,
+        isRootNode?: boolean
     }) {
         super(params.treeNode.label, params.treeNode.value ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded);
         this.treeNode = params.treeNode;
+
+        const contextValue = () => {
+            if (params.isRootNode) {
+                return 'LOG_ORG';
+            } else {
+                return 'LOG_ENTRY';
+            }
+        };
+        this.contextValue = contextValue();
     }
 
     iconPath = {
@@ -527,7 +536,8 @@ class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, R
     getChildren(element?: ApexLogTreeNode | undefined): vscode.ProviderResult<ApexLogTreeNode[]> {
         if (element) {
             return element.treeNode.children.map(treeNode => new ApexLogTreeNode({
-                treeNode
+                treeNode,
+                isRootNode: false
             }));
         } else {
             if (!this.root) {
@@ -535,7 +545,8 @@ class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, R
             }
             return [
                 new ApexLogTreeNode({
-                    treeNode: this.root
+                    treeNode: this.root,
+                    isRootNode: true
                 })
             ];
         }

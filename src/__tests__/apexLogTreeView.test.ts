@@ -31,8 +31,8 @@ describe('apex log tree view', () => {
 
 		logDir = Uri.from(
 			{
-				fileSystemPath : 'testLogDir',
-				scheme : 'file'
+				fileSystemPath: 'testLogDir',
+				scheme: 'file'
 			}
 		);
 

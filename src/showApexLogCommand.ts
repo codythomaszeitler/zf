@@ -1,3 +1,4 @@
+import { filterUserDebugs } from "./apexLog";
 import { Command } from "./command";
 import { IntegratedDevelopmentEnvironment, Uri } from "./integratedDevelopmentEnvironment";
 import { SalesforceCli } from "./salesforceCli";
@@ -13,49 +14,99 @@ export function getLogFileUri(params: {
 }
 
 export class ShowApexLogCommand extends Command {
-	public constructor(params: {
+	public constructor (params: {
 		cli: SalesforceCli,
 		ide: IntegratedDevelopmentEnvironment
 	}) {
 		super(params);
 	}
 
-	public async execute(params: {
+	public async execute({ targetOrg, logId, logDir }: {
+		targetOrg: SalesforceOrg,
+		logId: SalesforceId,
+		logDir: Uri
+	}) {
+		await this.getIde().withProgress(async (progressToken) => {
+			const getApexLogCommand = new GetApexLogCommand({
+				ide: this.getIde(), cli: this.getCli(), progressToken
+			});
+
+			await getApexLogCommand.execute({
+				logDir, logId, targetOrg
+			});
+
+			const logFileUri = getLogFileUri({
+				logDir, logId, targetOrg
+			});
+			await this.getIde().showTextDocument(logFileUri);
+		}, {
+			title: 'Opening Log File'
+		});
+	}
+}
+
+export class ShowApexLogDebugsOnlyCommand extends Command {
+
+	public async execute({ targetOrg, logDir, logId }: {
 		targetOrg: SalesforceOrg,
 		logId: SalesforceId,
 		logDir: Uri
 	}) {
 		const logFileUri = getLogFileUri({
-			targetOrg: params.targetOrg,
-			logDir: params.logDir,
-			logId: params.logId
+			targetOrg: targetOrg,
+			logDir: logDir,
+			logId: logId
 		});
 
 		await this.getIde().withProgress(async (progressToken) => {
-			progressToken.report({
-				progress: 25,
-				title: 'Checking if file exists'
+			const getApexLogCommand = new GetApexLogCommand({
+				cli: this.getCli(), ide: this.getIde(), progressToken
 			});
-			const hasFile = await this.getIde().hasFile(logFileUri);
-			if (!hasFile) {
-				progressToken.report({
-					progress: 50,
-					title: `Getting log file ${params.logId.toString()}`
-				});
-				await this.getCli().apexGetLog({
-					targetOrg: params.targetOrg,
-					logDir: params.logDir,
-					logId: params.logId
-				});
-			}
+			await getApexLogCommand.execute({
+				logDir, logId, targetOrg
+			});
 
-			progressToken.report({
-				progress: 75,
-				title: `Opening log file ${params.logId.toString()}`
-			});
-			await this.getIde().showTextDocument(logFileUri);
+			const contents = await this.getIde().readFile({ uri: logFileUri });
+
+			const tempDebugOnlyDir = Uri.join(logDir, 'tempDebugsOnlyDir');
+			const debugsOnly = filterUserDebugs(contents);
+
+			await this.getIde().showTempFileWith(tempDebugOnlyDir, debugsOnly);
 		}, {
-			title: 'Opening Log File'
+			title: 'Opening Log File (Debugs Only)'
+		});
+	}
+}
+
+class GetApexLogCommand extends Command {
+	public async execute({ targetOrg, logDir, logId }: { targetOrg: SalesforceOrg, logId: SalesforceId, logDir: Uri }) {
+		const progressToken = this.getProgressToken();
+
+		const logFileUri = getLogFileUri({
+			targetOrg: targetOrg,
+			logDir: logDir,
+			logId: logId
+		});
+		progressToken?.report({
+			progress: 25,
+			title: 'Checking if file exists'
+		});
+		const hasFile = await this.getIde().hasFile(logFileUri);
+		if (!hasFile) {
+			progressToken?.report({
+				progress: 50,
+				title: `Getting log file ${logId.toString()}`
+			});
+			await this.getCli().apexGetLog({
+				targetOrg: targetOrg,
+				logDir: logDir,
+				logId: logId
+			});
+		}
+
+		progressToken?.report({
+			progress: 75,
+			title: `Opening log file ${logId.toString()}`
 		});
 	}
 }

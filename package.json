@@ -66,6 +66,10 @@
       {
         "command": "sf.zsi.refreshMetadataExplorer",
         "title": "ZF: Refresh Metadata Explorer"
+      },
+      {
+        "command": "sf.zsi.showLogDebugsOnly",
+        "title": "ZF: Show Debugs"
       }
     ],
     "views": {
@@ -112,6 +116,16 @@
         {
           "command": "sf.zsi.metadataRetrieveIntoDirectory",
           "when": "view == zeitlerforce-metadata-explorer && viewItem == METADATA_NAME_NODE",
+          "group": "inline"
+        },
+        {
+          "command": "sf.zsi.metadataRetrieveIntoDirectory",
+          "when": "view == zeitlerforce-metadata-explorer && viewItem == METADATA_NAME_NODE",
+          "group": "inline"
+        },
+        {
+          "command": "sf.zsi.showLogDebugsOnly",
+          "when": "view == server-side-apex-logs && viewItem == LOG_ENTRY",
           "group": "inline"
         }
       ]

@@ -122,6 +122,16 @@ export abstract class IntegratedDevelopmentEnvironment {
         const file = await this.findFile(basename, Uri.dirname(uri));
         return !!file;
     }
+
+    public async showTempFileWith(outputDir: Uri, contents: string) {
+        const basename = Date.now() + '.txt';
+        const uri = Uri.join(outputDir, basename);
+
+        await this.writeFile({
+            uri, contents
+        });
+        await this.showTextDocument(uri);
+    }
 }
 
 export interface OnSaveTextDocumentsEvent {
