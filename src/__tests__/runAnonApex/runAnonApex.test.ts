@@ -173,7 +173,7 @@ function genApexRunFailedCompileResult({ message }: { message: string }) {
 	} as ApexRunFailedResult;
 }
 
-function genLogWithUserDebug(contents : string) {
+export function genLogWithUserDebug(contents : string) {
 	return `61.0 APEX_CODE,DEBUG;APEX_PROFILING,INFO
 Execute Anonymous: System.debug('${contents}');
 17:56:40.34 (34029611)|USER_INFO|[EXTERNAL]|0055e000002p0JR|codyzeitler12@cunning-raccoon-bz3els.com|(GMT-07:00) Pacific Daylight Time (America/Los_Angeles)|GMT-07:00

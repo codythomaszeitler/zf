@@ -1,4 +1,4 @@
-import { ApexGetLogResult } from "./apexGetLogResult";
+import { ApexGetLogResult, intoApexGetLogResult } from "./apexGetLogResult";
 import { ApexListLogResult } from "./apexListLogResult";
 import { ApexLog } from "./apexLog";
 import { ApexTestGetResult, ApexTestResult, ApexTestRunResult, parseStackTrace } from "./apexTestRunResult";
@@ -605,12 +605,8 @@ export class SfSalesforceCli extends SalesforceCli {
             throw new Error('Must provide either logId or numLogs.');
         }
 
-        const { stdout } = await this.exec(command);
-        if (stdout.status) {
-            throw new Error(stdout.message);
-        }
-
-        return new ApexGetLogResult();
+        const stdout: unknown = (await this.exec(command)).stdout;
+        return intoApexGetLogResult(stdout);
     }
 
     async apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
