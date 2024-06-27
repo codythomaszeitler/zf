@@ -506,6 +506,13 @@ export function addToFileSystem(fs: MockFileSystem, files: ProjectDeployFileRepo
 			fileSystemPath: file.filePath
 		});
 		fs.create({ uri });
+
+		if (uri.getFileSystemPath().endsWith('.cls')) {
+			const metaXml = Uri.from({
+				scheme: 'file', fileSystemPath: uri.getFileSystemPath() + '-meta.xml'
+			});
+			fs.create({ uri: metaXml });
+		}
 	});
 }
 
