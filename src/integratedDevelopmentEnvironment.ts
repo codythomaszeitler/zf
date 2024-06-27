@@ -54,24 +54,34 @@ export abstract class IntegratedDevelopmentEnvironment {
             return [];
         }
 
-        const fileGlobs = "{" + uris.map(uri => uri.getBaseName()).join(",") + "}";
-        const packageDirPaths = "{" + this.sfdxProject.packageDirectories.map(packageDir => {
-            if (packageDir.path.startsWith('./') || packageDir.path.startsWith('.\\')) {
-                return packageDir.path.slice(2);
-            } else {
-                return packageDir.path;
-            }
-        }).join(",") + "}";
+        const nonRelativePackageDirs = this.sfdxProject.packageDirectories.map(packageDir =>
+            this.generateUri(packageDir.path)
+        );
+        const isWithinPackageDir = (uri: Uri) => nonRelativePackageDirs.some(nonRelativePackageDir => uri.getFileSystemPath().startsWith(nonRelativePackageDir.getFileSystemPath()));;
+        const possibleMetadataUris: Uri[] = uris.filter(uri => isWithinPackageDir(uri));
 
-        const sfMetadataUris: Uri[] = [];
-        const promises = this.sfdxProject.packageDirectories.map(packageDir => {
-            return this.findFiles(`${packageDirPaths}/**/${fileGlobs}`, this.getCurrentDir()).then((uris: Uri[]) => {
-                sfMetadataUris.push(...uris);
+
+        const sfMetadataUriPromises = possibleMetadataUris.map(uri => {
+            return new Promise<Uri | undefined>(resolve => {
+                if (uri.getFileSystemPath().endsWith('-meta.xml')) {
+                    resolve(uri);
+                } else {
+                    const withMetaXml = Uri.from({
+                        scheme: 'file', fileSystemPath: uri.getFileSystemPath() + '-meta.xml'
+                    });
+                    this.hasFile(withMetaXml).then(hasFile => {
+                        if (hasFile) {
+                            resolve(uri);
+                        } else {
+                            resolve(undefined);
+                        }
+                    });
+                }
             });
         });
 
-        await Promise.all(promises);
-        return sfMetadataUris;
+        const sfMetadataUris = await Promise.all(sfMetadataUriPromises);
+        return sfMetadataUris.filter(uri => uri);
     }
 
     abstract showQuickPick(items: string[]): Thenable<string>;
