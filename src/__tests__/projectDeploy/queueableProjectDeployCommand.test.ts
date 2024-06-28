@@ -133,13 +133,18 @@ describe('queueable project deploy command', () => {
 			uris: [Uri.from({ scheme: 'file', fileSystemPath: cFailureFile.filePath })]
 		});
 
-		await firstDeployment;
+		const firstDeploymentResult = await firstDeployment;
 
-		await Promise.all([secondDeployment, thirdDeployment]);
+		const [secondDeploymentReturn, thirdDeploymentReturn] = await Promise.all([secondDeployment, thirdDeployment]);
 
 		const bFileDiagnostics = ide.getDiagnosticsFor(bFailureFileUri);
 		expect(bFileDiagnostics).toHaveLength(1);
 		const cFileDiagnostics = ide.getDiagnosticsFor(cFailureFileUri);
 		expect(cFileDiagnostics).toHaveLength(1);
+
+		expect(secondDeploymentReturn.isComplete).toBe(false);
+		expect(thirdDeploymentReturn.isComplete).toBe(false);
+
+		expect(firstDeploymentResult.isComplete).toBe(true);
 	});
 });

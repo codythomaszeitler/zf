@@ -80,13 +80,7 @@ export class QueueableProjectDeployCommand extends Command {
 
 	private async queueProjectDeploy({ uris }: { uris: Uri[] }) {
 		if (!this.targetOrg) {
-			this.targetOrg = await new Promise<SalesforceOrg>(resolve => {
-				setTimeout(() => {
-					this.getCli().getDefaultOrg().then(defaultOrg => {
-						resolve(defaultOrg);
-					});
-				}, 10000);
-			});
+			this.targetOrg = await this.getCli().getDefaultOrg();
 		}
 
 		const sfMetadataUris = await this.getIde().getSalesforceMetadataUris(uris);
