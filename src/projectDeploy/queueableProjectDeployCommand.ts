@@ -68,6 +68,9 @@ export class QueueableProjectDeployCommand extends Command {
 			await this.queueProjectDeploy({
 				uris
 			});
+			return {
+				isComplete : false
+			};
 		}
 
 		return {
@@ -77,7 +80,13 @@ export class QueueableProjectDeployCommand extends Command {
 
 	private async queueProjectDeploy({ uris }: { uris: Uri[] }) {
 		if (!this.targetOrg) {
-			this.targetOrg = await this.getCli().getDefaultOrg();
+			this.targetOrg = await new Promise<SalesforceOrg>(resolve => {
+				setTimeout(() => {
+					this.getCli().getDefaultOrg().then(defaultOrg => {
+						resolve(defaultOrg);
+					});
+				}, 10000);
+			});
 		}
 
 		const sfMetadataUris = await this.getIde().getSalesforceMetadataUris(uris);
