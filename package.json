@@ -171,7 +171,8 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "test": "jest"
+    "test": "jest",
+    "antlr4ts": "antlr4ts -visitor src\\soql\\Soql.g4"
   },
   "devDependencies": {
     "@types/glob": "^7.1.4",
@@ -182,6 +183,7 @@
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
     "@vscode/test-electron": "^1.6.2",
+    "antlr4ts-cli": "^0.5.0-alpha.4",
     "eslint": "^8.1.0",
     "glob": "^7.1.7",
     "glob-to-regexp": "^0.4.1",
