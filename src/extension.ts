@@ -24,6 +24,8 @@ import { RunHighlightedAnonApex } from './runAnonApex/runAnonApex';
 import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
 import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
 import { GenerateFauxSoqlCommand } from './soql/genFauxSoqlCommand';
+import { Position } from './position';
+import { SoqlIntellisense } from './soql/intellisense';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -57,6 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
 			showCliOutput(ide, cliInputOutput.cliInputOutput);
 		});
 	});
+
 
 	async function runSfOrgOpen() {
 		try {
@@ -396,6 +399,30 @@ export function activate(context: vscode.ExtensionContext) {
 
 		if (uri.isApexClass()) {
 			controller.items.delete(apexClassName);
+		}
+	});
+
+
+	vscode.languages.registerCompletionItemProvider({
+		scheme: 'file', language: 'soql'
+	}, {
+		async provideCompletionItems(document, position, token, context) {
+			if (ide.getConfig("sf.zsi.enableSoqlIntellisensePrototype", true)) {
+				const contents = document.getText();
+
+				const zfPosition = new Position(position.line, position.character);
+				const intellisense = new SoqlIntellisense({
+					cli: salesforceCli,
+					ide,
+					sObjectsDir: ide.generateUri('.sfdx', 'tools', 'sobjects')
+				});
+
+				const items = await intellisense.autocompleteSuggestionsAt(contents, zfPosition);
+				return items.map(item => (new vscode.CompletionItem(item.item, vscode.CompletionItemKind.Field)));
+			}
+			else {
+				return [];
+			}
 		}
 	});
 

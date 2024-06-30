@@ -178,6 +178,11 @@
           "type": "boolean",
           "description": "If set to true, deployment progress will never be shown (this will ensure that your deployment will go as fast as possible, but you will not be able to see any progress on it). If this is set to true, the value within sf.zsi.numFilesToTriggerDeploymentProgress has no effect.",
           "default": false
+        },
+        "sf.zsi.enableSoqlIntellisensePrototype": {
+          "type": "boolean",
+          "description": "If set to true, will use both the ZeitlerForce and salesforce SOQL servers in .soql files.",
+          "default": true
         }
       }
     }
@@ -187,7 +192,8 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "test": "jest"
+    "test": "jest",
+    "antlr4ts" : ".\\node_modules\\.bin\\antlr4ts -visitor .\\src\\parser\\SoqlLexer.g4 .\\src\\parser\\SoqlParser.g4"
   },
   "devDependencies": {
     "@types/glob": "^7.1.4",
@@ -198,6 +204,7 @@
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
     "@vscode/test-electron": "^1.6.2",
+    "antlr4ts-cli": "^0.5.0-alpha.4",
     "eslint": "^8.1.0",
     "glob": "^7.1.7",
     "glob-to-regexp": "^0.4.1",

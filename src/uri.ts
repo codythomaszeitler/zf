@@ -2,7 +2,7 @@ import * as path from 'path';
 
 export class Uri {
 
-	private constructor(private readonly scheme: string, private readonly fileSystemPath: string) {
+	private constructor (private readonly scheme: string, private readonly fileSystemPath: string) {
 		this.fileSystemPath = fileSystemPath;
 		this.scheme = scheme;
 	}
@@ -27,7 +27,7 @@ export class Uri {
 		});
 	}
 
-	public static basename(filePath : string) {
+	public static basename(filePath: string) {
 		return path.basename(filePath);
 	}
 
@@ -43,11 +43,15 @@ export class Uri {
 		return path.basename(this.fileSystemPath);
 	}
 
+	public getBaseNameWithoutExtension(): string {
+		return path.parse(this.fileSystemPath).name;
+	}
+
 	public isApexClass(): boolean {
 		return this.fileSystemPath.endsWith('.cls');
 	}
 
-	public equals(uri : Uri) {
+	public equals(uri: Uri) {
 		return this.fileSystemPath === uri.fileSystemPath;
 	}
 }

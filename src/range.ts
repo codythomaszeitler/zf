@@ -4,7 +4,7 @@ export class Range {
     private readonly start: Position;
     private readonly end: Position | undefined | void;
 
-    public constructor(start: Position, end: Position | undefined | void) {
+    public constructor (start: Position, end: Position | undefined | void) {
         this.start = start;
         this.end = end;
     }

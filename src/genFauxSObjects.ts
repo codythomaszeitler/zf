@@ -5,7 +5,7 @@ import { SObjectApiName } from "./sObjectApiName";
 import { SObjectChildRelationshipDescribeResultDeprecated, SObjectDescribeResultDeprecated, SObjectFieldDescribeResultDeprecated } from "./sObjectDescribeResult";
 import { SalesforceOrg } from "./salesforceOrg";
 
-function fauxSObjectIntoString({ fauxApexClass }: {
+export function fauxSObjectIntoString({ fauxApexClass }: {
     fauxApexClass: FauxSObjectApexClass
 }) {
     const fields = fauxApexClass.fields.map(field => '\t' + field.modifier + ' ' + field.type + ' ' + field.name + ';').join('\n');
@@ -25,12 +25,12 @@ function generateFauxSObject(params: {
     return output;
 }
 
-interface FauxSObjectApexClass {
+export interface FauxSObjectApexClass {
     name: string;
     fields: FauxSObjectField[];
 }
 
-interface FauxSObjectField {
+export interface FauxSObjectField {
     name: string;
     modifier: string;
     type: string;
