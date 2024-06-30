@@ -24,7 +24,8 @@ export class ApexParser {
 				return apexMethod;
 			}),
 			className: visitor.className,
-			isTestClass: visitor.isTestClass
+			isTestClass: visitor.isTestClass,
+			fields: [...visitor.fields]
 		});
 	}
 }
@@ -35,24 +36,34 @@ type ApexMethod = {
 	range: Range;
 };
 
+type ApexField = {
+	name: string;
+	type: string;
+	range: Range;
+};
+
 class ApexClassSymbolTable {
 
 	private readonly methods: ApexMethod[];
 	private readonly className: string;
 	private readonly isTestClass: boolean;
+	private readonly fields: ApexField[];
 
 	public constructor ({
 		className,
 		methods,
-		isTestClass
+		isTestClass,
+		fields
 	}: {
 		methods: ApexMethod[],
 		className: string,
-		isTestClass: boolean
+		isTestClass: boolean,
+		fields: ApexField[]
 	}) {
 		this.methods = methods;
 		this.className = className;
 		this.isTestClass = isTestClass;
+		this.fields = fields;
 	}
 
 	public getTestMethods(): ApexMethod[] {
@@ -66,6 +77,10 @@ class ApexClassSymbolTable {
 	public getIsTestClass() {
 		return this.isTestClass;
 	}
+
+	public getFields() {
+		return this.fields;
+	}
 }
 
 type VisitorResult = {
@@ -78,6 +93,12 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 
 	members: VisitorResult[] = [];
 	className: string = "";
+	fields: ApexField[];
+
+	constructor () {
+		super();
+		this.fields = [];
+	}
 
 	get isTestClass() {
 		return this.members.some(member => member.isTestMethod);
@@ -104,6 +125,7 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 			const memberDecl = ctx.memberDeclaration();
 			if (ctx.modifier() && memberDecl) {
 				const methodDecl = memberDecl.methodDeclaration();
+				const fieldDecl = memberDecl.fieldDeclaration();
 				if (methodDecl) {
 					let range = undefined;
 					const start = new Position(methodDecl.start.line - 1, methodDecl.start.charPositionInLine);
@@ -120,6 +142,27 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 						range
 					};
 					return [result];
+				} else if (fieldDecl) {
+					let range = undefined;
+					const start = new Position(fieldDecl.start.line - 1, fieldDecl.start.charPositionInLine);
+					if (fieldDecl.stop) {
+						const end = new Position(fieldDecl.stop.line - 1, fieldDecl.stop.charPositionInLine);
+						range = new Range(start, end);
+					} else {
+						range = new Range(start);
+					}
+
+					const typeRef = fieldDecl.typeRef();
+					const varDecls = fieldDecl.variableDeclarators().variableDeclarator();
+
+					varDecls.forEach(varDecl => {
+						const id = varDecl.id();
+						this.fields.push({
+							range,
+							type: typeRef.text,
+							name: id.text
+						});
+					});
 				}
 			}
 			return [];

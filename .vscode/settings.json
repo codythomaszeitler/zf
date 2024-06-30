@@ -43,6 +43,7 @@
         "Sobject",
         "sobjects",
         "Soql",
+        "soql",
         "triggerable",
         "undeletable",
         "updateable",

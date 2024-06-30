@@ -15,6 +15,13 @@
 				"kind": "build",
 				"isDefault": true
 			}
+		},
+		{
+			"type": "npm",
+			"script": "antlr4ts",
+			"problemMatcher": [],
+			"label": "npm: antlr4ts",
+			"detail": ".\\node_modules\\.bin\\antlr4ts -visitor .\\src\\parser\\ApexLexer.g4 .\\src\\parser\\ApexParser.g4"
 		}
 	]
 }
