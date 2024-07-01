@@ -9,8 +9,8 @@ const projectDeployFileBaseSchema = z.object({
 const projectDeployFileFailure = projectDeployFileBaseSchema.extend({
 	state: z.enum(["Failed"]),
 	fullName: z.string(),
-	lineNumber: z.number(),
-	columnNumber: z.number(),
+	lineNumber: z.number().optional(),
+	columnNumber: z.number().optional(),
 	error: z.string()
 });
 

@@ -109,10 +109,6 @@ describe('queueable project deploy command', () => {
 			ide, cli
 		});
 
-		const firstDeployment = testObject.execute({
-			uris: [Uri.from({ scheme: 'file', fileSystemPath: aFailureFile.filePath })]
-		});
-
 		const waitForDeploymentToStart = new Promise<void>((resolve) => {
 			const savedProjectDeployStart = cli.projectDeployStart;
 			cli.projectDeployStart = async function (params) {
@@ -121,6 +117,10 @@ describe('queueable project deploy command', () => {
 				cli.projectDeployStart = savedProjectDeployStart;
 				return value;
 			};
+		});
+
+		const firstDeployment = testObject.execute({
+			uris: [Uri.from({ scheme: 'file', fileSystemPath: aFailureFile.filePath })]
 		});
 
 		await waitForDeploymentToStart;
