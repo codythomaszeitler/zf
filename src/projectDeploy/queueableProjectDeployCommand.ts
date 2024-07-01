@@ -3,7 +3,6 @@ import { SalesforceOrg } from "../salesforceOrg";
 import { ProjectDeployCommand } from "./projectDeployCommand";
 import { IntegratedDevelopmentEnvironment, TextDocument, Uri } from "./../integratedDevelopmentEnvironment";
 import { SalesforceCli } from "./../salesforceCli";
-import { Logger } from "../logger";
 
 type ProjectDeployState = 'Not Running' | 'In Progress';
 
@@ -19,12 +18,11 @@ export class QueueableProjectDeployCommand extends Command {
 	}
 
 	public async execute({ uris }: { uris: Uri[] }): Promise<{ isComplete: boolean }> {
+		await this.queueProjectDeploy({
+			uris
+		});
 		if (this.state === 'Not Running') {
 			this.state = 'In Progress';
-
-			await this.queueProjectDeploy({
-				uris
-			});
 
 			if (!this.targetOrg) {
 				this.state = 'Not Running';
@@ -43,39 +41,38 @@ export class QueueableProjectDeployCommand extends Command {
 			do {
 				const sourceDir = this.getSourceDir();
 				this.toDeploy.clear();
-
-				await this.getIde().withProgress(async (progressToken) => {
-					const projectDeployCommand = new ProjectDeployCommand({
-						cli: this.getCli(),
-						ide: this.getIde(),
-						progressToken
-					});
-
-					if (this.targetOrg) {
-						await projectDeployCommand.execute({
-							targetOrg: this.targetOrg,
-							uris: sourceDir
-						});
-					}
-
-				}, {
-					title: 'Project Deploy Start',
-					isCancellable: true
-				});
+				await this.runProjectDeployWithProgress(sourceDir);
 			} while (this.toDeploy.size !== 0);
 			this.state = 'Not Running';
 		} else {
-			await this.queueProjectDeploy({
-				uris
-			});
 			return {
-				isComplete : false
+				isComplete: false
 			};
 		}
 
 		return {
 			isComplete: true
 		};
+	}
+
+	private async runProjectDeployWithProgress(uris: Uri[]) {
+		await this.getIde().withProgress(async (progressToken) => {
+			const projectDeployCommand = new ProjectDeployCommand({
+				cli: this.getCli(),
+				ide: this.getIde(),
+				progressToken
+			});
+
+			if (this.targetOrg) {
+				await projectDeployCommand.execute({
+					targetOrg: this.targetOrg,
+					uris
+				});
+			}
+		}, {
+			title: 'Project Deploy Start',
+			isCancellable: true
+		});
 	}
 
 	private async queueProjectDeploy({ uris }: { uris: Uri[] }) {

@@ -3,8 +3,8 @@ export class Position {
     private readonly columnNumber : number;
 
     public constructor(lineNumber : number, columnNumber : number) {
-        this.lineNumber = lineNumber;
-        this.columnNumber = columnNumber;
+        this.lineNumber = lineNumber || 0;
+        this.columnNumber = columnNumber || 0;
     }
 
     public getLineNumber() : number {

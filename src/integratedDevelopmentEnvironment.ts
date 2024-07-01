@@ -49,6 +49,26 @@ export abstract class IntegratedDevelopmentEnvironment {
     }
 
     public async getSalesforceMetadataUris(uris: Uri[]): Promise<Uri[]> {
+        const directoryHasMetaXmlFile = async (directory: Uri) => {
+            const uris = await this.findFiles('*-meta.xml', directory);
+            return uris.length !== 0;
+        };
+
+        const isNonMetaXmlFileDeployable = async (uri: Uri) => {
+            const withMetaXml = Uri.from({
+                scheme: 'file', fileSystemPath: uri.getFileSystemPath() + '-meta.xml'
+            });
+
+            const hasFile = await this.hasFile(withMetaXml);
+            if (hasFile) {
+                return true;
+            }
+
+            const directory = Uri.dirname(uri);
+            const dirHasXmlFile = await directoryHasMetaXmlFile(directory);
+            return dirHasXmlFile;
+        };
+
         if (!this.sfdxProject) {
             Logger.get().warn(`Tried to run 'isSalesforceMetadata' without sfdx-project loaded into IDE.`);
             return [];
@@ -66,11 +86,8 @@ export abstract class IntegratedDevelopmentEnvironment {
                 if (uri.getFileSystemPath().endsWith('-meta.xml')) {
                     resolve(uri);
                 } else {
-                    const withMetaXml = Uri.from({
-                        scheme: 'file', fileSystemPath: uri.getFileSystemPath() + '-meta.xml'
-                    });
-                    this.hasFile(withMetaXml).then(hasFile => {
-                        if (hasFile) {
+                    isNonMetaXmlFileDeployable(uri).then(hasXmlFile => {
+                        if (hasXmlFile) {
                             resolve(uri);
                         } else {
                             resolve(undefined);
