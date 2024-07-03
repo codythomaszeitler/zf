@@ -22,6 +22,7 @@ import { QuickDefaultOrgSfSalesforceCli } from './quickDefaultOrgSalesforceCli';
 import { ProjectDeployCommand } from './projectDeploy/projectDeployCommand';
 import { RunHighlightedAnonApex } from './runAnonApex/runAnonApex';
 import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
+import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -266,7 +267,23 @@ export function activate(context: vscode.ExtensionContext) {
 			title: 'Refreshing Metadata Explorer',
 			isCancellable: false
 		});
+	}
 
+	async function runSoqlScriptExecute() {
+		const executeSoqlCommand = new ExecuteAndShowSoqlCommand({
+			cli: salesforceCli,
+			ide
+		});
+
+		await ide.withProgress(async progressToken => {
+			const outputDir = ide.generateUri('zf', 'soqlResults');
+			await executeSoqlCommand.execute({
+				outputDir
+			});
+		}, {
+			title: 'Executing SOQL',
+			isCancellable: false
+		});
 	}
 
 	const metadataRetrieveAndShow = genOnMetadataRetrieveAndShow({ cli: salesforceCli, ide, metadataDir: getZfMetadataDir(ide) });
@@ -411,6 +428,8 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		});
 	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", runSoqlScriptExecute));
 }
 
 // this method is called when your extension is deactivated

@@ -42,6 +42,7 @@
         "Sfdx",
         "Sobject",
         "sobjects",
+        "Soql",
         "triggerable",
         "undeletable",
         "updateable",

@@ -63,5 +63,3 @@ export function genMockExecutor(commandToStdOutput: any) {
 		};
 	};
 }
-
-// It would be cool if you could add commands right here?

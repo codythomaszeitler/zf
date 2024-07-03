@@ -254,10 +254,12 @@ export class MockSalesforceCli extends SalesforceCli {
     }
 
     async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery }): Promise<DataQueryResult> {
-        const from = params.query.from;
-        return new DataQueryResult({
-            sObjects: this.sObjects.getSObjectsWithType(from)
-        });
+        if (typeof params.query !== 'string') {
+            const from = params.query.from;
+            return new DataQueryResult({
+                sObjects: this.sObjects.getSObjectsWithType(from)
+            });
+        }
     }
 
     private readonly orgsWithUsers: OrgWithListsUsersResult[] = [];
