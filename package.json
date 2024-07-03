@@ -70,6 +70,10 @@
       {
         "command": "sf.zsi.showLogDebugsOnly",
         "title": "ZF: Show Debugs"
+      },
+      {
+        "command": "sf.zsi.runSoqlScript",
+        "title": "ZF: Execute SOQL"
       }
     ],
     "views": {
@@ -105,6 +109,13 @@
           "command": "sf.zsi.refreshMetadataExplorer",
           "group": "navigation@0",
           "when": "view == zeitlerforce-metadata-explorer"
+        }
+      ],
+      "editor/title/run" : [
+        {
+          "command": "sf.zsi.runSoqlScript",
+          "group": "navigation@0",
+          "when": "editorLangId == soql"
         }
       ],
       "view/item/context": [

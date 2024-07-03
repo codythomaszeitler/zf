@@ -18,6 +18,7 @@ export class DebugLogLevelSelector {
 		developerName: string
 	}): Promise<DebugLevel | undefined> {
 		const dataQueryResult = await this.cli.dataQuery({
+			useToolingApi : true,
 			targetOrg: params.targetOrg, query: {
 				fields: ["DeveloperName"],
 				from: DEBUG_LEVEL_SOBJECT_NAME,

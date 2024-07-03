@@ -480,6 +480,7 @@ describe('sf salesforce cli', () => {
 
             const result = await cli.dataQuery({
                 targetOrg,
+                useToolingApi: true,
                 query: {
                     fields: ['DeveloperName'],
                     from: DEBUG_LEVEL_SOBJECT_NAME,
@@ -504,6 +505,7 @@ describe('sf salesforce cli', () => {
 
             const result = await cli.dataQuery({
                 targetOrg,
+                useToolingApi : true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                 }
@@ -527,6 +529,7 @@ describe('sf salesforce cli', () => {
 
             const result = await cli.dataQuery({
                 targetOrg,
+                useToolingApi : true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                     where: "DeveloperName = 'ZFDebugTraceFlag'"
@@ -555,6 +558,7 @@ describe('sf salesforce cli', () => {
 
             const result = await cli.dataQuery({
                 targetOrg,
+                useToolingApi : true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                     where: "DeveloperName = 'NOT-FOUND'"
@@ -579,6 +583,7 @@ describe('sf salesforce cli', () => {
 
             const result = await cli.dataQuery({
                 targetOrg,
+                useToolingApi : true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                     where: "DeveloperName = 'NOT-FOUND'"
@@ -606,6 +611,7 @@ describe('sf salesforce cli', () => {
 
             const result = await cli.dataQuery({
                 targetOrg,
+                useToolingApi : true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                     where: "DeveloperName = 'NOT-FOUND'"
@@ -634,6 +640,7 @@ describe('sf salesforce cli', () => {
             try {
                 await cli.dataQuery({
                     targetOrg,
+                    useToolingApi : true,
                     query: {
                         from: '',
                     }

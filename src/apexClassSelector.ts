@@ -7,6 +7,7 @@ export class ApexClassSelector extends Selector {
 	public async queryAllApexClasses({ targetOrg }: { targetOrg: SalesforceOrg; }) {
 		const dataQueryResults = await this.getCli().dataQuery({
 			targetOrg,
+			useToolingApi : true,
 			query: {
 				from: APEX_CLASS_SOBJECT_NAME,
 				fields: ['Name', 'SymbolTable', 'Body']

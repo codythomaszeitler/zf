@@ -1,5 +1,5 @@
-export interface SoqlQuery {
-	fields? : string[];
+export type SoqlQuery = {
+	fields?: string[];
 	from: string;
 	where?: string;
-}
+} | string;

@@ -7,6 +7,7 @@ export class ApexTestQueueItemSelector extends Selector {
 
 	public async queryByParentJobId(params: { targetOrg: SalesforceOrg; parentJobId: SalesforceId; }) {
 		const dataQueryResult = await this.getCli().dataQuery({
+			useToolingApi : true,
 			query: {
 				from: APEX_TEST_QUEUE_ITEM_SOBJECT_NAME,
 				fields: ['Status'],

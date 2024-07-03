@@ -47,6 +47,7 @@ export class ReadApexTestLogCommand extends Command {
 	}) {
 		const records = await this.getCli().dataQuery({
 			targetOrg,
+			useToolingApi : true,
 			query: {
 				from: "ApexTestResult",
 				fields: ["ApexLogId"],

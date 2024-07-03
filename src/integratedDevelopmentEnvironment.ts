@@ -103,7 +103,7 @@ export abstract class IntegratedDevelopmentEnvironment {
 
     abstract showQuickPick(items: string[]): Thenable<string>;
     abstract showErrorMessage(message: string): Promise<void>;
-    abstract showTextDocument(uri: Uri): Promise<void>;
+    abstract showTextDocument(uri: Uri, options? : ShowTextDocumentOptions): Promise<void>;
     abstract deleteTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
     abstract showInformationMessage(message: string, options?: {
@@ -140,14 +140,14 @@ export abstract class IntegratedDevelopmentEnvironment {
         return !!file;
     }
 
-    public async showTempFileWith(outputDir: Uri, contents: string) {
+    public async showTempFileWith(outputDir: Uri, contents: string, options? : ShowTextDocumentOptions) {
         const basename = Date.now() + '.txt';
         const uri = Uri.join(outputDir, basename);
 
         await this.writeFile({
             uri, contents
         });
-        await this.showTextDocument(uri);
+        await this.showTextDocument(uri, options);
     }
 }
 
@@ -215,4 +215,12 @@ export class Diagnostic {
     public getSeverity(): DiagnosticSeverity {
         return this.severity;
     }
+}
+
+export enum ViewColumn {
+    besides, active
+}
+
+export interface ShowTextDocumentOptions  {
+    viewColumn? : ViewColumn;
 }

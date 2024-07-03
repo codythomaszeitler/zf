@@ -1,4 +1,4 @@
-import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, TextLine, Uri } from "./integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, ShowTextDocumentOptions, TextLine, Uri, ViewColumn } from "./integratedDevelopmentEnvironment";
 import { ApexTestResult } from './apexTestRunResult';
 import * as vscode from 'vscode';
 import { Range } from "./range";
@@ -148,11 +148,29 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
     }
 
-    async showTextDocument(uri: Uri): Promise<void> {
+    async showTextDocument(uri: Uri, options: ShowTextDocumentOptions): Promise<void> {
+        const intoVsCodeNumber = (viewColumn: ViewColumn) => {
+            if (viewColumn === ViewColumn.active) {
+                return -1;
+            }
+            else if (viewColumn === ViewColumn.besides) {
+                return -2;
+            } else {
+                throw new Error(`There was an unknown view column ${viewColumn}`);
+            }
+        };
+
         const uriMapper = new UriMapper();
         const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
         const document = await vscode.workspace.openTextDocument(vscodeUri);
-        await vscode.window.showTextDocument(document);
+
+        if (options?.viewColumn !== undefined) {
+            await vscode.window.showTextDocument(document, {
+                viewColumn: intoVsCodeNumber(options.viewColumn)
+            });
+        } else {
+            await vscode.window.showTextDocument(document);
+        }
     }
 
     showWarningMessage(message: string): Promise<void> {

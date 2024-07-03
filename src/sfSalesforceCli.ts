@@ -494,30 +494,52 @@ export class SfSalesforceCli extends SalesforceCli {
         });
     }
 
-    async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; }): Promise<DataQueryResult> {
-        if (!params.query.from) {
-            throw new Error('Cannot run data query with empty from table.');
-        }
+    async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean }): Promise<DataQueryResult> {
 
-        const fields = new Set();
-        fields.add("Id");
-        if (params.query.fields) {
-            params.query.fields.forEach(field => {
-                fields.add(field);
-            });
-        }
+        const queryAsString = (query: SoqlQuery) => {
+            if (typeof query === 'string') {
+                return `"${query}"`;
+            } else {
+                if (!query.from) {
+                    throw new Error('Cannot run data query with empty from table.');
+                }
+                const fields = new Set();
+                fields.add("Id");
+                if (query.fields) {
+                    query.fields.forEach(field => {
+                        fields.add(field);
+                    });
+                }
 
-        const joined = () => {
-            const asList = [...fields];
-            return asList.join(", ");
+                const joined = () => {
+                    const asList = [...fields];
+                    return asList.join(", ");
+                };
+
+                const whereClause = () => {
+                    if (!query.where) {
+                        return "";
+                    }
+
+                    return ` WHERE ${query.where}`;
+                };
+                return `"SELECT ${joined()} FROM ${query.from}${whereClause()}"`;
+            }
         };
 
-        const whereClause = () => {
-            if (!params.query.where) {
-                return "";
+        const getType = (query: SoqlQuery) => {
+            if (typeof query === 'string') {
+                return '';
+            } else {
+                return query.from;
             }
+        };
 
-            return ` WHERE ${params.query.where}`;
+        const toolingApiParams = () => {
+            if (params.useToolingApi) {
+                return ['--use-tooling-api'];
+            }
+            return [];
         };
 
         const command: ExecutorCommand = {
@@ -526,8 +548,8 @@ export class SfSalesforceCli extends SalesforceCli {
                 'data',
                 'query',
                 '--query',
-                `"SELECT ${joined()} FROM ${params.query.from}${whereClause()}"`,
-                '--use-tooling-api',
+                queryAsString(params.query),
+                ...toolingApiParams(),
                 '--target-org',
                 params.targetOrg.getAlias(),
                 '--json'
@@ -556,7 +578,7 @@ export class SfSalesforceCli extends SalesforceCli {
         const sObjects = stdout.result.records.map((record: any) => {
             const sObject: SObject = {
                 ...record,
-                type: params.query.from
+                type: getType(params.query)
             };
             return sObject;
         });

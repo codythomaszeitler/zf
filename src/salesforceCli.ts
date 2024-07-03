@@ -66,7 +66,7 @@ export abstract class SalesforceCli {
         sObject: UpsertableSObject;
     }): Promise<DataUpsertRecordResult>;
 
-    abstract dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery }): Promise<DataQueryResult>;
+    abstract dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi : boolean }): Promise<DataQueryResult>;
 
     abstract orgListUsers(params: {
         targetOrg: SalesforceOrg,

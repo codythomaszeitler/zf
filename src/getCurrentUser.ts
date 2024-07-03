@@ -36,6 +36,7 @@ export async function getCurrentUser({ cli, targetOrg }: {
 async function getUserIdFor({ username, cli, targetOrg }: { username: string, cli: SalesforceCli, targetOrg: SalesforceOrg }) {
 	const dataQueryResult = await cli.dataQuery({
 		targetOrg: targetOrg,
+		useToolingApi : true,
 		query: {
 			from: USER_SOBJECT_NAME,
 			where: `Username = '${username}'`
