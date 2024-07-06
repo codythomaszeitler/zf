@@ -23,6 +23,15 @@ import { ProjectDeployCommand } from './projectDeploy/projectDeployCommand';
 import { RunHighlightedAnonApex } from './runAnonApex/runAnonApex';
 import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
 import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
+import {
+	LanguageClient,
+	LanguageClientOptions,
+	ServerOptions,
+	TransportKind
+} from 'vscode-languageclient/node';
+
+let client: LanguageClient;
+
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -430,7 +439,49 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", runSoqlScriptExecute));
+	let serverModule = "C:\\cygwin64\\home\\Cody\\dev\\soql-language-server\\lib\\server.js";
+	// The debug options for the server
+	// --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
+	let debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+
+	// If the extension is launched in debug mode then the debug server options are used
+	// Otherwise the run options are used
+	let serverOptions: ServerOptions = {
+		run: { module: serverModule, transport: TransportKind.ipc },
+		debug: {
+			module: serverModule,
+			transport: TransportKind.ipc,
+			options: debugOptions
+		}
+	};
+
+	// Options to control the language client
+	let clientOptions: LanguageClientOptions = {
+		// Register the server for plain text documents
+		documentSelector: [{ scheme: 'file', language: 'soql' }],
+		synchronize: {
+			// Notify the server about file changes to '.clientrc files contained in the workspace
+			fileEvents: vscode.workspace.createFileSystemWatcher('**/.soql')
+		}
+	};
+
+	// Create the language client and start the client.
+	client = new LanguageClient(
+		'languageServerExample',
+		'Language Server Example',
+		serverOptions,
+		clientOptions
+	);
+
+	// Start the client. This will also launch the server
+	client.start().catch(e => {
+		console.log(e);
+	});
+
+	console.log(client);
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() { }
+export function deactivate() {
+	client.stop();
+}
