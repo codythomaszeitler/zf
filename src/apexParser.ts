@@ -90,9 +90,13 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 
 	visitClassBodyDeclaration(ctx: _ApexParser.ClassBodyDeclarationContext): void {
 		const isTestMethod = () => {
+			function compareIgnoreCase(a: string, b: string) {
+				return a?.toLowerCase() === b?.toLowerCase();
+			}
+
 			const modifiers = ctx.modifier();
 			return modifiers.some(modifier => {
-				return modifier.annotation()?.qualifiedName().text === 'IsTest';
+				return compareIgnoreCase(modifier.annotation()?.qualifiedName().text, 'IsTest');
 			});
 		};
 
