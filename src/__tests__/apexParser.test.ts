@@ -16,6 +16,21 @@ describe('apex parser', () => {
 		expect(publicTestMethod1.name).toBe('testMethod1');
 	});
 
+	it('should be able to get all public test methods on an apex class (when IsTest does not match case exactly)', () => {
+		const testObject = new ApexParser();
+		const apexClass = testObject.parse('@IsTest public class TestClass { @isTest public static void testMethod1() {} } ');
+
+		expect(apexClass.getClassName()).toBe('TestClass');
+		expect(apexClass.getIsTestClass()).toBe(true);
+
+		const apexMethods = apexClass.getTestMethods();
+
+		expect(apexMethods).toHaveLength(1);
+
+		const publicTestMethod1 = apexMethods[0];
+		expect(publicTestMethod1.name).toBe('testMethod1');
+	});
+
 	it('should be able to get all private test methods on an apex class', () => {
 		const testObject = new ApexParser();
 		const apexClass = testObject.parse('@IsTest public class TestClass { @IsTest static void testMethod1() {} } ');
