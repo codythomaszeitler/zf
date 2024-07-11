@@ -1,15 +1,74 @@
+import { Logger } from "./logger";
 import { SObjectApiName } from "./sObjectApiName";
+import { z } from 'zod';
 
-export class SObjectDescribeResult {
+const sobjectDescribeChildRelationshipResultSchema = z.object({
+    cascadeDelete: z.boolean(),
+    childSObject: z.string(),
+    deprecatedAndHidden: z.boolean(),
+    field: z.string(),
+    junctionIdListNames: z.array(z.any()),
+    junctionReferenceTo: z.array(z.any()),
+    relationshipName: z.string().nullable(),
+    restrictedDelete: z.boolean()
+});
+
+const sobjectDescribeFieldResultSchema = z.object({
+    aggregatable: z.boolean(),
+    custom: z.boolean(),
+    filterable: z.boolean(),
+    groupable: z.boolean(),
+    inlineHelpText: z.string().nullable(),
+    label: z.string().nullable(),
+    name: z.string(),
+    nillable: z.boolean(),
+    picklistValues: z.array(z.object({
+        active: z.boolean(),
+        label: z.string().nullable(),
+        value: z.string()
+    })),
+    referenceTo: z.array(z.string()),
+    relationshipName: z.string().nullable(),
+    sortable: z.boolean(),
+    type: z.string()
+});
+
+const sobjectDescribeResultSchema = z.object({
+    result: z.object({
+        childRelationships: z.array(sobjectDescribeChildRelationshipResultSchema),
+        fields: z.array(sobjectDescribeFieldResultSchema),
+        custom: z.boolean(),
+        name: z.string(),
+        queryable: z.boolean()
+    })
+});
+
+export type SObjectDescribeResult = z.infer<typeof sobjectDescribeResultSchema>;
+export type SObjectDescribeChildRelationshipResult = z.infer<typeof sobjectDescribeChildRelationshipResultSchema>;
+export type SObjectDescribeFieldResult = z.infer<typeof sobjectDescribeFieldResultSchema>;
+
+export function intoSObjectDescribeResult(cliOutputJson: unknown) {
+    try {
+        return sobjectDescribeResultSchema.parse(cliOutputJson);
+    } catch (e: unknown) {
+        if (e instanceof Error) {
+            Logger.get().warn(`Could not parse: ${JSON.stringify(cliOutputJson)}`);
+            Logger.get().error(e);
+        }
+        return undefined;
+    }
+}
+
+export class SObjectDescribeResultDeprecated {
 
     private readonly apiName: SObjectApiName;
-    private readonly fields: SObjectFieldDescribeResult[];
-    private readonly childRelationships: SObjectChildRelationshipDescribeResult[];
+    private readonly fields: SObjectFieldDescribeResultDeprecated[];
+    private readonly childRelationships: SObjectChildRelationshipDescribeResultDeprecated[];
 
-    public constructor(params: {
+    public constructor (params: {
         apiName: SObjectApiName;
-        fields: SObjectFieldDescribeResult[],
-        childRelationships: SObjectChildRelationshipDescribeResult[]
+        fields: SObjectFieldDescribeResultDeprecated[],
+        childRelationships: SObjectChildRelationshipDescribeResultDeprecated[]
     }) {
         this.apiName = params.apiName;
         this.fields = params.fields;
@@ -20,26 +79,26 @@ export class SObjectDescribeResult {
         return this.apiName;
     }
 
-    public getFields(): SObjectFieldDescribeResult[] {
+    public getFields(): SObjectFieldDescribeResultDeprecated[] {
         return [...this.fields];
     }
 
-    public getFieldDescribeByApiName(name: string): SObjectFieldDescribeResult | null {
+    public getFieldDescribeByApiName(name: string): SObjectFieldDescribeResultDeprecated | null {
         return this.fields.find((field) => field.getApiName() === name) || null;
     }
 
-    public getChildRelationships(): SObjectChildRelationshipDescribeResult[] {
+    public getChildRelationships(): SObjectChildRelationshipDescribeResultDeprecated[] {
         return [...this.childRelationships];
     }
 }
 
-export class SObjectFieldDescribeResult {
+export class SObjectFieldDescribeResultDeprecated {
     private readonly apiName: string;
     private readonly type: SObjectFieldType;
     private readonly referenceTo: string[];
     private readonly relationshipName: string;
 
-    public constructor(params: {
+    public constructor (params: {
         apiName: string,
         type: SObjectFieldType,
         referenceTo?: string[],
@@ -87,11 +146,11 @@ export type SObjectFieldType =
     | 'date'
     | 'currency';
 
-export class SObjectChildRelationshipDescribeResult {
+export class SObjectChildRelationshipDescribeResultDeprecated {
     childSObject: string;
     relationshipName: string;
 
-    public constructor({
+    public constructor ({
         childSObject,
         relationshipName
     }: { childSObject: string, relationshipName: string }) {
@@ -99,3 +158,4 @@ export class SObjectChildRelationshipDescribeResult {
         this.relationshipName = relationshipName;
     }
 }
+

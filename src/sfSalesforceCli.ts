@@ -11,8 +11,8 @@ import { Logger } from "./logger";
 import { OrgListUser, OrgListUsersResult } from "./orgListUsersResult";
 import { SObject } from "./sObject";
 import { SObjectApiName } from "./sObjectApiName";
-import { SObjectChildRelationshipDescribeResult, SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
-import { SObjectListResult } from "./sObjectListResult";
+import { intoSObjectDescribeResult, SObjectChildRelationshipDescribeResultDeprecated, SObjectDescribeResult, SObjectDescribeResultDeprecated, SObjectFieldDescribeResultDeprecated } from "./sObjectDescribeResult";
+import { intoSObjectListResult, SObjectListResult, SObjectListResultDeprecated } from "./sObjectListResult";
 import { ProjectRetrieveResult, SalesforceCli } from "./salesforceCli";
 import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
@@ -322,6 +322,44 @@ export class SfSalesforceCli extends SalesforceCli {
                 '--json'
             ]
         };
+        const stdout = (await this.exec(command)).stdout as unknown;
+        return intoSObjectListResult(stdout);
+    }
+
+    async sobjectDescribe(params: {
+        targetOrg: SalesforceOrg,
+        sObjectApiName: string
+    }): Promise<SObjectDescribeResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'sobject',
+                'describe',
+                '--sobject',
+                params.sObjectApiName,
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
+
+        const stdout = (await this.exec(command)).stdout;
+        return intoSObjectDescribeResult(stdout);
+    }
+
+    async sobjectListDeprecated(params: {
+        targetOrg: SalesforceOrg
+    }): Promise<SObjectListResultDeprecated> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'sobject',
+                'list',
+                '--target-org',
+                params.targetOrg.getAlias(),
+                '--json'
+            ]
+        };
 
         const { stdout } = await this.exec(command);
         if (stdout.status) {
@@ -329,7 +367,7 @@ export class SfSalesforceCli extends SalesforceCli {
         }
 
         if (!stdout.result) {
-            return new SObjectListResult({
+            return new SObjectListResultDeprecated({
                 sObjectApiNames: []
             });
         }
@@ -338,12 +376,12 @@ export class SfSalesforceCli extends SalesforceCli {
             return SObjectApiName.get(result);
         });
 
-        return new SObjectListResult({
+        return new SObjectListResultDeprecated({
             sObjectApiNames,
         });
     }
 
-    async sobjectDescribe(params: { targetOrg: SalesforceOrg; sObjectApiName: SObjectApiName; }): Promise<SObjectDescribeResult> {
+    async sobjectDescribeDeprecated(params: { targetOrg: SalesforceOrg; sObjectApiName: SObjectApiName; }): Promise<SObjectDescribeResultDeprecated> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -362,8 +400,8 @@ export class SfSalesforceCli extends SalesforceCli {
             throw new Error(stdout.message);
         }
 
-        const fields: SObjectFieldDescribeResult[] = stdout.result.fields.map((field: any) => {
-            return new SObjectFieldDescribeResult({
+        const fields: SObjectFieldDescribeResultDeprecated[] = stdout.result.fields.map((field: any) => {
+            return new SObjectFieldDescribeResultDeprecated({
                 apiName: field.name,
                 type: field.type,
                 referenceTo: field.referenceTo,
@@ -371,14 +409,14 @@ export class SfSalesforceCli extends SalesforceCli {
             });
         });
 
-        const childRelationships: SObjectChildRelationshipDescribeResult[] = stdout.result.childRelationships.map((childRelationship: any) => {
-            return new SObjectChildRelationshipDescribeResult({
+        const childRelationships: SObjectChildRelationshipDescribeResultDeprecated[] = stdout.result.childRelationships.map((childRelationship: any) => {
+            return new SObjectChildRelationshipDescribeResultDeprecated({
                 childSObject: childRelationship.childSObject,
                 relationshipName: childRelationship.relationshipName
             });
         });
 
-        const result: SObjectDescribeResult = new SObjectDescribeResult({
+        const result: SObjectDescribeResultDeprecated = new SObjectDescribeResultDeprecated({
             apiName: params.sObjectApiName,
             fields,
             childRelationships

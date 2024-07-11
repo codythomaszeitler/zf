@@ -23,6 +23,7 @@ import { ProjectDeployCommand } from './projectDeploy/projectDeployCommand';
 import { RunHighlightedAnonApex } from './runAnonApex/runAnonApex';
 import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
 import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
+import { GenerateFauxSoqlCommand } from './soql/genFauxSoqlCommand';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -412,6 +413,24 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.cleanLocalApexLogs', runCleanLocalApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.refreshApexLogs', runRefreshApexLogs));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateOfflineSymbolTable', runGeneratorOfflineSymbolTable));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSoql', async () => {
+		try {
+			const destDir = ide.generateUri('.sfdx', 'tools', 'soqlMetadata', 'customObjects');
+			const generateFauxSoqlCommand = new GenerateFauxSoqlCommand({
+				ide,
+				cli: salesforceCli
+			});
+
+			await generateFauxSoqlCommand.execute({
+				destDir
+			});
+
+		} catch (e) {
+			if (e instanceof Error) {
+				ide.showErrorMessage(e.message);
+			}
+		}
+	}));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.showLogDebugsOnly', (logNode: ApexLogTreeNode) => {
 		const apexLog = logNode.treeNode.value;
 

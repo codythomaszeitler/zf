@@ -6,9 +6,9 @@ import { NO_SF_ORG_FOUND, SalesforceOrg } from "../salesforceOrg";
 import { ExecutorCommand } from '../executor';
 import { getWhenResultKeyDoesNotExist, getWhenResultArrayIsEmpty } from './data/configGetOutput';
 import { getWithCustomObject, getWithFailureMessage, getWithoutResultArray } from './data/sobjectListOutputs';
-import { SObjectListResult } from '../sObjectListResult';
+import { SObjectListResultDeprecated } from '../sObjectListResult';
 import { SObjectApiName } from '../sObjectApiName';
-import { SObjectDescribeResult, SObjectFieldDescribeResult } from '../sObjectDescribeResult';
+import { SObjectDescribeResultDeprecated, SObjectFieldDescribeResultDeprecated } from '../sObjectDescribeResult';
 import { getSObjectAccountDescribe, getSObjectDescribeWithFailureMessage } from './data/sobjectDescribeOutput';
 import { Logger } from '../logger';
 import { TestLogger } from './logger.test';
@@ -210,7 +210,7 @@ describe('sf salesforce cli', () => {
             });
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-            const result: SObjectListResult = await cli.sobjectList({
+            const result: SObjectListResultDeprecated = await cli.sobjectListDeprecated({
                 targetOrg
             });
             expect(result.getSObjectApiNames()).not.toHaveLength(0);
@@ -229,7 +229,7 @@ describe('sf salesforce cli', () => {
             });
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-            const result: SObjectListResult = await cli.sobjectList({
+            const result: SObjectListResultDeprecated = await cli.sobjectListDeprecated({
                 targetOrg
             });
             expect(result.getSObjectApiNames()).toHaveLength(0);
@@ -249,7 +249,7 @@ describe('sf salesforce cli', () => {
 
             let caughtException = null;
             try {
-                await cli.sobjectList({
+                await cli.sobjectListDeprecated({
                     targetOrg
                 });
             } catch (e: any) {
@@ -275,7 +275,7 @@ describe('sf salesforce cli', () => {
             });
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
-            const result: SObjectDescribeResult = await cli.sobjectDescribe({
+            const result: SObjectDescribeResultDeprecated = await cli.sobjectDescribeDeprecated({
                 targetOrg,
                 sObjectApiName: testObjectApiName
             });
@@ -283,7 +283,7 @@ describe('sf salesforce cli', () => {
             expect(result.getApiName()).toStrictEqual(SObjectApiName.get('Test_Object__c'));
 
             expect(result.getFields().length).not.toBe(0);
-            const testObjectNameFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Id');
+            const testObjectNameFieldDescribe: SObjectFieldDescribeResultDeprecated | null = result.getFieldDescribeByApiName('Id');
 
             if (testObjectNameFieldDescribe) {
                 expect(testObjectNameFieldDescribe.getApiName()).toBe('Id');
@@ -292,7 +292,7 @@ describe('sf salesforce cli', () => {
                 expect(true).toBe(false);
             }
 
-            const isDeletedFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('IsDeleted');
+            const isDeletedFieldDescribe: SObjectFieldDescribeResultDeprecated | null = result.getFieldDescribeByApiName('IsDeleted');
 
             if (isDeletedFieldDescribe) {
                 expect(isDeletedFieldDescribe.getApiName()).toBe('IsDeleted');
@@ -303,7 +303,7 @@ describe('sf salesforce cli', () => {
             }
 
 
-            const nameFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Name');
+            const nameFieldDescribe: SObjectFieldDescribeResultDeprecated | null = result.getFieldDescribeByApiName('Name');
 
             if (nameFieldDescribe) {
                 expect(nameFieldDescribe.getApiName()).toBe('Name');
@@ -312,7 +312,7 @@ describe('sf salesforce cli', () => {
                 expect(true).toBe(false);
             }
 
-            const testUrlFieldDescribe: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Test_Url__c');
+            const testUrlFieldDescribe: SObjectFieldDescribeResultDeprecated | null = result.getFieldDescribeByApiName('Test_Url__c');
 
             if (testUrlFieldDescribe) {
                 expect(testUrlFieldDescribe.getApiName()).toBe('Test_Url__c');
@@ -322,7 +322,7 @@ describe('sf salesforce cli', () => {
                 expect(true).toBe(false);
             }
 
-            const testTimeDescribeResult: SObjectFieldDescribeResult | null = result.getFieldDescribeByApiName('Test_Time__c');
+            const testTimeDescribeResult: SObjectFieldDescribeResultDeprecated | null = result.getFieldDescribeByApiName('Test_Time__c');
 
             if (testTimeDescribeResult) {
                 expect(testTimeDescribeResult.getApiName()).toBe('Test_Time__c');
@@ -349,7 +349,7 @@ describe('sf salesforce cli', () => {
 
             let caughtException = null;
             try {
-                await cli.sobjectDescribe({
+                await cli.sobjectDescribeDeprecated({
                     targetOrg,
                     sObjectApiName: testObjectApiName
                 });

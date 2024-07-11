@@ -2,9 +2,9 @@ import { ExecutorCommand } from "../../executor";
 import { JobId } from "../../jobId";
 import { ProjectRetrieveResult, SalesforceCli } from "../../salesforceCli";
 import { SalesforceOrg } from "../../salesforceOrg";
-import { SObjectListResult } from "../../sObjectListResult";
+import { SObjectListResult, SObjectListResultDeprecated } from "../../sObjectListResult";
 import { SObjectApiName } from "../../sObjectApiName";
-import { SObjectDescribeResult } from "../../sObjectDescribeResult";
+import { SObjectDescribeResult, SObjectDescribeResultDeprecated } from "../../sObjectDescribeResult";
 import { UpsertableSObject } from "../../upsertableSObject";
 import { DataCreateRecordResult } from "../../dataCreateRecordResult";
 import { OrgListUsersResult } from "../../orgListUsersResult";
@@ -26,6 +26,12 @@ import { ProjectDeployCancelResult, ProjectDeployResult } from "../../projectDep
 import { ApexRunResult } from "../../runAnonApex/runAnonApex";
 
 export class MockSalesforceCli extends SalesforceCli {
+    sobjectList(params: { targetOrg: SalesforceOrg; }): Promise<SObjectListResult> {
+        throw new Error("Method not implemented.");
+    }
+    sobjectDescribe(params: { targetOrg: SalesforceOrg; sObjectApiName: string; }): Promise<SObjectDescribeResult> {
+        throw new Error("Method not implemented.");
+    }
     projectDeployPreview(params: { targetOrg: SalesforceOrg; }): Promise<{ result: { toDeploy: { path: string; }[]; toRetrieve: {}[]; toDelete: {}[]; }; status: number; } | undefined> {
         throw new Error("Method not implemented.");
     }
@@ -186,13 +192,13 @@ export class MockSalesforceCli extends SalesforceCli {
         this.noComponentsToDeploy = noComponentsToDeploy;
     }
 
-    sobjectList(params: {
+    sobjectListDeprecated(params: {
         targetOrg: SalesforceOrg
-    }): Promise<SObjectListResult> {
+    }): Promise<SObjectListResultDeprecated> {
         throw new Error("Method not implemented.");
     }
 
-    sobjectDescribe(params: { targetOrg: SalesforceOrg; sObjectApiName: SObjectApiName; }): Promise<SObjectDescribeResult> {
+    sobjectDescribeDeprecated(params: { targetOrg: SalesforceOrg; sObjectApiName: SObjectApiName; }): Promise<SObjectDescribeResultDeprecated> {
         throw new Error("Method not implemented.");
     }
 

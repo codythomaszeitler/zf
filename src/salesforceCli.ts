@@ -1,8 +1,8 @@
 import { SalesforceOrg } from "./salesforceOrg";
 import { JobId } from "./jobId";
 import { Executor, ExecutorCommand, ExecutorResult, intoCliCommandString } from "./executor";
-import { SObjectListResult } from "./sObjectListResult";
-import { SObjectDescribeResult } from "./sObjectDescribeResult";
+import { SObjectListResult, SObjectListResultDeprecated } from "./sObjectListResult";
+import { SObjectDescribeResult, SObjectDescribeResultDeprecated } from "./sObjectDescribeResult";
 import { SObjectApiName } from "./sObjectApiName";
 import { DataCreateRecordResult as DataUpsertRecordResult } from "./dataCreateRecordResult";
 import { UpsertableSObject } from "./upsertableSObject";
@@ -48,12 +48,21 @@ export abstract class SalesforceCli {
 
     abstract projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg, outputDir?: Uri, metadata: string }): Promise<ProjectRetrieveResult>;
 
+    abstract sobjectListDeprecated(params: {
+        targetOrg: SalesforceOrg
+    }): Promise<SObjectListResultDeprecated>;
+    abstract sobjectDescribeDeprecated(params: {
+        targetOrg: SalesforceOrg,
+        sObjectApiName: SObjectApiName
+    }): Promise<SObjectDescribeResultDeprecated>;
+
     abstract sobjectList(params: {
         targetOrg: SalesforceOrg
     }): Promise<SObjectListResult>;
+
     abstract sobjectDescribe(params: {
         targetOrg: SalesforceOrg,
-        sObjectApiName: SObjectApiName
+        sObjectApiName: string
     }): Promise<SObjectDescribeResult>;
 
     abstract apexRun(params: {

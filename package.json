@@ -72,8 +72,13 @@
         "title": "ZF: Show Debugs"
       },
       {
+        "command": "sf.zsi.generateFauxSoql",
+        "title": "ZF: Generate Faux SOQL"
+      },
+      {
         "command": "sf.zsi.runSoqlScript",
-        "title": "ZF: Execute SOQL"
+        "title": "ZF: Run SOQL Script",
+        "when": "editorLangId == soql"
       }
     ],
     "views": {

@@ -1,9 +1,29 @@
+import { Logger } from "./logger";
 import { SObjectApiName } from "./sObjectApiName";
+import { z } from 'zod';
 
-export class SObjectListResult {
+const sobjectListResultSchema = z.object({
+    result: z.array(z.string())
+});
+
+export type SObjectListResult = z.infer<typeof sobjectListResultSchema>;
+
+export function intoSObjectListResult(cliOutputJson: unknown) {
+    try {
+        return sobjectListResultSchema.parse(cliOutputJson);
+    } catch (e: unknown) {
+        if (e instanceof Error) {
+            Logger.get().warn(`Could not parse: ${JSON.stringify(cliOutputJson)}`);
+            Logger.get().error(e);
+        }
+        return undefined;
+    }
+}
+
+export class SObjectListResultDeprecated {
     private readonly sObjectApiNames: SObjectApiName[];
 
-    public constructor(params: {
+    public constructor (params: {
         sObjectApiNames: SObjectApiName[]
     }) {
         this.sObjectApiNames = params.sObjectApiNames;
@@ -13,7 +33,7 @@ export class SObjectListResult {
         return [...this.sObjectApiNames];
     }
 
-    public getSObjectApiNamesAsString() : string[] {
+    public getSObjectApiNamesAsString(): string[] {
         return this.sObjectApiNames.map(sObjectApiName => {
             return sObjectApiName.toString();
         }).reverse();
