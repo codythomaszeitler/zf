@@ -2,7 +2,7 @@ import { Command } from "./command";
 import { Uri } from "./integratedDevelopmentEnvironment";
 import { Logger } from "./logger";
 import { SObjectApiName } from "./sObjectApiName";
-import { SObjectChildRelationshipDescribeResult, SObjectDescribeResult, SObjectFieldDescribeResult } from "./sObjectDescribeResult";
+import { SObjectChildRelationshipDescribeResultDeprecated, SObjectDescribeResultDeprecated, SObjectFieldDescribeResultDeprecated } from "./sObjectDescribeResult";
 import { SalesforceOrg } from "./salesforceOrg";
 
 function fauxSObjectIntoString({ fauxApexClass }: {
@@ -13,7 +13,7 @@ function fauxSObjectIntoString({ fauxApexClass }: {
 }
 
 function generateFauxSObject(params: {
-    describe: SObjectDescribeResult
+    describe: SObjectDescribeResultDeprecated
 }): FauxSObjectApexClass {
     const fields = mapFields(params.describe.getFields());
     fields.push(...mapChildRelationships(params.describe.getChildRelationships()));
@@ -36,7 +36,7 @@ interface FauxSObjectField {
     type: string;
 }
 
-function mapFields(fields: SObjectFieldDescribeResult[]): FauxSObjectField[] {
+function mapFields(fields: SObjectFieldDescribeResultDeprecated[]): FauxSObjectField[] {
     const apexFields: FauxSObjectField[] = [];
     fields.forEach(field => {
         apexFields.push(...describeResultToApexField(field));
@@ -44,7 +44,7 @@ function mapFields(fields: SObjectFieldDescribeResult[]): FauxSObjectField[] {
     return apexFields;
 }
 
-function describeResultToApexField(field: SObjectFieldDescribeResult): FauxSObjectField[] {
+function describeResultToApexField(field: SObjectFieldDescribeResultDeprecated): FauxSObjectField[] {
     const fauxSObjectFields: FauxSObjectField[] = [];
     if (field.getType() === 'string' || field.getType() === 'url' || field.getType() === 'phone' || field.getType() === 'picklist' || field.getType() === 'multipicklist' || field.getType() === 'textarea' || field.getType() === 'encryptedstring') {
         const fauxSObjectField: FauxSObjectField = {
@@ -121,7 +121,7 @@ function describeResultToApexField(field: SObjectFieldDescribeResult): FauxSObje
     return fauxSObjectFields.filter(fauxSObjectField => fauxSObjectField.name);
 }
 
-function mapChildRelationships(childRelationships: SObjectChildRelationshipDescribeResult[]): FauxSObjectField[] {
+function mapChildRelationships(childRelationships: SObjectChildRelationshipDescribeResultDeprecated[]): FauxSObjectField[] {
     return childRelationships.filter(childRelationship => childRelationship.relationshipName).map(childRelationship => {
         return {
             modifier: 'global',
@@ -139,7 +139,7 @@ export class GenerateFauxSObjectsCommand extends Command {
                 return;
             }
 
-            const sObjectListResult = await this.getCli().sobjectList({
+            const sObjectListResult = await this.getCli().sobjectListDeprecated({
                 targetOrg
             });
 
@@ -167,7 +167,7 @@ export class GenerateFauxSObjectsCommand extends Command {
                 }
 
                 try {
-                    const sObjectDescribeResult = await this.getCli().sobjectDescribe({
+                    const sObjectDescribeResult = await this.getCli().sobjectDescribeDeprecated({
                         targetOrg,
                         sObjectApiName: SObjectApiName.get(sObjectName)
                     });
