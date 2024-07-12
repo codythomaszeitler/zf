@@ -415,14 +415,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateOfflineSymbolTable', runGeneratorOfflineSymbolTable));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSoql', async () => {
 		try {
-			const destDir = ide.generateUri('.sfdx', 'tools', 'soqlMetadata', 'customObjects');
+			const destDir = ide.generateUri('.sfdx', 'tools');
 			const generateFauxSoqlCommand = new GenerateFauxSoqlCommand({
 				ide,
 				cli: salesforceCli
 			});
 
 			await generateFauxSoqlCommand.execute({
-				destDir
+				sfdxToolsDir: destDir
 			});
 
 		} catch (e) {
