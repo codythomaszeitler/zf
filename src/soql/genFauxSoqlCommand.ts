@@ -2,10 +2,37 @@ import { Command } from "../command";
 import { Uri } from "../integratedDevelopmentEnvironment";
 import { Logger } from "../logger";
 import { SalesforceOrg } from "../salesforceOrg";
+import { SObjectDescribeResult } from "../sObjectDescribeResult";
+
+
+export function genSoqlMetadataDirs(sfdxToolsDir: Uri) {
+	const soqlMetadataCustomDir = Uri.join(sfdxToolsDir, 'soqlMetadata', 'customObjects');
+	const soqlMetadataStandardDir = Uri.join(sfdxToolsDir, 'soqlMetadata', 'standardObjects');
+
+	return {
+		soqlMetadataCustomDir,
+		soqlMetadataStandardDir
+	};
+}
 
 export class GenerateFauxSoqlCommand extends Command {
 
-	public async execute({ targetOrg, destDir }: { targetOrg?: SalesforceOrg, destDir: Uri }) {
+	public async execute({ targetOrg, sfdxToolsDir }: { targetOrg?: SalesforceOrg, sfdxToolsDir: Uri }) {
+
+		const { soqlMetadataCustomDir, soqlMetadataStandardDir } = genSoqlMetadataDirs(sfdxToolsDir);
+
+		const getUriFor = (sobjectDescribeResult: SObjectDescribeResult) => {
+			if (sobjectDescribeResult.result.custom) {
+				return Uri.join(soqlMetadataCustomDir, `${sobjectDescribeResult.result.name}.json`);
+			} else {
+				return Uri.join(soqlMetadataStandardDir, `${sobjectDescribeResult.result.name}.json`);
+			}
+		};
+
+		const reverse = (elements: string[]) => {
+			elements.reverse();
+			return elements;
+		};
 
 		await this.getIde().withProgress(async (progressToken) => {
 			const targetOrDefaultOrg = await this.getTargetOrDefaultOrg(targetOrg);
@@ -13,10 +40,18 @@ export class GenerateFauxSoqlCommand extends Command {
 			const sObjectListResult = await this.getCli().sobjectList({
 				targetOrg: targetOrDefaultOrg
 			});
+
+			if (!sObjectListResult) {
+				const warningMessage = `Could not parse sobject list against ${targetOrDefaultOrg.getAlias()}.`;
+				Logger.get().warn(warningMessage);
+				this.getIde().showWarningMessage(warningMessage);
+				return;
+			}
+
 			let completed = 0;
 			const total = sObjectListResult.result.length;
 
-			const sObjectNames = sObjectListResult.result;
+			const sObjectNames = reverse(sObjectListResult.result);
 
 			const queryDescribeAndWriteFauxSoql = async () => {
 				if (progressToken.isCancellationRequested) {
@@ -42,8 +77,13 @@ export class GenerateFauxSoqlCommand extends Command {
 						targetOrg: targetOrDefaultOrg, sObjectApiName
 					});
 
+					if (!sObjectDescribeResult) {
+						Logger.get().warn(`Could not parse soql for ${sObjectApiName}.`);
+						return queryDescribeAndWriteFauxSoql();
+					}
+
 					const result = sObjectDescribeResult.result;
-					const uri = Uri.join(destDir, `${sObjectApiName}.json`);
+					const uri = getUriFor(sObjectDescribeResult);
 
 					await this.getIde().writeFile({
 						uri,
@@ -71,3 +111,6 @@ export class GenerateFauxSoqlCommand extends Command {
 		});
 	}
 }
+
+
+// What are we trying to accomplish here?
