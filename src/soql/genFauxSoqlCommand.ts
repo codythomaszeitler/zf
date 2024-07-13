@@ -4,11 +4,22 @@ import { Logger } from "../logger";
 import { SalesforceOrg } from "../salesforceOrg";
 import { SObjectDescribeResult } from "../sObjectDescribeResult";
 
+
+export function genSoqlMetadataDirs(sfdxToolsDir: Uri) {
+	const soqlMetadataCustomDir = Uri.join(sfdxToolsDir, 'soqlMetadata', 'customObjects');
+	const soqlMetadataStandardDir = Uri.join(sfdxToolsDir, 'soqlMetadata', 'standardObjects');
+
+	return {
+		soqlMetadataCustomDir,
+		soqlMetadataStandardDir
+	};
+}
+
 export class GenerateFauxSoqlCommand extends Command {
 
 	public async execute({ targetOrg, sfdxToolsDir }: { targetOrg?: SalesforceOrg, sfdxToolsDir: Uri }) {
-		const soqlMetadataCustomDir = Uri.join(sfdxToolsDir, 'soqlMetadata', 'customObjects');
-		const soqlMetadataStandardDir = Uri.join(sfdxToolsDir, 'soqlMetadata', 'standardObjects');
+
+		const { soqlMetadataCustomDir, soqlMetadataStandardDir } = genSoqlMetadataDirs(sfdxToolsDir);
 
 		const getUriFor = (sobjectDescribeResult: SObjectDescribeResult) => {
 			if (sobjectDescribeResult.result.custom) {
@@ -31,7 +42,7 @@ export class GenerateFauxSoqlCommand extends Command {
 			});
 
 			if (!sObjectListResult) {
-				const warningMessage = `Could not parse sobject list against ${targetOrDefaultOrg.getAlias()}`;
+				const warningMessage = `Could not parse sobject list against ${targetOrDefaultOrg.getAlias()}.`;
 				Logger.get().warn(warningMessage);
 				this.getIde().showWarningMessage(warningMessage);
 				return;
@@ -60,9 +71,6 @@ export class GenerateFauxSoqlCommand extends Command {
 				if (!sObjectApiName) {
 					return Promise.resolve();
 				}
-
-				// So... what are we trying to do here?
-				// And the rpoblem here is that 
 
 				try {
 					const sObjectDescribeResult = await this.getCli().sobjectDescribe({
