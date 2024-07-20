@@ -449,6 +449,17 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", runSoqlScriptExecute));
+
+
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.deployGitDiff', async () => {
+		const result = await vscode.commands.executeCommand('git.api.getRepositories');
+		console.log(result);
+
+		const repositoryState = await vscode.commands.executeCommand('git.api.getRepositoryState', result);
+		console.log(repositoryState);
+
+		// So how should this really work? 
+	}));
 }
 
 // this method is called when your extension is deactivated

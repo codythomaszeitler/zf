@@ -79,6 +79,10 @@
         "command": "sf.zsi.runSoqlScript",
         "title": "ZF: Run SOQL Script",
         "when": "editorLangId == soql"
+      },
+      {
+        "command": "sf.zsi.deployGitDiff",
+        "title": "ZF: Run Git Diff Deployment"
       }
     ],
     "views": {
@@ -210,6 +214,10 @@
     "apex-parser": "^2.17.0",
     "fast-xml-parser": "^4.4.0",
     "json-schema-to-ts": "^3.1.0",
+    "sfdx-git-delta": "^5.40.2",
     "zod": "^3.23.8"
-  }
+  },
+  "extensionDependencies": [
+    "vscode.git"
+  ]
 }
