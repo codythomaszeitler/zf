@@ -404,7 +404,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 	vscode.languages.registerCompletionItemProvider({
-		scheme: 'file', language: 'soql'
+		scheme: 'file', pattern : '**/*.soql'
 	}, {
 		async provideCompletionItems(document, position, token, context) {
 			if (ide.getConfig("sf.zsi.enableSoqlIntellisensePrototype", true)) {
