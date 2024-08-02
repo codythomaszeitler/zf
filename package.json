@@ -3,7 +3,7 @@
   "displayName": "ZeitlerForce",
   "repository": "https://github.com/codythomaszeitler/sf-zsi.git",
   "description": "vscode extensions for salesforce.",
-  "version": "1.39.0",
+  "version": "1.40.0",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -193,7 +193,7 @@
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "test": "jest",
-    "antlr4ts" : ".\\node_modules\\.bin\\antlr4ts -visitor .\\src\\parser\\SoqlLexer.g4 .\\src\\parser\\SoqlParser.g4"
+    "antlr4ts": ".\\node_modules\\.bin\\antlr4ts -visitor .\\src\\parser\\SoqlLexer.g4 .\\src\\parser\\SoqlParser.g4"
   },
   "devDependencies": {
     "@types/glob": "^7.1.4",
