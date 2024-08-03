@@ -185,7 +185,18 @@
           "default": true
         }
       }
-    }
+    },
+    "languages": [
+      {
+        "id": "zoql",
+        "aliases": [
+          "zoql"
+        ],
+        "extensions": [
+          ".zoql"
+        ]
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
