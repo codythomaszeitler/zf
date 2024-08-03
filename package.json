@@ -120,7 +120,7 @@
         {
           "command": "sf.zsi.runSoqlScript",
           "group": "navigation@0",
-          "when": "editorLangId == soql"
+          "when": "editorLangId == soql || editorLangId == zoql"
         }
       ],
       "view/item/context": [
