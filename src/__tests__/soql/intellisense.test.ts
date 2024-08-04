@@ -67,6 +67,34 @@ describe('soql intellisense', () => {
 		expect(results[0].item).toBe('Name');
 	});
 
+	it('should be able to intellisense one account field, Name, when its partially completed', async () => {
+		const currentEditorContents = 'SELECT Id, Na FROM Account';
+		const position = new Position(1, 13);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			}],
+			name: 'Account'
+		};
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Name');
+	});
+
 	it('should be able to intellisense two account fields (account stored in standard dir)', async () => {
 		const currentEditorContents = 'SELECT Id,  FROM Account';
 		const position = new Position(1, 11);
@@ -207,6 +235,52 @@ describe('soql intellisense', () => {
 		expect(results[0].item).toBe('Account');
 		expect(results[1].item).toBe('Test_Object__c');
 	});
+
+	it('should be able to intellisense when trying to auto-complete sobjects (partial sobject put in)', async () => {
+		const currentEditorContents = 'SELECT Id FROM Acc';
+		const position = new Position(0, 15);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				}
+			],
+			name: 'Account'
+		};
+		const accountSObjectContents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const accountUri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri: accountUri, contents: accountSObjectContents
+		});
+
+		const testObjectSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				}
+			],
+			name: 'Test_Object__c'
+		};
+		const testObjectUri = Uri.join(sObjectsDir, CUSTOM_SOBJECTS_SUBDIR, 'Test_Object__c.cls');
+		const testObjectContents = fauxSObjectIntoString({ fauxApexClass: testObjectSObject });
+		await ide.writeFile({
+			uri: testObjectUri, contents: testObjectContents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Account');
+	});
+
 
 	it('should be able to intellisense NOTHING when trying to auto-complete a completed query while within select', async () => {
 		const currentEditorContents = 'SELECT Id, Name   FROM Account';

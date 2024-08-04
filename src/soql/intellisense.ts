@@ -11,7 +11,7 @@ import { CaseInsensitiveInputStream } from "apex-parser";
 
 export const CUSTOM_SOBJECTS_SUBDIR = 'customObjects';
 export const STANDARD_SOBJECTS_SUBDIR = 'standardObjects';
-const sfZsiString = '__zf#szi#location__';
+const sfZsiString = '__zf_szi_location__';
 
 const sortByName = (items: { item: string }[]) => {
 	return items.sort((a, b) => {
@@ -40,8 +40,12 @@ export class SoqlIntellisense {
 		}
 
 		const findMatching = (element: any) => {
-			if (element.text === sfZsiString) {
+			if (element.text?.includes(sfZsiString) && element.childCount === 0) {
 				return element;
+			}
+
+			if (!element.text?.includes(sfZsiString)) {
+				return undefined;
 			}
 
 			if (!element.children) {
@@ -58,65 +62,77 @@ export class SoqlIntellisense {
 			return undefined;
 		};
 
-		const match = findMatching(soql);
-		const containsRule = (rule: number) => {
-			return this.getDescendantsOf(soql).some(element => element.ruleIndex === rule);
+		const getParents = (element: any) => {
+			const parents = [];
+			let iterator = element.parent;
+			while (iterator) {
+				parents.push(iterator);
+				iterator = iterator.parent;
+			}
+			return parents;
 		};
 
-		if (match.ruleIndex === SoqlParser.RULE_fromSoqlId) {
-			const items = [];
-			if (!containsRule(SoqlParser.RULE_whereClause)) {
-				items.push({
-					item: 'WHERE'
-				});
-			}
+		const hasParentRule = (element: any, ruleIndex: number) => {
+			const parents = getParents(element);
+			return parents.some(parent => parent.ruleIndex === ruleIndex);
+		};
 
-			if (!containsRule(SoqlParser.RULE_orderByClause)) {
-				items.push({
-					item: 'ORDER BY'
-				});
-			}
+		const match = findMatching(soql);
 
-			return sortByName(items);
-		}
-
-		if (match.ruleIndex === SoqlParser.RULE_selectOrSoqlId) {
+		if (match.parent.ruleIndex === SoqlParser.RULE_selectOrSoqlId) {
 			return [{
 				item: 'SELECT'
 			}];
 		}
 
-		if (match.ruleIndex === SoqlParser.RULE_fromOrSoqlId) {
+		if (match.parent.ruleIndex === SoqlParser.RULE_fromOrSoqlId) {
 			return [{
 				item: 'FROM'
 			}];
 		}
 
-		if (match.ruleIndex === SoqlParser.RULE_fromNameList) {
-			return await this.getSortedSObjectNames();
+		if (hasParentRule(match, SoqlParser.RULE_fromSoqlId)) {
+			const items = [];
+			if (!hasParentRule(match, SoqlParser.RULE_whereClause)) {
+				items.push({
+					item: 'WHERE'
+				});
+			}
+
+			if (!hasParentRule(match, SoqlParser.RULE_orderByClause)) {
+				items.push({
+					item: 'ORDER BY'
+				});
+			}
+			return sortByName(items);
+		}
+
+		if (hasParentRule(match, SoqlParser.RULE_fromNameList)) {
+			const withoutZfString = match.text.replace(sfZsiString, '');
+			const sObjectNames = await this.getSortedSObjectNames();
+			return sObjectNames.filter(item => item.item.startsWith(withoutZfString));
 		}
 
 		const fromName = this.getCurrentFromName(soql);
 		const fauxSObjectClass = await this.readFauxSObject(fromName);
 
-
-		if (match.ruleIndex === SoqlParser.RULE_selectEntry
-			|| match.ruleIndex === SoqlParser.RULE_selectList) {
-			const alreadySelectedNames = this.getCurrentSelectListFieldNames(soql);
-			return fauxSObjectClass.getSortedNonCollectionFields().filter(field => !alreadySelectedNames.includes(field.item));
-		}
-
-		if (match.ruleIndex === SoqlParser.RULE_logicalExpression ||
-			match.ruleIndex === SoqlParser.RULE_conditionalExpression ||
-			match.ruleIndex === SoqlParser.RULE_fieldOrderList) {
-			return fauxSObjectClass.getSortedNonCollectionFields();
-		}
-
-		if (match.ruleIndex === SoqlParser.RULE_fieldOrder) {
-			const alreadyOrderByNames = this.getCurrentOrderByFieldNames(soql);
-			return fauxSObjectClass.getSortedNonCollectionFields().filter(item => {
-				return !alreadyOrderByNames.includes(item.item);
-			});
+		if (match.parent.ruleIndex === SoqlParser.RULE_soqlId) {
+			const withoutZfString = match.parent.text.replace(sfZsiString, '');
+			const items = fauxSObjectClass.getSortedNonCollectionFields().filter(item => item.item.startsWith(withoutZfString));
+			if (hasParentRule(match, SoqlParser.RULE_selectList)) {
+				const alreadySelectedNames = this.getCurrentSelectListFieldNames(soql);
+				return items.filter(item => !alreadySelectedNames.includes(item.item));
+			}
+			else if (hasParentRule(match, SoqlParser.RULE_whereClause)) {
+				return items;
+			}
+			else if (hasParentRule(match, SoqlParser.RULE_orderByClause)) {
+				const alreadyOrderedByNames = this.getCurrentOrderByFieldNames(soql);
+				return items.filter(item => !alreadyOrderedByNames.includes(item.item));
+			}
+			else {
+				return [];
+			}
 		}
 
 		if (match.ruleIndex === SoqlParser.RULE_comparisonOperator) {
