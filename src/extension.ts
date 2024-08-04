@@ -478,5 +478,5 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", runSoqlScriptExecute));
 }
 
-// this method is called when your extension is deactivated
+
 export function deactivate() { }

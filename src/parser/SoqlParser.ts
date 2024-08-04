@@ -361,7 +361,7 @@ export class SoqlParser extends Parser {
 		"'switch'", "'testmethod'", "'this'", "'throw'", "'transient'", "'trigger'", 
 		"'try'", "'undelete'", "'update'", "'upsert'", "'virtual'", "'void'", 
 		"'webservice'", "'when'", "'while'", "'with'", "'without'", "'list'", 
-		"'map'", "'system'", "'user'", "'__zf#szi#location__'", "'select'", "'count'", 
+		"'map'", "'system'", "'user'", "'__zf_szi_location__'", "'select'", "'count'", 
 		"'from'", "'as'", "'using'", "'scope'", "'where'", "'order'", "'by'", 
 		"'limit'", "'and'", "'or'", "'not'", "'avg'", "'count_distinct'", "'min'", 
 		"'max'", "'sum'", "'typeof'", "'end'", "'then'", "'like'", "'in'", "'includes'", 

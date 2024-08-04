@@ -333,7 +333,7 @@ export class SoqlLexer extends Lexer {
 		"'switch'", "'testmethod'", "'this'", "'throw'", "'transient'", "'trigger'", 
 		"'try'", "'undelete'", "'update'", "'upsert'", "'virtual'", "'void'", 
 		"'webservice'", "'when'", "'while'", "'with'", "'without'", "'list'", 
-		"'map'", "'system'", "'user'", "'__zf#szi#location__'", "'select'", "'count'", 
+		"'map'", "'system'", "'user'", "'__zf_szi_location__'", "'select'", "'count'", 
 		"'from'", "'as'", "'using'", "'scope'", "'where'", "'order'", "'by'", 
 		"'limit'", "'and'", "'or'", "'not'", "'avg'", "'count_distinct'", "'min'", 
 		"'max'", "'sum'", "'typeof'", "'end'", "'then'", "'like'", "'in'", "'includes'", 
@@ -1063,9 +1063,9 @@ export class SoqlLexer extends Lexer {
 		"\u0393t\x03\x02\x02\x02\u0394\u0395\x07w\x02\x02\u0395\u0396\x07u\x02" +
 		"\x02\u0396\u0397\x07g\x02\x02\u0397\u0398\x07t\x02\x02\u0398v\x03\x02" +
 		"\x02\x02\u0399\u039A\x07a\x02\x02\u039A\u039B\x07a\x02\x02\u039B\u039C" +
-		"\x07|\x02\x02\u039C\u039D\x07h\x02\x02\u039D\u039E\x07%\x02\x02\u039E" +
+		"\x07|\x02\x02\u039C\u039D\x07h\x02\x02\u039D\u039E\x07a\x02\x02\u039E" +
 		"\u039F\x07u\x02\x02\u039F\u03A0\x07|\x02\x02\u03A0\u03A1\x07k\x02\x02" +
-		"\u03A1\u03A2\x07%\x02\x02\u03A2\u03A3\x07n\x02\x02\u03A3\u03A4\x07q\x02" +
+		"\u03A1\u03A2\x07a\x02\x02\u03A2\u03A3\x07n\x02\x02\u03A3\u03A4\x07q\x02" +
 		"\x02\u03A4\u03A5\x07e\x02\x02\u03A5\u03A6\x07c\x02\x02\u03A6\u03A7\x07" +
 		"v\x02\x02\u03A7\u03A8\x07k\x02\x02\u03A8\u03A9\x07q\x02\x02\u03A9\u03AA" +
 		"\x07p\x02\x02\u03AA\u03AB\x07a\x02\x02\u03AB\u03AC\x07a\x02\x02\u03AC" +

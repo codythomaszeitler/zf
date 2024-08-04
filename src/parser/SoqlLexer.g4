@@ -110,7 +110,7 @@ SYSTEM          : 'system';
 USER            : 'user';
 
 // ZF INTELLISENSE KEYWORD
-ZF_INTELLISENSE: '__zf#szi#location__';
+ZF_INTELLISENSE: '__zf_szi_location__';
 
 // Soql specific keywords
 SELECT          : 'select';
