@@ -1,6 +1,6 @@
 import { IntegratedDevelopmentEnvironment, Uri } from "../integratedDevelopmentEnvironment";
 import { Position } from "../position";
-import { QueryContext, SoqlParser } from '../parser/SoqlParser';
+import { QueryContext, SelectListContext, SoqlParser } from '../parser/SoqlParser';
 import { SoqlLexer } from '../parser/SoqlLexer';
 import { CommonTokenStream } from 'antlr4ts';
 import { Command } from "../command";
@@ -77,6 +77,10 @@ export class SoqlIntellisense {
 			return parents.some(parent => parent.ruleIndex === ruleIndex);
 		};
 
+		const containsChildRule = (element: any, ruleIndex: number) => {
+			return element.children.some(child => child.ruleIndex === ruleIndex);
+		};
+
 		const match = findMatching(soql);
 
 		if (match.parent.ruleIndex === SoqlParser.RULE_selectOrSoqlId) {
@@ -91,6 +95,7 @@ export class SoqlIntellisense {
 			}];
 		}
 
+		// What in th world is going on here. 
 		if (hasParentRule(match, SoqlParser.RULE_fromSoqlId)) {
 			const items = [];
 			if (!hasParentRule(match, SoqlParser.RULE_whereClause)) {
@@ -111,6 +116,23 @@ export class SoqlIntellisense {
 			const withoutZfString = match.text.replace(sfZsiString, '');
 			const sObjectNames = await this.getSortedSObjectNames();
 			return sObjectNames.filter(item => item.item.startsWith(withoutZfString));
+		}
+
+		const hasFrom = containsChildRule(soql, SoqlParser.RULE_fromOrSoqlId);
+		if (match.parent.ruleIndex === SoqlParser.RULE_selectEntry && !hasFrom) {
+			const selectList = match.parent.parent as SelectListContext;
+			const selectEntries = selectList.selectEntry();
+
+			const isLastSelectEntry = selectEntries[selectEntries.length - 1] === match.parent;
+			if (isLastSelectEntry) {
+				return [{
+					item: 'FROM'
+				}];
+			}
+		}
+
+		if (!hasFrom) {
+			return [];
 		}
 
 		const fromName = this.getCurrentFromName(soql);
@@ -135,7 +157,7 @@ export class SoqlIntellisense {
 			}
 		}
 
-		if (match.ruleIndex === SoqlParser.RULE_comparisonOperator) {
+		if (match.parent.ruleIndex === SoqlParser.RULE_comparisonOperator) {
 			const items = [{
 				item: '!='
 			}, {
@@ -143,6 +165,20 @@ export class SoqlIntellisense {
 			}, {
 				item: '='
 			}];
+			return sortByName(items);
+		}
+
+		if (match.parent.ruleIndex === SoqlParser.RULE_endOfQuery) {
+			const items = [];
+			if (containsChildRule(soql, SoqlParser.RULE_whereClause)) {
+				items.push({
+					item: 'AND'
+				}, {
+					item: 'OR'
+				}, {
+					item: 'ORDER BY'
+				});
+			}
 			return sortByName(items);
 		}
 
