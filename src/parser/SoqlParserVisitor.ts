@@ -4,6 +4,7 @@
 import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
 
 import { QueryContext } from "./SoqlParser";
+import { EndOfQueryContext } from "./SoqlParser";
 import { SelectOrSoqlIdContext } from "./SoqlParser";
 import { FromOrSoqlIdContext } from "./SoqlParser";
 import { SubQueryContext } from "./SoqlParser";
@@ -78,6 +79,13 @@ export interface SoqlParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitQuery?: (ctx: QueryContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `SoqlParser.endOfQuery`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitEndOfQuery?: (ctx: EndOfQueryContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `SoqlParser.selectOrSoqlId`.

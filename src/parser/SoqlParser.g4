@@ -44,7 +44,7 @@ options {tokenVocab=SoqlLexer;}
 // I will never understand why this is not a valid grammar...
 query
     : selectOrSoqlId selectList?
-        fromOrSoqlId fromNameList?
+        fromOrSoqlId? fromNameList?
         usingScope?
         whereClause?
         withClause?
@@ -55,7 +55,11 @@ query
         allRowsClause?
         forClauses
         (UPDATE updateList)?
+        endOfQuery?
         ;
+
+endOfQuery:
+    ZF_INTELLISENSE;
 
 selectOrSoqlId:
     SELECT
@@ -78,6 +82,7 @@ subQuery
 
 selectList
     : 
+    // There could be a select entry Id, INTELLISENSE, A FROM Account
     selectEntry (COMMA selectEntry?)*;
 
 selectEntry

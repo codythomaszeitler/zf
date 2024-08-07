@@ -4,6 +4,7 @@
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
 import { QueryContext } from "./SoqlParser";
+import { EndOfQueryContext } from "./SoqlParser";
 import { SelectOrSoqlIdContext } from "./SoqlParser";
 import { FromOrSoqlIdContext } from "./SoqlParser";
 import { SubQueryContext } from "./SoqlParser";
@@ -79,6 +80,17 @@ export interface SoqlParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitQuery?: (ctx: QueryContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `SoqlParser.endOfQuery`.
+	 * @param ctx the parse tree
+	 */
+	enterEndOfQuery?: (ctx: EndOfQueryContext) => void;
+	/**
+	 * Exit a parse tree produced by `SoqlParser.endOfQuery`.
+	 * @param ctx the parse tree
+	 */
+	exitEndOfQuery?: (ctx: EndOfQueryContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `SoqlParser.selectOrSoqlId`.
