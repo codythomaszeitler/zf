@@ -111,6 +111,15 @@ USER            : 'user';
 
 // ZF INTELLISENSE KEYWORD
 ZF_INTELLISENSE: '__zf_szi_location__';
+SZF_INTELLISENSE: 's__zf_szi_location__';
+SEZF_INTELLISENSE: 'se__zf_szi_location__';
+SELZF_INTELLISENSE: 'sel__zf_szi_location__';
+SELEZF_INTELLISENSE: 'sele__zf_szi_location__';
+SELECZF_INTELLISENSE: 'selec__zf_szi_location__';
+
+FZF_INTELLISENSE: 'f__zf_szi_location__';
+FRZF_INTELLISENSE: 'fr__zf_szi_location__';
+FROZF_INTELLISENSE: 'fro__zf_szi_location__';
 
 // Soql specific keywords
 SELECT          : 'select';

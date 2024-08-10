@@ -151,7 +151,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         }
 
         this.shownInformationMessages.push(message);
-        return this.showInformationMessageSelection;
+        return this.showInformationMessageSelection ?? "";
     }
 
     didShowInformationMessage(message: string): boolean {

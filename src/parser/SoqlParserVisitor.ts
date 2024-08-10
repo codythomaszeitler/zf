@@ -8,13 +8,20 @@ import { EndOfQueryContext } from "./SoqlParser";
 import { SelectOrSoqlIdContext } from "./SoqlParser";
 import { FromOrSoqlIdContext } from "./SoqlParser";
 import { SubQueryContext } from "./SoqlParser";
+import { SubQueryFromNameListContext } from "./SoqlParser";
+import { SubQueryFromNameFieldNameContext } from "./SoqlParser";
+import { SubQueryFromNameSoqlIdContext } from "./SoqlParser";
 import { SelectListContext } from "./SoqlParser";
 import { SelectEntryContext } from "./SoqlParser";
 import { FieldNameContext } from "./SoqlParser";
 import { FromNameListContext } from "./SoqlParser";
+import { FromNameFieldNameContext } from "./SoqlParser";
+import { FromNameSoqlIdContext } from "./SoqlParser";
 import { FromSoqlIdContext } from "./SoqlParser";
 import { SubFieldListContext } from "./SoqlParser";
 import { SubFieldEntryContext } from "./SoqlParser";
+import { SubFieldEntryFieldNameContext } from "./SoqlParser";
+import { SubFieldEntrySoqlIdContext } from "./SoqlParser";
 import { SoqlFieldsParameterContext } from "./SoqlParser";
 import { SoqlFunctionContext } from "./SoqlParser";
 import { DateFieldNameContext } from "./SoqlParser";
@@ -109,6 +116,27 @@ export interface SoqlParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitSubQuery?: (ctx: SubQueryContext) => Result;
 
 	/**
+	 * Visit a parse tree produced by `SoqlParser.subQueryFromNameList`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSubQueryFromNameList?: (ctx: SubQueryFromNameListContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `SoqlParser.subQueryFromNameFieldName`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSubQueryFromNameFieldName?: (ctx: SubQueryFromNameFieldNameContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `SoqlParser.subQueryFromNameSoqlId`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSubQueryFromNameSoqlId?: (ctx: SubQueryFromNameSoqlIdContext) => Result;
+
+	/**
 	 * Visit a parse tree produced by `SoqlParser.selectList`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -137,6 +165,20 @@ export interface SoqlParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitFromNameList?: (ctx: FromNameListContext) => Result;
 
 	/**
+	 * Visit a parse tree produced by `SoqlParser.fromNameFieldName`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitFromNameFieldName?: (ctx: FromNameFieldNameContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `SoqlParser.fromNameSoqlId`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitFromNameSoqlId?: (ctx: FromNameSoqlIdContext) => Result;
+
+	/**
 	 * Visit a parse tree produced by `SoqlParser.fromSoqlId`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -156,6 +198,20 @@ export interface SoqlParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitSubFieldEntry?: (ctx: SubFieldEntryContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `SoqlParser.subFieldEntryFieldName`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSubFieldEntryFieldName?: (ctx: SubFieldEntryFieldNameContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `SoqlParser.subFieldEntrySoqlId`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSubFieldEntrySoqlId?: (ctx: SubFieldEntrySoqlIdContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `SoqlParser.soqlFieldsParameter`.
