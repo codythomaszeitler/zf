@@ -41,7 +41,6 @@
 parser grammar SoqlParser;
 options {tokenVocab=SoqlLexer;}
 
-// I will never understand why this is not a valid grammar...
 query
     : selectOrSoqlId selectList?
         fromOrSoqlId? fromNameList?
@@ -63,22 +62,42 @@ endOfQuery:
 
 selectOrSoqlId:
     SELECT
+    | SZF_INTELLISENSE
+    | SEZF_INTELLISENSE
+    | SELZF_INTELLISENSE 
+    | SELEZF_INTELLISENSE
+    | SELECZF_INTELLISENSE
     | ZF_INTELLISENSE;
 
 fromOrSoqlId:
     FROM 
+    | FZF_INTELLISENSE
+    | FRZF_INTELLISENSE
+    | FROZF_INTELLISENSE
     | ZF_INTELLISENSE
     ;
 
 subQuery
-    : SELECT subFieldList
-        FROM fromNameList
+    : selectOrSoqlId subFieldList?
+        fromOrSoqlId? fromNameList?
         whereClause?
         orderByClause?
         limitClause?
         forClauses
         (UPDATE updateList)?
         ;
+
+subQueryFromNameList
+    : subQueryFromNameFieldName fromSoqlId? (COMMA subQueryFromNameFieldName fromSoqlId?)*;
+
+subQueryFromNameFieldName
+    : subQueryFromNameSoqlId (DOT subQueryFromNameSoqlId)*;
+
+subQueryFromNameSoqlId
+    : Identifier
+    | NAME
+    | ZF_INTELLISENSE
+    ;
 
 selectList
     : 
@@ -88,13 +107,23 @@ selectList
 selectEntry
     : 
     fieldName ZF_INTELLISENSE?
+    | LPAREN subQuery RPAREN
     ;
 
 fieldName
     : soqlId (DOT soqlId)*;
 
 fromNameList
-    : fieldName fromSoqlId? (COMMA fieldName fromSoqlId?)*;
+    : fromNameFieldName fromSoqlId? (COMMA fromNameFieldName fromSoqlId?)*;
+
+fromNameFieldName
+    : fromNameSoqlId;
+
+fromNameSoqlId
+    : Identifier
+    | NAME
+    | ZF_INTELLISENSE
+    ;
 
 fromSoqlId
     : 
@@ -106,9 +135,19 @@ subFieldList
     : subFieldEntry (COMMA subFieldEntry)*;
 
 subFieldEntry
-    : fieldName soqlId?
+    : subFieldEntryFieldName ZF_INTELLISENSE?
     | soqlFunction soqlId?
     | typeOf
+    ;
+
+subFieldEntryFieldName
+    : subFieldEntrySoqlId (DOT subFieldEntrySoqlId)*
+    ;
+
+subFieldEntrySoqlId
+    : Identifier
+    | NAME
+    | ZF_INTELLISENSE
     ;
 
 soqlFieldsParameter

@@ -8,13 +8,20 @@ import { EndOfQueryContext } from "./SoqlParser";
 import { SelectOrSoqlIdContext } from "./SoqlParser";
 import { FromOrSoqlIdContext } from "./SoqlParser";
 import { SubQueryContext } from "./SoqlParser";
+import { SubQueryFromNameListContext } from "./SoqlParser";
+import { SubQueryFromNameFieldNameContext } from "./SoqlParser";
+import { SubQueryFromNameSoqlIdContext } from "./SoqlParser";
 import { SelectListContext } from "./SoqlParser";
 import { SelectEntryContext } from "./SoqlParser";
 import { FieldNameContext } from "./SoqlParser";
 import { FromNameListContext } from "./SoqlParser";
+import { FromNameFieldNameContext } from "./SoqlParser";
+import { FromNameSoqlIdContext } from "./SoqlParser";
 import { FromSoqlIdContext } from "./SoqlParser";
 import { SubFieldListContext } from "./SoqlParser";
 import { SubFieldEntryContext } from "./SoqlParser";
+import { SubFieldEntryFieldNameContext } from "./SoqlParser";
+import { SubFieldEntrySoqlIdContext } from "./SoqlParser";
 import { SoqlFieldsParameterContext } from "./SoqlParser";
 import { SoqlFunctionContext } from "./SoqlParser";
 import { DateFieldNameContext } from "./SoqlParser";
@@ -126,6 +133,39 @@ export interface SoqlParserListener extends ParseTreeListener {
 	exitSubQuery?: (ctx: SubQueryContext) => void;
 
 	/**
+	 * Enter a parse tree produced by `SoqlParser.subQueryFromNameList`.
+	 * @param ctx the parse tree
+	 */
+	enterSubQueryFromNameList?: (ctx: SubQueryFromNameListContext) => void;
+	/**
+	 * Exit a parse tree produced by `SoqlParser.subQueryFromNameList`.
+	 * @param ctx the parse tree
+	 */
+	exitSubQueryFromNameList?: (ctx: SubQueryFromNameListContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `SoqlParser.subQueryFromNameFieldName`.
+	 * @param ctx the parse tree
+	 */
+	enterSubQueryFromNameFieldName?: (ctx: SubQueryFromNameFieldNameContext) => void;
+	/**
+	 * Exit a parse tree produced by `SoqlParser.subQueryFromNameFieldName`.
+	 * @param ctx the parse tree
+	 */
+	exitSubQueryFromNameFieldName?: (ctx: SubQueryFromNameFieldNameContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `SoqlParser.subQueryFromNameSoqlId`.
+	 * @param ctx the parse tree
+	 */
+	enterSubQueryFromNameSoqlId?: (ctx: SubQueryFromNameSoqlIdContext) => void;
+	/**
+	 * Exit a parse tree produced by `SoqlParser.subQueryFromNameSoqlId`.
+	 * @param ctx the parse tree
+	 */
+	exitSubQueryFromNameSoqlId?: (ctx: SubQueryFromNameSoqlIdContext) => void;
+
+	/**
 	 * Enter a parse tree produced by `SoqlParser.selectList`.
 	 * @param ctx the parse tree
 	 */
@@ -170,6 +210,28 @@ export interface SoqlParserListener extends ParseTreeListener {
 	exitFromNameList?: (ctx: FromNameListContext) => void;
 
 	/**
+	 * Enter a parse tree produced by `SoqlParser.fromNameFieldName`.
+	 * @param ctx the parse tree
+	 */
+	enterFromNameFieldName?: (ctx: FromNameFieldNameContext) => void;
+	/**
+	 * Exit a parse tree produced by `SoqlParser.fromNameFieldName`.
+	 * @param ctx the parse tree
+	 */
+	exitFromNameFieldName?: (ctx: FromNameFieldNameContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `SoqlParser.fromNameSoqlId`.
+	 * @param ctx the parse tree
+	 */
+	enterFromNameSoqlId?: (ctx: FromNameSoqlIdContext) => void;
+	/**
+	 * Exit a parse tree produced by `SoqlParser.fromNameSoqlId`.
+	 * @param ctx the parse tree
+	 */
+	exitFromNameSoqlId?: (ctx: FromNameSoqlIdContext) => void;
+
+	/**
 	 * Enter a parse tree produced by `SoqlParser.fromSoqlId`.
 	 * @param ctx the parse tree
 	 */
@@ -201,6 +263,28 @@ export interface SoqlParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitSubFieldEntry?: (ctx: SubFieldEntryContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `SoqlParser.subFieldEntryFieldName`.
+	 * @param ctx the parse tree
+	 */
+	enterSubFieldEntryFieldName?: (ctx: SubFieldEntryFieldNameContext) => void;
+	/**
+	 * Exit a parse tree produced by `SoqlParser.subFieldEntryFieldName`.
+	 * @param ctx the parse tree
+	 */
+	exitSubFieldEntryFieldName?: (ctx: SubFieldEntryFieldNameContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `SoqlParser.subFieldEntrySoqlId`.
+	 * @param ctx the parse tree
+	 */
+	enterSubFieldEntrySoqlId?: (ctx: SubFieldEntrySoqlIdContext) => void;
+	/**
+	 * Exit a parse tree produced by `SoqlParser.subFieldEntrySoqlId`.
+	 * @param ctx the parse tree
+	 */
+	exitSubFieldEntrySoqlId?: (ctx: SubFieldEntrySoqlIdContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `SoqlParser.soqlFieldsParameter`.

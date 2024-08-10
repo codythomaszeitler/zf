@@ -238,7 +238,7 @@ describe('soql intellisense', () => {
 
 	it('should be able to intellisense when trying to auto-complete sobjects (partial sobject put in)', async () => {
 		const currentEditorContents = 'SELECT Id FROM Acc';
-		const position = new Position(0, 15);
+		const position = new Position(0, 18);
 
 		const testObject = new SoqlIntellisense({
 			ide, cli, sObjectsDir
@@ -482,6 +482,129 @@ describe('soql intellisense', () => {
 		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
 		expect(results).toHaveLength(1);
 		expect(results[0].item).toBe('SELECT');
+	});
+
+	it('should be able to intellisense a SELECT at the beginning of a query when only partially completed', async () => {
+		const currentEditorContents = 'SEL Id FROM Account';
+		const position = new Position(0, 3);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Name',
+					type: 'String'
+				},
+				{
+					modifier: 'public',
+					name: 'ParentId',
+					type: 'Id'
+				}
+			],
+			name: 'Account'
+		};
+
+		// SEL__zf_szi_location__
+		// SEL__zf_szi_location__
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('SELECT');
+	});
+
+	it('should be able to intellisense an Id if there is nothing but a select in the query', async () => {
+		const currentEditorContents = 'SELECT ';
+		const position = new Position(0, 7);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Name',
+					type: 'String'
+				},
+				{
+					modifier: 'public',
+					name: 'ParentId',
+					type: 'Id'
+				}
+			],
+			name: 'Account'
+		};
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Id');
+	});
+
+	it('should be able to intellisense only a FROM if there is an Id and it is partially completed', async () => {
+		const currentEditorContents = 'SELECT Id F';
+		const position = new Position(0, 11);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Name',
+					type: 'String'
+				},
+				{
+					modifier: 'public',
+					name: 'ParentId',
+					type: 'Id'
+				}
+			],
+			name: 'Account'
+		};
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('FROM');
 	});
 
 	it('should be able to intellisense a FROM at the end of a query', async () => {
@@ -732,6 +855,7 @@ describe('soql intellisense', () => {
 	});
 
 	it('should be able to intellisense a field after an ORDER BY and COMMA', async () => {
+		// Okay so this is interesting, this is not 
 		const currentEditorContents = 'SELECT Id FROM Account WHERE Name = \'a\' ORDER BY ParentId, ';
 		const position = new Position(0, 61);
 
@@ -1132,5 +1256,396 @@ describe('soql intellisense', () => {
 		expect(results).toHaveLength(2);
 		expect(results[0].item).toBe('Id');
 		expect(results[1].item).toBe('LeadName');
+	});
+
+	it('should be able to intellisense fields on child relationship queries', async () => {
+		const currentEditorContents = 'SELECT Id, (SELECT  FROM Contacts) FROM Account';
+		const position = new Position(0, 19);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>'
+			}],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'LastName',
+				type: 'String'
+			}],
+			name: 'Contact'
+		};
+
+
+		await writeStandardFauxSObject({
+			fauxSObjectApexClass: [contactSObject, accountSObject]
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('LastName');
+	});
+
+	async function writeStandardFauxSObject({ fauxSObjectApexClass }: { fauxSObjectApexClass: FauxSObjectApexClass | FauxSObjectApexClass[] }) {
+		const writeIntoFile = async (fauxSObjectApexClass: FauxSObjectApexClass) => {
+			const contents = fauxSObjectIntoString({ fauxApexClass: fauxSObjectApexClass });
+			const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, `${fauxSObjectApexClass.name}.cls`);
+			await ide.writeFile({
+				uri, contents
+			});
+		};
+
+		if (Array.isArray(fauxSObjectApexClass)) {
+			for (const fauxSObject of fauxSObjectApexClass) {
+				await writeIntoFile(fauxSObject);
+			}
+		} else {
+			await writeIntoFile(fauxSObjectApexClass);
+		}
+	}
+
+	it('should be able to do child relationship queries', async () => {
+		const currentEditorContents = 'SELECT Id, (SELECT Id FROM ) FROM Account';
+		const position = new Position(0, 27);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>'
+			}],
+			name: 'Account'
+		};
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Contacts');
+	});
+
+	it('should be able to intellisense fields on child relationship queries (with parent lookup)', async () => {
+		const currentEditorContents = 'SELECT Id, (SELECT LastName, Account. FROM Contacts) FROM Account';
+		const position = new Position(0, 37);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>'
+			}],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'LastName',
+				type: 'String'
+			}, {
+				modifier: 'public',
+				name: 'Account',
+				type: 'Account'
+			},
+			{
+				modifier: 'public',
+				name: 'AccountId',
+				type: 'Id'
+			}
+			],
+			name: 'Contact'
+		};
+
+
+		await writeStandardFauxSObject({
+			fauxSObjectApexClass: [contactSObject, accountSObject]
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Name');
+	});
+
+	it('should be able to intellisense an Id in an almost empty sub-select (only SELECT and Id found)', async () => {
+		const currentEditorContents = 'SELECT Id, (SELECT Id ) FROM Account';
+		const position = new Position(0, 22);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>'
+			}],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'LastName',
+				type: 'String'
+			}, {
+				modifier: 'public',
+				name: 'Account',
+				type: 'Account'
+			},
+			{
+				modifier: 'public',
+				name: 'AccountId',
+				type: 'Id'
+			}
+			],
+			name: 'Contact'
+		};
+
+
+		await writeStandardFauxSObject({
+			fauxSObjectApexClass: [contactSObject, accountSObject]
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('FROM');
+	});
+
+	it('should be able to intellisense an Id in an almost empty sub-select (only SELECT found)', async () => {
+		const currentEditorContents = 'SELECT Id, (SELECT ) FROM Account';
+		const position = new Position(0, 19);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>'
+			}],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'LastName',
+				type: 'String'
+			}, {
+				modifier: 'public',
+				name: 'Account',
+				type: 'Account'
+			},
+			{
+				modifier: 'public',
+				name: 'AccountId',
+				type: 'Id'
+			}
+			],
+			name: 'Contact'
+		};
+
+
+		await writeStandardFauxSObject({
+			fauxSObjectApexClass: [contactSObject, accountSObject]
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Id');
+	});
+
+	it('should be able to intellisense a SELECT at the start of an empty sub-query', async () => {
+		const currentEditorContents = 'SELECT Id, () FROM Account';
+		const position = new Position(0, 12);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>'
+			}],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'LastName',
+				type: 'String'
+			}, {
+				modifier: 'public',
+				name: 'Account',
+				type: 'Account'
+			},
+			{
+				modifier: 'public',
+				name: 'AccountId',
+				type: 'Id'
+			}
+			],
+			name: 'Contact'
+		};
+
+
+		await writeStandardFauxSObject({
+			fauxSObjectApexClass: [contactSObject, accountSObject]
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('SELECT');
+	});
+
+	it('should be able to intellisense fields on child relationship queries (with parent lookup and partially complete)', async () => {
+		const currentEditorContents = 'SELECT Id, (SELECT LastName, Account.Pare FROM Contacts) FROM Account';
+		const position = new Position(0, 41);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>'
+			}, 
+			{
+				modifier: 'public',
+				name: 'Parent',
+				type: 'Account'
+			},
+			{
+				modifier: 'public',
+				name: 'ParentId',
+				type: 'Id'
+			}],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'LastName',
+				type: 'String'
+			}, {
+				modifier: 'public',
+				name: 'Account',
+				type: 'Account'
+			},
+			{
+				modifier: 'public',
+				name: 'AccountId',
+				type: 'Id'
+			}
+			],
+			name: 'Contact'
+		};
+
+
+		await writeStandardFauxSObject({
+			fauxSObjectApexClass: [contactSObject, accountSObject]
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(2);
+		expect(results[0].item).toBe('Parent');
+		expect(results[1].item).toBe('ParentId');
+	});
+
+	it('should be able to do child relationship queries', async () => {
+		const currentEditorContents = 'SELECT Id, (SELECT Id FROM ) FROM Account';
+		const position = new Position(0, 27);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>'
+			}],
+			name: 'Account'
+		};
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Contacts');
 	});
 });
