@@ -1,6 +1,6 @@
 import { IntegratedDevelopmentEnvironment, Uri } from "../integratedDevelopmentEnvironment";
 import { Position } from "../position";
-import { QueryContext, SelectListContext, SoqlParser } from '../parser/SoqlParser';
+import { FieldNameContext, QueryContext, SelectListContext, SoqlParser } from '../parser/SoqlParser';
 import { SoqlLexer } from '../parser/SoqlLexer';
 import { CommonTokenStream } from 'antlr4ts';
 import { Command } from "../command";
@@ -140,6 +140,24 @@ export class SoqlIntellisense {
 
 		if (match.parent.ruleIndex === SoqlParser.RULE_soqlId) {
 			const withoutZfString = match.parent.text.replace(sfZsiString, '');
+			if (match.parent.parent.ruleIndex === SoqlParser.RULE_fieldName) {
+				const fieldName = match.parent.parent as FieldNameContext;
+				const soqlIds = fieldName.soqlId();
+
+				// This implies that there are 
+				if (soqlIds.length > 1) {
+					const lookupSoqlId = soqlIds[soqlIds.length - 2];
+					const lookupName = lookupSoqlId.text;
+
+					const lookupType = fauxSObjectClass.fields.find(field => field.name === lookupName);
+
+					const lookupFauxSObjectClass = await this.readFauxSObject(lookupType.type);
+
+					const items = lookupFauxSObjectClass.getSortedNonCollectionFields();
+					return items;
+				}
+			}
+
 			const items = fauxSObjectClass.getSortedNonCollectionFields().filter(item => item.item.startsWith(withoutZfString));
 			if (hasParentRule(match, SoqlParser.RULE_selectList)) {
 				const alreadySelectedNames = this.getCurrentSelectListFieldNames(soql);

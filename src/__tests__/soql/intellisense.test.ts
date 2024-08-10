@@ -897,4 +897,128 @@ describe('soql intellisense', () => {
 		expect(results).toHaveLength(1);
 		expect(results[0].item).toBe('SELECT');
 	});
+
+	it('should be able to autocomplete against an account name parent lookup field on contact', async () => {
+		// So we have to know that we are yes... at the end of a query.
+		const currentEditorContents = 'SELECT Id, Account. FROM Contact';
+		const position = new Position(0, 19);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Name',
+					type: 'String'
+				},
+				{
+					modifier: 'public',
+					name: 'ParentId',
+					type: 'Id'
+				}
+			],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'LastName',
+					type: 'String'
+				},
+				{
+					modifier: 'public',
+					name: 'AccountId',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Account',
+					type: 'Account'
+				}
+			],
+			name: 'Contact'
+		};
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const contactContents = fauxSObjectIntoString({ fauxApexClass: contactSObject });
+		const contactFauxSObjectUri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Contact.cls');
+		await ide.writeFile({
+			uri: contactFauxSObjectUri, contents : contactContents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(3);
+		expect(results[0].item).toBe('Id');
+		expect(results[1].item).toBe('Name');
+		expect(results[2].item).toBe('ParentId');
+	});
+
+	it('should be able to autocomplete against an account to account parent (lookup not matching sobject name)', async () => {
+		// So we have to know that we are yes... at the end of a query.
+		const currentEditorContents = 'SELECT Id, Parent. FROM Account';
+		const position = new Position(0, 18);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Name',
+					type: 'String'
+				},
+				{
+					modifier: 'public',
+					name: 'ParentId',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Parent',
+					type: 'Account'
+				}
+			],
+			name: 'Account'
+		};
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(4);
+		expect(results[0].item).toBe('Id');
+		expect(results[1].item).toBe('Name');
+		expect(results[2].item).toBe('Parent');
+		expect(results[3].item).toBe('ParentId');
+	});
 });
