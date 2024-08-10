@@ -963,7 +963,7 @@ describe('soql intellisense', () => {
 		const contactContents = fauxSObjectIntoString({ fauxApexClass: contactSObject });
 		const contactFauxSObjectUri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Contact.cls');
 		await ide.writeFile({
-			uri: contactFauxSObjectUri, contents : contactContents
+			uri: contactFauxSObjectUri, contents: contactContents
 		});
 
 		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
@@ -1020,5 +1020,117 @@ describe('soql intellisense', () => {
 		expect(results[1].item).toBe('Name');
 		expect(results[2].item).toBe('Parent');
 		expect(results[3].item).toBe('ParentId');
+	});
+
+	it('should be able to autocomplete against Account.Parent.Parent.Test_Lead_Lookup__r against contact', async () => {
+		// So we have to know that we are yes... at the end of a query.
+		const currentEditorContents = 'SELECT Id, Account.Parent.Parent.Test_Lead_Lookup__r. FROM Contact';
+		const position = new Position(0, 53);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Name',
+					type: 'String'
+				},
+				{
+					modifier: 'public',
+					name: 'ParentId',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Parent',
+					type: 'Account'
+				},
+				{
+					modifier: 'public',
+					name: 'Test_Lead_Lookup__c',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Test_Lead_Lookup__r',
+					type: 'Lead'
+				}
+			],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'LastName',
+					type: 'String'
+				},
+				{
+					modifier: 'public',
+					name: 'AccountId',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'Account',
+					type: 'Account'
+				}
+			],
+			name: 'Contact'
+		};
+
+		const leadSObject: FauxSObjectApexClass = {
+			fields: [
+				{
+					modifier: 'public',
+					name: 'Id',
+					type: 'Id'
+				},
+				{
+					modifier: 'public',
+					name: 'LeadName',
+					type: 'String'
+				}
+			],
+			name: 'Lead'
+		};
+
+
+		const contactContents = fauxSObjectIntoString({ fauxApexClass: contactSObject });
+		const contactFauxSObjectUri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Contact.cls');
+		await ide.writeFile({
+			uri: contactFauxSObjectUri, contents: contactContents
+		});
+
+		const leadContents = fauxSObjectIntoString({ fauxApexClass: leadSObject });
+		const leadFauxSObjectUri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Lead.cls');
+		await ide.writeFile({
+			uri: leadFauxSObjectUri, contents: leadContents
+		});
+
+		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
+		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
+		await ide.writeFile({
+			uri, contents
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(2);
+		expect(results[0].item).toBe('Id');
+		expect(results[1].item).toBe('LeadName');
 	});
 });

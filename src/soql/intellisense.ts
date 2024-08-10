@@ -144,16 +144,17 @@ export class SoqlIntellisense {
 				const fieldName = match.parent.parent as FieldNameContext;
 				const soqlIds = fieldName.soqlId();
 
-				// This implies that there are 
 				if (soqlIds.length > 1) {
-					const lookupSoqlId = soqlIds[soqlIds.length - 2];
-					const lookupName = lookupSoqlId.text;
+					let leftFauxSObjectClass = fauxSObjectClass;
+					for (let i = 0; i < soqlIds.length - 1; i++) {
+						const leftSoqlId = soqlIds[i];
+						const lookupType = leftFauxSObjectClass.fields.find(field => field.name === leftSoqlId.text);
 
-					const lookupType = fauxSObjectClass.fields.find(field => field.name === lookupName);
+						const lookupFauxSObjectClass = await this.readFauxSObject(lookupType.type);
+						leftFauxSObjectClass = lookupFauxSObjectClass;
+					}
 
-					const lookupFauxSObjectClass = await this.readFauxSObject(lookupType.type);
-
-					const items = lookupFauxSObjectClass.getSortedNonCollectionFields();
+					const items = leftFauxSObjectClass.getSortedNonCollectionFields();
 					return items;
 				}
 			}
