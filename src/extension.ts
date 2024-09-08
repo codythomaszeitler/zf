@@ -25,7 +25,10 @@ import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
 import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
 import { GenerateFauxSoqlCommand } from './soql/genFauxSoqlCommand';
 import { Position } from './position';
-import { SoqlIntellisense } from './soql/intellisense';
+import { DescribeSObject, ListSObjects, SoqlIntellisense } from './soql/intellisense';
+import { SObjectDescribeResult } from './sObjectDescribeResult';
+import { SObject } from './sObject';
+import { SObjectListResult } from './sObjectListResult';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -122,6 +125,7 @@ export function activate(context: vscode.ExtensionContext) {
 					targetOrg: defaultOrg,
 					destDir: ide.generateUri('.sfdx', 'tools', 'sobjects', 'customObjects')
 				});
+				// ana
 			} catch (e: any) {
 				ide.showErrorMessage(e.message);
 			}
@@ -421,6 +425,44 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 
+	const cache = new Map<string, SObjectDescribeResult>();
+	const cachedDescribeSObjects: DescribeSObject = async function ({ sObjectName }) {
+		if (cache.has(sObjectName)) {
+			return cache.get(sObjectName);
+		}
+
+		const defaultOrg = await salesforceCli.getDefaultOrg();
+		const sObjectDescribeResult = await salesforceCli.sobjectDescribe({
+			targetOrg: defaultOrg, sObjectApiName: sObjectName
+		});
+		cache.set(sObjectName, sObjectDescribeResult);
+
+		setTimeout(() => {
+			cache.delete(sObjectName);
+		}, 10000);
+
+		return sObjectDescribeResult;
+	};
+
+
+	let listSObjectsCache : SObjectListResult | undefined = undefined;
+	const cachedListSObjects : ListSObjects = async function({}) {
+		if (listSObjectsCache) {
+			return listSObjectsCache;
+		}
+		const defaultOrg = await salesforceCli.getDefaultOrg();
+		const sObjectListResult = await salesforceCli.sobjectList({
+			targetOrg : defaultOrg
+		});
+		listSObjectsCache = sObjectListResult;
+
+		setTimeout(() => {
+			listSObjectsCache = undefined;
+		}, 10000);
+
+		return sObjectListResult;
+	}
+
 	vscode.languages.registerCompletionItemProvider({
 		scheme: 'file', language: 'zoql'
 	}, {
@@ -430,9 +472,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 				const zfPosition = new Position(position.line, position.character);
 				const intellisense = new SoqlIntellisense({
-					cli: salesforceCli,
-					ide,
-					sObjectsDir: ide.generateUri('.sfdx', 'tools', 'sobjects')
+					describeSObject : cachedDescribeSObjects,
+					listSObjects : cachedListSObjects
 				});
 
 				const items = await intellisense.autocompleteSuggestionsAt(contents, zfPosition);
