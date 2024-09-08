@@ -10,6 +10,7 @@ import { GenerateFauxSoqlCommand, genSoqlMetadataDirs } from '../../soql/genFaux
 import { Uri } from '../../integratedDevelopmentEnvironment';
 import { TestLogger } from '../logger.test';
 import { Logger } from '../../logger';
+import { PickAndGenerateFauxSObjectCommand } from '../../genFauxSObjects';
 
 describe('generate faux sobjects', () => {
 

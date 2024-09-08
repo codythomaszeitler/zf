@@ -30,6 +30,10 @@
         "title": "ZF: Generate Faux SObjects"
       },
       {
+        "command": "sf.zsi.generateFauxSObjectSelection",
+        "title": "ZF: Generate Faux SObject"
+      },
+      {
         "command": "sf.zsi.runHighlightedApex",
         "title": "ZF: Run Highlighted Apex"
       },
