@@ -100,6 +100,20 @@ const genSObjectDescribeSoqlDirectory = function ({ ide, cli, sObjectsDir }: { i
 				const sorted = sortByName(values);
 				return sorted;
 			},
+			getSortedCollectionTypes() {
+				const lists = this.fields.filter(field => listRegex.test(field.type));
+				const types = lists.map(field => field.type) as string[];
+				return types.map(type => {
+					const genericParameterMatch = type.match(/List<(.*)>/);
+					if (!genericParameterMatch) {
+						throw new Error('Could not do the thing.');
+					}
+					const genericParameter = genericParameterMatch[1];
+					return genericParameter;
+				}).map(sObjectName => ({
+					item: sObjectName
+				}));
+			}
 		};
 		return result;
 	};
@@ -366,16 +380,28 @@ export class SoqlIntellisense {
 	}
 
 	private async runFromNameSoqlIdAutocompletion({ stamp, soql }: { stamp: FromNameSoqlIdMatchedRule; soql: QueryContext }) {
-		const visitor: SoqlParserVisitor<void> & { subQueryContext?: SubQueryContext } = { ...getBaseSoqlParserVisitor() };
+		const visitor: SoqlParserVisitor<void> & { subQueryContext?: SubQueryContext; whereClauseContext?: WhereClauseContext } = { ...getBaseSoqlParserVisitor() };
+
 		visitor.visitSubQuery = function (ctx) {
+			// What question are we about right now?
 			if (isChildOf(stamp.fromNameSoqlIdContext, ctx)) {
 				visitor.subQueryContext = ctx;
 			}
 			visitor.visitChildren(ctx);
 		};
+		visitor.visitWhereClause = function (ctx) {
+			if (isChildOf(stamp.fromNameSoqlIdContext, ctx)) {
+				visitor.whereClauseContext = ctx;
+			}
+			visitor.visitChildren(ctx);
+		};
 		visitor.visit(soql);
 
-		if (visitor.subQueryContext) {
+		if (visitor.subQueryContext && visitor.whereClauseContext) {
+			const fromName = this.getCurrentFromName(soql);
+			const fauxSObjectClass = await this.readFauxSObject(fromName);
+			return fauxSObjectClass.getSortedCollectionTypes();
+		} else if (visitor.subQueryContext) {
 			const fromName = this.getCurrentFromName(soql);
 			const fauxSObjectClass = await this.readFauxSObject(fromName);
 			return fauxSObjectClass.getSortedCollectionFields();
@@ -659,6 +685,7 @@ type SoqlParserFauxSObjectApexClass = FauxSObjectApexClass & {
 	getSortedNonCollectionFields: () => { item: string }[]
 	getSortedCollectionFields: () => { item: string }[]
 	getFieldMatchingName: (name: string) => SoqlFauxSObjectField | undefined;
+	getSortedCollectionTypes: () => { item: string }[]
 };
 
 type SoqlListFauxSObjectField = FauxSObjectField & {

@@ -211,6 +211,7 @@ fieldNameList
 usingScope
     : USING SCOPE soqlId;
 
+// Its the fact that I am in the where clause that makes this work. 
 whereClause
     : WHERE logicalExpression;
 

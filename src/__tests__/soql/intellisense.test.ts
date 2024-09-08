@@ -513,9 +513,6 @@ describe('soql intellisense', () => {
 			name: 'Account'
 		};
 
-		// SEL__zf_szi_location__
-		// SEL__zf_szi_location__
-
 		const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
 		const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
 		await ide.writeFile({
@@ -1614,6 +1611,67 @@ describe('soql intellisense', () => {
 		expect(results).toHaveLength(2);
 		expect(results[0].item).toBe('Parent');
 		expect(results[1].item).toBe('ParentId');
+	});
+
+	it('should be able to intellisense a real object name and not child relationship name in where sub-select', async () => {
+		const currentEditorContents = 'SELECT Id FROM Account WHERE Id IN (SELECT FROM )';
+		const position = new Position(0, 48);
+
+		const testObject = new SoqlIntellisense({
+			ide, cli, sObjectsDir
+		});
+
+		const accountSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'Name',
+				type: 'String'
+			},
+			{
+				modifier: 'public',
+				name: 'Contacts',
+				type: 'List<Contact>' // I mean this should really be the correct type.
+			}, 
+			{
+				modifier: 'public',
+				name: 'Parent',
+				type: 'Account'
+			},
+			{
+				modifier: 'public',
+				name: 'ParentId',
+				type: 'Id'
+			}],
+			name: 'Account'
+		};
+
+		const contactSObject: FauxSObjectApexClass = {
+			fields: [{
+				modifier: 'public',
+				name: 'LastName',
+				type: 'String'
+			}, {
+				modifier: 'public',
+				name: 'Account',
+				type: 'Account'
+			},
+			{
+				modifier: 'public',
+				name: 'AccountId',
+				type: 'Id'
+			}
+			],
+			name: 'Contact'
+		};
+
+
+		await writeStandardFauxSObject({
+			fauxSObjectApexClass: [contactSObject, accountSObject]
+		});
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Contact');
 	});
 
 	it('should be able to do child relationship queries', async () => {
