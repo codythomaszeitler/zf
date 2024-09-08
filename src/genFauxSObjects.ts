@@ -131,19 +131,47 @@ function mapChildRelationships(childRelationships: SObjectChildRelationshipDescr
     });
 }
 
+export class PickAndGenerateFauxSObjectCommand extends Command {
+
+    public async execute({ targetOrg, destDir }: { targetOrg: SalesforceOrg; destDir: Uri }) {
+        const { result: sObjectNames } = await this.getCli().sobjectList({ targetOrg });
+        if (sObjectNames) {
+            const selection = await this.getIde().showQuickPick(sObjectNames);
+
+            const generateFauxSObjectsCommand = new GenerateFauxSObjectsCommand({
+                cli: this.getCli(),
+                ide: this.getIde()
+            });
+
+            await generateFauxSObjectsCommand.execute({
+                targetOrg, destDir, sObjectsToGenerate: [selection]
+            });
+        }
+    }
+}
+
 export class GenerateFauxSObjectsCommand extends Command {
 
-    public async execute({ targetOrg, destDir }: { targetOrg: SalesforceOrg, destDir: Uri }) {
+    public async execute({ targetOrg, destDir, sObjectsToGenerate }: { targetOrg: SalesforceOrg, destDir: Uri, sObjectsToGenerate?: string[] }) {
         await this.getIde().withProgress(async (progressToken) => {
+            const getSObjectNames = async () => {
+                if (sObjectsToGenerate) {
+                    return sObjectsToGenerate;
+                }
+
+                const sObjectListResult = await this.getCli().sobjectListDeprecated({
+                    targetOrg
+                });
+
+                const sObjectNames = sObjectListResult.getSObjectApiNamesAsString();
+                return sObjectNames;
+            };
+
             if (progressToken.isCancellationRequested) {
                 return;
             }
 
-            const sObjectListResult = await this.getCli().sobjectListDeprecated({
-                targetOrg
-            });
-
-            const sObjectNames = sObjectListResult.getSObjectApiNamesAsString();
+            const sObjectNames = await getSObjectNames();
 
             let completed = 0;
             const total = sObjectNames.length;

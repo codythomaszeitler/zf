@@ -3,7 +3,7 @@ import { openOrg } from './openOrg';
 import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, ApexLogTreeNode } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { runCliCommand } from './executor';
-import { GenerateFauxSObjectsCommand } from './genFauxSObjects';
+import { GenerateFauxSObjectsCommand, PickAndGenerateFauxSObjectCommand } from './genFauxSObjects';
 import { LogLevel, Logger } from './logger';
 import { generateDebugTraceFlag } from './genDebugTraceFlag';
 import { getRecentApexLogs } from './getRecentApexLogs';
@@ -97,6 +97,24 @@ export function activate(context: vscode.ExtensionContext) {
 		if (defaultOrg) {
 			try {
 				const generateFauxSObjectsCommand = new GenerateFauxSObjectsCommand({
+					cli: salesforceCli,
+					ide
+				});
+				await generateFauxSObjectsCommand.execute({
+					targetOrg: defaultOrg,
+					destDir: ide.generateUri('.sfdx', 'tools', 'sobjects', 'customObjects')
+				});
+			} catch (e: any) {
+				ide.showErrorMessage(e.message);
+			}
+		}
+	}
+
+	async function generateFauxSObjectSelection() {
+		const defaultOrg = await salesforceCli.getDefaultOrg();
+		if (defaultOrg) {
+			try {
+				const generateFauxSObjectsCommand = new PickAndGenerateFauxSObjectCommand({
 					cli: salesforceCli,
 					ide
 				});
@@ -404,7 +422,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 	vscode.languages.registerCompletionItemProvider({
-		scheme: 'file', language : 'zoql'
+		scheme: 'file', language: 'zoql'
 	}, {
 		async provideCompletionItems(document, position, token, context) {
 			if (ide.getConfig("sf.zsi.enableSoqlIntellisensePrototype", true)) {
@@ -434,6 +452,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.projectDeploy", withDiagsProjectDeployStart));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.openOrg', runSfOrgOpen));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjects', generateFauxSObject));
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.generateFauxSObjectSelection', generateFauxSObjectSelection));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runHighlightedApex', runHighlightedApexCommand));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.enableDebugLogForCurrentUser', runEnableDebugLogForCurrentUser));
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.getRecentApexLogs', runGetRecentApexLogs));

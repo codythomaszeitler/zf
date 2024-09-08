@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { GenerateFauxSObjectsCommand, } from '../genFauxSObjects';
+import { GenerateFauxSObjectsCommand, PickAndGenerateFauxSObjectCommand, } from '../genFauxSObjects';
 import { MockIDE } from './__mocks__/mockIntegratedDevelopmentEnvironment';
 import { MockFileSystem } from './__mocks__/mockFileSystem';
 import { SfSalesforceCli } from '../sfSalesforceCli';
@@ -54,6 +54,33 @@ describe('gen faux sobjects with command like object - account', () => {
 			targetOrg: org,
 			destDir
 		});
+
+		const accountFauxSobjectUri = Uri.join(destDir, "Account.cls");
+		const content = await ide.readFile({
+			uri: accountFauxSobjectUri
+		});
+
+		const expected = getFauxAccountSObjectClassString();
+		expect(content).toBe(expected);
+	});
+
+	it('should be able to generate Account faux sobject into file - single selection', async () => {
+		const destDir = ide.generateUri('.sfdx', 'sobjects', 'customObjects');
+		const testObject = new PickAndGenerateFauxSObjectCommand({
+			cli,
+			ide
+		});
+
+		const promise = testObject.execute({
+			targetOrg: org,
+			destDir
+		});
+
+		await ide.waitForShowQuickPick();
+
+		ide.selectQuickPickItem('Account');
+
+		await promise;
 
 		const accountFauxSobjectUri = Uri.join(destDir, "Account.cls");
 		const content = await ide.readFile({
