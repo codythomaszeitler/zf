@@ -122,6 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
 					targetOrg: defaultOrg,
 					destDir: ide.generateUri('.sfdx', 'tools', 'sobjects', 'customObjects')
 				});
+				// ana
 			} catch (e: any) {
 				ide.showErrorMessage(e.message);
 			}

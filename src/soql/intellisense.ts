@@ -36,6 +36,12 @@ const genListSObjectsSoqlDirectory = function ({ sObjectsDir, ide }: { sObjectsD
 	return listSObjects;
 };
 
+
+function isCollectionType(field: FauxSObjectField) {
+	const listRegex = /List<.*>/;
+	return listRegex.test(field.type);
+}
+
 const genSObjectDescribeSoqlDirectory = function ({ ide, cli, sObjectsDir }: { ide: IntegratedDevelopmentEnvironment, cli: SalesforceCli; sObjectsDir: Uri }) {
 	const describeSObjects: DescribeSObject = async function ({ sObjectName }) {
 		const getFauxSObjectUri = async () => {
@@ -54,11 +60,10 @@ const genSObjectDescribeSoqlDirectory = function ({ ide, cli, sObjectsDir }: { i
 		const fauxSObjectApexClass = await readFauxSObjectCommand.execute({
 			fauxSObjectUri
 		});
-		const listRegex = /List<.*>/;
 		const result: SoqlParserFauxSObjectApexClass = {
 			...fauxSObjectApexClass,
 			getSortedNonCollectionFields() {
-				const fields = this.fields.filter(field => !listRegex.test(field.type)).map(field => ({
+				const fields = this.fields.filter(field => !isCollectionType(field)).map(field => ({
 					item: field.name
 				}));
 				return sortByName(fields);
@@ -68,7 +73,7 @@ const genSObjectDescribeSoqlDirectory = function ({ ide, cli, sObjectsDir }: { i
 				if (!matching) {
 					return undefined;
 				}
-				const isCollection = listRegex.test(matching.type);
+				const isCollection = isCollectionType(matching);
 				if (isCollection) {
 					const genericParameterMatch = matching.type.match(/List<(.*)>/);
 					if (!genericParameterMatch) {
@@ -88,7 +93,7 @@ const genSObjectDescribeSoqlDirectory = function ({ ide, cli, sObjectsDir }: { i
 				}
 			},
 			getSortedCollectionFields() {
-				const lists = this.fields.filter(field => listRegex.test(field.type));
+				const lists = this.fields.filter(field => isCollectionType(field));
 				const names = lists.map(field => field.name);
 				const unique = new Set<string>(names);
 				const values: SoqlIntellisenseResult[] = [];
@@ -101,7 +106,7 @@ const genSObjectDescribeSoqlDirectory = function ({ ide, cli, sObjectsDir }: { i
 				return sorted;
 			},
 			getSortedCollectionTypes() {
-				const lists = this.fields.filter(field => listRegex.test(field.type));
+				const lists = this.fields.filter(field => isCollectionType(field));
 				const types = lists.map(field => field.type) as string[];
 				return types.map(type => {
 					const genericParameterMatch = type.match(/List<(.*)>/);
@@ -492,7 +497,7 @@ export class SoqlIntellisense {
 		const fauxSObjectClass = await this.readFauxSObject(fromName);
 
 		const visitor: SoqlParserVisitor<void> &
-		{ subQueryContext?: SubQueryContext; subFieldEntryFieldNameContext?: SubFieldEntryFieldNameContext; lastSoqlId?: SubFieldEntrySoqlIdContext; fromNameListContext?: FromNameListContext; fromOrSoqlIdContext?: FromOrSoqlIdContext } = { ...getBaseSoqlParserVisitor() };
+		{ subQueryContext?: SubQueryContext; subFieldEntryFieldNameContext?: SubFieldEntryFieldNameContext; lastSoqlId?: SubFieldEntrySoqlIdContext; fromNameListContext?: FromNameListContext; fromOrSoqlIdContext?: FromOrSoqlIdContext; whereClauseContext?: WhereClauseContext } = { ...getBaseSoqlParserVisitor() };
 
 		visitor.visitSubQuery = function (ctx) {
 			if (isChildOf(stamp.subFieldEntrySoqlIdContext, ctx)) {
@@ -527,6 +532,13 @@ export class SoqlIntellisense {
 			visitor.visitChildren(ctx);
 		};
 
+		visitor.visitWhereClause = function (ctx) {
+			if (isChildOf(stamp.subFieldEntrySoqlIdContext, ctx)) {
+				visitor.whereClauseContext = ctx;
+			}
+			visitor.visitChildren(ctx);
+		};
+
 		visitor.visit(soql);
 
 		const subQuery = visitor.subQueryContext;
@@ -541,6 +553,14 @@ export class SoqlIntellisense {
 		}
 
 		const subQueryFromName = this.getSubQueryFromName(subQuery);
+		if (visitor.whereClauseContext) {
+			const fromName = this.getCurrentFromName(soql);
+			const subQuerySObject = await this.readFauxSObject(subQueryFromName);
+			const sObject = await this.readFauxSObject(fromName);
+			const options = subQuerySObject.fields.filter(field => isCollectionType(field)).filter(field => field.type === sObject.name);
+			return options.map(option => ({item : option.name }));
+		}
+
 		const field = fauxSObjectClass.getFieldMatchingName(subQueryFromName);
 		if (field?.isCollection) {
 			const subQueryFauxSObjectClass = await this.readFauxSObject(field.genericParameter);
