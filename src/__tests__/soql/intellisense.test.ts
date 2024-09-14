@@ -9,6 +9,8 @@ import { genCommandToStdOutput, genMockExecutor } from './../__mocks__/mockShell
 import { FauxSObjectApexClass, fauxSObjectIntoString } from "../../genFauxSObjects";
 import { Uri } from "../../integratedDevelopmentEnvironment";
 
+// What's interesting here is that we really should 
+
 describe('soql intellisense', () => {
 	let fs: MockFileSystem;
 	let cli: SfSalesforceCli;

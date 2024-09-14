@@ -25,7 +25,8 @@ import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
 import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
 import { GenerateFauxSoqlCommand } from './soql/genFauxSoqlCommand';
 import { Position } from './position';
-import { SoqlIntellisense } from './soql/intellisense';
+import { DescribeSObject, genSObjectDescribeSoqlDirectory, SoqlIntellisense } from './soql/intellisense';
+import { SObjectDescribeResult } from './sObjectDescribeResult';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -422,6 +423,21 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 
+	const cache = new Map<string, SObjectDescribeResult>();
+	const cachedDescribeSObjects: DescribeSObject = async function ({ sObjectName }) {
+		if (cache.has(sObjectName)) {
+			return cache.get(sObjectName);
+		}
+
+		const defaultOrg = await salesforceCli.getDefaultOrg();
+		const sObjectDescribeResult = await salesforceCli.sobjectDescribe({
+			targetOrg: defaultOrg, sObjectApiName: sObjectName
+		});
+		cache.set(sObjectName, sObjectDescribeResult);
+		return sObjectDescribeResult;
+	};
+
+
 	vscode.languages.registerCompletionItemProvider({
 		scheme: 'file', language: 'zoql'
 	}, {
@@ -433,7 +449,9 @@ export function activate(context: vscode.ExtensionContext) {
 				const intellisense = new SoqlIntellisense({
 					cli: salesforceCli,
 					ide,
-					sObjectsDir: ide.generateUri('.sfdx', 'tools', 'sobjects')
+					sObjectsDir: ide.generateUri('.sfdx', 'tools', 'sobjects'),
+					sObjectDescribeCacheUri : ide.generateUri('.sfdx', 'tools', 'sobjects'),
+					describeSObject : cachedDescribeSObjects
 				});
 
 				const items = await intellisense.autocompleteSuggestionsAt(contents, zfPosition);
