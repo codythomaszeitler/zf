@@ -72,33 +72,22 @@ describe('soql intellisense', () => {
 	});
 
 
-	// it('should be able to intellisense one account field, Name, when its partially completed', async () => {
-	// 	const currentEditorContents = 'SELECT Id, Na FROM Account';
-	// 	const position = new Position(1, 13);
+	it('should be able to intellisense one account field, Name, when its partially completed', async () => {
+		const currentEditorContents = 'SELECT Id, Na FROM Account';
+		const position = new Position(1, 13);
 
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
+		const testObject = new SoqlIntellisense({
+			describeSObject, listSObjects
+		});
 
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [{
-	// 			modifier: 'public',
-	// 			name: 'Name',
-	// 			type: 'String'
-	// 		}],
-	// 		name: 'Account'
-	// 	};
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Name');
 
-	// 	const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri, contents
-	// 	});
 
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(1);
-	// 	expect(results[0].item).toBe('Name');
-	// });
+		const allStartWithNa = results.filter(item => item.item.startsWith('Na'));
+		expect(allStartWithNa).toHaveLength(3);
+	});
 
 	// it('should be able to intellisense two account fields (account stored in standard dir)', async () => {
 	// 	const currentEditorContents = 'SELECT Id,  FROM Account';
