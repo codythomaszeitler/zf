@@ -25,8 +25,10 @@ import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
 import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
 import { GenerateFauxSoqlCommand } from './soql/genFauxSoqlCommand';
 import { Position } from './position';
-import { DescribeSObject, genSObjectDescribeSoqlDirectory, SoqlIntellisense } from './soql/intellisense';
+import { DescribeSObject, genSObjectDescribeSoqlDirectory, ListSObjects, SoqlIntellisense } from './soql/intellisense';
 import { SObjectDescribeResult } from './sObjectDescribeResult';
+import { SObject } from './sObject';
+import { SObjectListResult } from './sObjectListResult';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -434,9 +436,32 @@ export function activate(context: vscode.ExtensionContext) {
 			targetOrg: defaultOrg, sObjectApiName: sObjectName
 		});
 		cache.set(sObjectName, sObjectDescribeResult);
+
+		setTimeout(() => {
+			cache.delete(sObjectName);
+		}, 10000);
+
 		return sObjectDescribeResult;
 	};
 
+
+	let listSObjectsCache : SObjectListResult | undefined = undefined;
+	const cachedListSObjects : ListSObjects = async function({}) {
+		if (listSObjectsCache) {
+			return listSObjectsCache;
+		}
+		const defaultOrg = await salesforceCli.getDefaultOrg();
+		const sObjectListResult = await salesforceCli.sobjectList({
+			targetOrg : defaultOrg
+		});
+		listSObjectsCache = sObjectListResult;
+
+		setTimeout(() => {
+			listSObjectsCache = undefined;
+		}, 10000);
+
+		return sObjectListResult;
+	}
 
 	vscode.languages.registerCompletionItemProvider({
 		scheme: 'file', language: 'zoql'
@@ -451,7 +476,8 @@ export function activate(context: vscode.ExtensionContext) {
 					ide,
 					sObjectsDir: ide.generateUri('.sfdx', 'tools', 'sobjects'),
 					sObjectDescribeCacheUri : ide.generateUri('.sfdx', 'tools', 'sobjects'),
-					describeSObject : cachedDescribeSObjects
+					describeSObject : cachedDescribeSObjects,
+					listSObjects : cachedListSObjects
 				});
 
 				const items = await intellisense.autocompleteSuggestionsAt(contents, zfPosition);

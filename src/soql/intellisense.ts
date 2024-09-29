@@ -25,52 +25,23 @@ const sortByName = (items: { item: string }[]) => {
 	});
 };
 
-const genListSObjectsSoqlDirectory = function ({ cli }: { cli: SalesforceCli }) {
-	// We should cache this...
-	const listSObjects: ListSObjects = async function ({ }) {
-		const defaultOrg = await cli.getDefaultOrg();
-		const sObjectListResult = await cli.sobjectList({
-			targetOrg: defaultOrg
-		});
-		return sObjectListResult;
-	};
-	return listSObjects;
-};
-
-export const genSObjectDescribeSoqlDirectory = function ({ cli, ide }: { cli: SalesforceCli; ide: IntegratedDevelopmentEnvironment; sObjectDescribeCacheUri: Uri }) {
-	const describeSObjects: DescribeSObject = async function ({ sObjectName }) {
-		const defaultOrg = await cli.getDefaultOrg();
-
-		const sObjectDescribeResult = await cli.sobjectDescribe({
-			targetOrg: defaultOrg, sObjectApiName: sObjectName
-		});
-		return sObjectDescribeResult;
-	};
-	return describeSObjects;
-};
-
 export class SoqlIntellisense {
 
 	private readonly describeSObject?: DescribeSObject;
 	private readonly listSObjects?: ListSObjects;
 
 	constructor ({
-		ide, cli, sObjectsDir, describeSObject, listSObjects
-	}: { ide: IntegratedDevelopmentEnvironment; cli: SalesforceCli, sObjectsDir: Uri, describeSObject?: DescribeSObject, listSObjects?: ListSObjects; sObjectDescribeCacheUri: Uri }) {
+		describeSObject, listSObjects
+	}: { describeSObject?: DescribeSObject, listSObjects?: ListSObjects; }) {
 		if (listSObjects) {
 			this.listSObjects = listSObjects;
-		} else {
-			this.listSObjects = genListSObjectsSoqlDirectory({
-				cli
-			});
 		}
-
 		if (describeSObject) {
 			this.describeSObject = describeSObject;
-		} 
+		}
 	}
 
-	async autocompleteSuggestionsAt(contents: string, position: Position) {
+	async autocompleteSuggestionsAt(contents: string, position: Position): Promise<{ item: string }[]> {
 		const soql = this.parseInjectedSoqlString(contents, position);
 		if (!soql) {
 			return [];
