@@ -89,50 +89,6 @@ describe('soql intellisense', () => {
 		expect(allStartWithNa).toHaveLength(3);
 	});
 
-	// it('should be able to intellisense two account fields (account stored in standard dir)', async () => {
-	// 	const currentEditorContents = 'SELECT Id,  FROM Account';
-	// 	const position = new Position(1, 11);
-
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
-
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'ParentId',
-	// 				type: 'Id'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Name',
-	// 				type: 'String'
-	// 			}, {
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'ChildAccounts',
-	// 				type: 'List<Account>'
-	// 			}],
-	// 		name: 'Account'
-	// 	};
-
-	// 	const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri, contents
-	// 	});
-
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(2);
-	// 	expect(results[0].item).toBe('Name');
-	// 	expect(results[1].item).toBe('ParentId');
-	// });
-
 	// it('should be able to intellisense with no account fields', async () => {
 	// 	const currentEditorContents = 'SELECT  FROM Account';
 	// 	const position = new Position(1, 7);
