@@ -11,6 +11,7 @@ import { Uri } from "../../integratedDevelopmentEnvironment";
 import { getAccountSObjectDescribeResult } from './data/accountSObjectDescribeResult';
 import { getListSObjectsResult } from './data/listSObjectResult';
 import { SObjectDescribeResult } from "../../sObjectDescribeResult";
+import { getSObjectList } from "../data/sobjectListOutputs";
 
 const describeSObject: DescribeSObject = async function ({ sObjectName }) {
 	if (sObjectName === 'Account') {
@@ -117,51 +118,20 @@ describe('soql intellisense', () => {
 		expect(results).toHaveLength(0);
 	});
 
-	// it('should be able to intellisense when trying to auto-complete sobjects', async () => {
-	// 	const currentEditorContents = 'SELECT Id FROM ';
-	// 	const position = new Position(0, 15);
+	it('should be able to intellisense when trying to auto-complete sobjects', async () => {
+		const currentEditorContents = 'SELECT Id FROM ';
+		const position = new Position(0, 15);
 
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
+		const testObject = new SoqlIntellisense({
+			describeSObject, listSObjects
+		});
 
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			}
-	// 		],
-	// 		name: 'Account'
-	// 	};
-	// 	const accountSObjectContents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const accountUri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri: accountUri, contents: accountSObjectContents
-	// 	});
+		const sObjectNames = getListSObjectsResult();
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(sObjectNames.result.length);
 
-	// 	const testObjectSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			}
-	// 		],
-	// 		name: 'Test_Object__c'
-	// 	};
-	// 	const testObjectUri = Uri.join(sObjectsDir, CUSTOM_SOBJECTS_SUBDIR, 'Test_Object__c.cls');
-	// 	const testObjectContents = fauxSObjectIntoString({ fauxApexClass: testObjectSObject });
-	// 	await ide.writeFile({
-	// 		uri: testObjectUri, contents: testObjectContents
-	// 	});
-
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(2);
-	// 	expect(results[0].item).toBe('Account');
-	// 	expect(results[1].item).toBe('Test_Object__c');
-	// });
+		expect(results.every(result => sObjectNames.result.includes(result.item))).toBe(true);
+	});
 
 	// it('should be able to intellisense when trying to auto-complete sobjects (partial sobject put in)', async () => {
 	// 	const currentEditorContents = 'SELECT Id FROM Acc';
