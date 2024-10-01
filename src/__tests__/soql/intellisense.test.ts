@@ -133,50 +133,23 @@ describe('soql intellisense', () => {
 		expect(results.every(result => sObjectNames.result.includes(result.item))).toBe(true);
 	});
 
-	// it('should be able to intellisense when trying to auto-complete sobjects (partial sobject put in)', async () => {
-	// 	const currentEditorContents = 'SELECT Id FROM Acc';
-	// 	const position = new Position(0, 18);
+	it('should be able to intellisense when trying to auto-complete sobjects (partial sobject put in)', async () => {
+		const currentEditorContents = 'SELECT Id FROM Acc';
+		const position = new Position(0, 18);
 
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
+		const testObject = new SoqlIntellisense({
+			describeSObject, listSObjects
+		});
 
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			}
-	// 		],
-	// 		name: 'Account'
-	// 	};
-	// 	const accountSObjectContents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const accountUri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri: accountUri, contents: accountSObjectContents
-	// 	});
+		const sObjectNames = getListSObjectsResult().result;
 
-	// 	const testObjectSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			}
-	// 		],
-	// 		name: 'Test_Object__c'
-	// 	};
-	// 	const testObjectUri = Uri.join(sObjectsDir, CUSTOM_SOBJECTS_SUBDIR, 'Test_Object__c.cls');
-	// 	const testObjectContents = fauxSObjectIntoString({ fauxApexClass: testObjectSObject });
-	// 	await ide.writeFile({
-	// 		uri: testObjectUri, contents: testObjectContents
-	// 	});
+		const startingWithAcc = sObjectNames.filter(sObjectName => sObjectName.startsWith('Acc'));
 
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(1);
-	// 	expect(results[0].item).toBe('Account');
-	// });
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(startingWithAcc.length);
+
+		expect(results.every(result => sObjectNames.includes(result.item))).toBe(true);
+	});
 
 
 	// it('should be able to intellisense NOTHING when trying to auto-complete a completed query while within select', async () => {
