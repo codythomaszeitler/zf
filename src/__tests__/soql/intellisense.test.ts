@@ -117,34 +117,6 @@ describe('soql intellisense', () => {
 		expect(results).toHaveLength(0);
 	});
 
-	// it('should be able to intellisense with no account fields (but has id)', async () => {
-	// 	const currentEditorContents = 'SELECT  FROM Account';
-	// 	const position = new Position(1, 7);
-
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
-
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [{
-	// 			modifier: 'public',
-	// 			name: 'Id',
-	// 			type: 'Id'
-	// 		}],
-	// 		name: 'Account'
-	// 	};
-
-	// 	const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri, contents
-	// 	});
-
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(1);
-	// 	expect(results[0].item).toBe('Id');
-	// });
-
 	// it('should be able to intellisense when trying to auto-complete sobjects', async () => {
 	// 	const currentEditorContents = 'SELECT Id FROM ';
 	// 	const position = new Position(0, 15);
