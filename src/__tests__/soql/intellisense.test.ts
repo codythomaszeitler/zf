@@ -1,5 +1,5 @@
 import { Position } from "../../position";
-import { CUSTOM_SOBJECTS_SUBDIR, DescribeSObject, ListSObjects, SoqlIntellisense, STANDARD_SOBJECTS_SUBDIR } from "../../soql/intellisense";
+import { DescribeSObject, ListSObjects, SoqlIntellisense, STANDARD_SOBJECTS_SUBDIR } from "../../soql/intellisense";
 import { describe } from '@jest/globals';
 import { SalesforceOrg } from "../../salesforceOrg";
 import { MockFileSystem } from "./../__mocks__/mockFileSystem";
@@ -10,6 +10,7 @@ import { FauxSObjectApexClass, fauxSObjectIntoString } from "../../genFauxSObjec
 import { Uri } from "../../integratedDevelopmentEnvironment";
 import { getAccountSObjectDescribeResult } from './data/accountSObjectDescribeResult';
 import { getListSObjectsResult } from './data/listSObjectResult';
+import { SObjectDescribeResult } from "../../sObjectDescribeResult";
 
 const describeSObject: DescribeSObject = async function ({ sObjectName }) {
 	if (sObjectName === 'Account') {
@@ -89,28 +90,32 @@ describe('soql intellisense', () => {
 		expect(allStartWithNa).toHaveLength(3);
 	});
 
-	// it('should be able to intellisense with no account fields', async () => {
-	// 	const currentEditorContents = 'SELECT  FROM Account';
-	// 	const position = new Position(1, 7);
+	it('should be able to intellisense against an sobject that does not return any fields', async () => {
+		const currentEditorContents = 'SELECT  FROM Account';
+		const position = new Position(1, 7);
 
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
+		const describeSObject: DescribeSObject = async ({ sObjectName }) => {
+			expect(sObjectName).toBe('Account');
+			const result: SObjectDescribeResult = {
+				result: {
+					fields: [],
+					childRelationships: [],
+					name: sObjectName,
+					custom: false,
+					queryable: true
+				}
+			};
 
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [],
-	// 		name: 'Account'
-	// 	};
+			return result;
+		};
 
-	// 	const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri, contents
-	// 	});
+		const testObject = new SoqlIntellisense({
+			describeSObject, listSObjects
+		});
 
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(0);
-	// });
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(0);
+	});
 
 	// it('should be able to intellisense with no account fields (but has id)', async () => {
 	// 	const currentEditorContents = 'SELECT  FROM Account';
