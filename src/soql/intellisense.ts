@@ -1,10 +1,8 @@
-import { IntegratedDevelopmentEnvironment, Uri } from "../integratedDevelopmentEnvironment";
 import { Position } from "../position";
 import { ComparisonOperatorContext, EndOfQueryContext, FieldNameContext, FromNameListContext, FromNameSoqlIdContext, FromOrSoqlIdContext, FromSoqlIdContext, OrderByClauseContext, QueryContext, SelectEntryContext, SelectListContext, SelectOrSoqlIdContext, SoqlIdContext, SoqlParser, SubFieldEntryContext, SubFieldEntryFieldNameContext, SubFieldEntrySoqlIdContext, SubFieldListContext, SubQueryContext, SubQueryFromNameFieldNameContext, SubQueryFromNameSoqlIdContext, WhereClauseContext } from '../parser/SoqlParser';
 import { SoqlLexer } from '../parser/SoqlLexer';
 import { CommonTokenStream } from 'antlr4ts';
 import { FauxSObjectApexClass, FauxSObjectField } from "../genFauxSObjects";
-import { SalesforceCli } from "../salesforceCli";
 import { CaseInsensitiveInputStream } from "apex-parser";
 import { SoqlParserVisitor } from "../parser/SoqlParserVisitor";
 import { ErrorNode } from "antlr4ts/tree/ErrorNode";
