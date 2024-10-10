@@ -186,47 +186,17 @@ describe('soql intellisense', () => {
 		});
 	}
 
-	// it('should be able to intellisense field names in a where clause', async () => {
-	// 	const currentEditorContents = 'SELECT Id FROM Account WHERE ';
-	// 	const position = new Position(0, 29);
+	it('should be able to intellisense field names in a where clause', async () => {
+		const currentEditorContents = 'SELECT Id FROM Account WHERE ';
+		const position = new Position(0, 29);
 
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
+		const testObject = new SoqlIntellisense({
+			describeSObject, listSObjects
+		});
 
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Name',
-	// 				type: 'String'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'ParentId',
-	// 				type: 'Id'
-	// 			}
-	// 		],
-	// 		name: 'Account'
-	// 	};
-
-	// 	const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri, contents
-	// 	});
-
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(3);
-	// 	expect(results[0].item).toBe('Id');
-	// 	expect(results[1].item).toBe('Name');
-	// 	expect(results[2].item).toBe('ParentId');
-	// });
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(73);
+	});
 
 	// it('should be able to intellisense WHERE clause AND ORDER BY clause after Account SObject', async () => {
 	// 	const currentEditorContents = 'SELECT Id FROM Account ';
