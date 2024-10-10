@@ -225,85 +225,31 @@ describe('soql intellisense', () => {
 		expect(results[0].item).toBe('SELECT');
 	});
 
-	// it('should be able to intellisense a SELECT at the beginning of a query when only partially completed', async () => {
-	// 	const currentEditorContents = 'SEL Id FROM Account';
-	// 	const position = new Position(0, 3);
+	it('should be able to intellisense a SELECT at the beginning of a query when only partially completed', async () => {
+		const currentEditorContents = 'SEL Id FROM Account';
+		const position = new Position(0, 3);
 
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
+		const testObject = new SoqlIntellisense({
+			describeSObject, listSObjects
+		});
 
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Name',
-	// 				type: 'String'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'ParentId',
-	// 				type: 'Id'
-	// 			}
-	// 		],
-	// 		name: 'Account'
-	// 	};
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('SELECT');
+	});
 
-	// 	const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri, contents
-	// 	});
+	it('should be able to intellisense an Id if there is nothing but a select in the query', async () => {
+		const currentEditorContents = 'SELECT ';
+		const position = new Position(0, 7);
 
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(1);
-	// 	expect(results[0].item).toBe('SELECT');
-	// });
+		const testObject = new SoqlIntellisense({
+			describeSObject, listSObjects
+		});
 
-	// it('should be able to intellisense an Id if there is nothing but a select in the query', async () => {
-	// 	const currentEditorContents = 'SELECT ';
-	// 	const position = new Position(0, 7);
-
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
-
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Name',
-	// 				type: 'String'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'ParentId',
-	// 				type: 'Id'
-	// 			}
-	// 		],
-	// 		name: 'Account'
-	// 	};
-
-	// 	const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri, contents
-	// 	});
-
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(1);
-	// 	expect(results[0].item).toBe('Id');
-	// });
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('Id');
+	});
 
 	// it('should be able to intellisense only a FROM if there is an Id and it is partially completed', async () => {
 	// 	const currentEditorContents = 'SELECT Id F';
