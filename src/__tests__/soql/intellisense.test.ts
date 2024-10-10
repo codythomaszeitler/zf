@@ -212,45 +212,18 @@ describe('soql intellisense', () => {
 		expect(results[1].item).toBe('WHERE');
 	});
 
-	// it('should be able to intellisense a SELECT at the beginning of a query', async () => {
-	// 	const currentEditorContents = ' Id FROM Account';
-	// 	const position = new Position(0, 0);
+	it('should be able to intellisense a SELECT at the beginning of a query', async () => {
+		const currentEditorContents = ' Id FROM Account';
+		const position = new Position(0, 0);
 
-	// 	const testObject = new SoqlIntellisense({
-	// 		ide, cli, sObjectsDir
-	// 	});
+		const testObject = new SoqlIntellisense({
+			describeSObject, listSObjects
+		});
 
-	// 	const accountSObject: FauxSObjectApexClass = {
-	// 		fields: [
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Id',
-	// 				type: 'Id'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'Name',
-	// 				type: 'String'
-	// 			},
-	// 			{
-	// 				modifier: 'public',
-	// 				name: 'ParentId',
-	// 				type: 'Id'
-	// 			}
-	// 		],
-	// 		name: 'Account'
-	// 	};
-
-	// 	const contents = fauxSObjectIntoString({ fauxApexClass: accountSObject });
-	// 	const uri = Uri.join(sObjectsDir, STANDARD_SOBJECTS_SUBDIR, 'Account.cls');
-	// 	await ide.writeFile({
-	// 		uri, contents
-	// 	});
-
-	// 	const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
-	// 	expect(results).toHaveLength(1);
-	// 	expect(results[0].item).toBe('SELECT');
-	// });
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(1);
+		expect(results[0].item).toBe('SELECT');
+	});
 
 	// it('should be able to intellisense a SELECT at the beginning of a query when only partially completed', async () => {
 	// 	const currentEditorContents = 'SEL Id FROM Account';
