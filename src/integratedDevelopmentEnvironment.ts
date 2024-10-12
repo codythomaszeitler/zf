@@ -144,7 +144,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     }
 
     public async showTempFileWith(outputDir: Uri, contents: string, options?: ShowTextDocumentOptions) {
-        const basename = Date.now() + '.txt';
+        const basename = Date.now() + '.' + (options?.extension ? options.extension : 'txt');
         const uri = Uri.join(outputDir, basename);
 
         await this.writeFile({
@@ -226,4 +226,5 @@ export enum ViewColumn {
 
 export interface ShowTextDocumentOptions {
     viewColumn?: ViewColumn;
+    extension?: string;
 }

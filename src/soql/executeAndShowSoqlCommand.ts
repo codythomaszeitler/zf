@@ -15,12 +15,6 @@ export class ExecuteAndShowSoqlCommand extends Command {
 			}
 		};
 
-		const fields = (query: string) => {
-			const parser = new SoqlParser();
-			const { fields } = parser.parse(query);
-			return fields.join(', ');
-		};
-
 		const targetOrDefaultOrg = await super.getTargetOrDefaultOrg(targetOrg);
 
 		const active = await this.getIde().getActiveTextEditor();
@@ -42,31 +36,22 @@ export class ExecuteAndShowSoqlCommand extends Command {
 			const results = await this.getCli().dataQuery({
 				query,
 				targetOrg: targetOrDefaultOrg,
-				useToolingApi: false
+				useToolingApi: false,
+				resultFormat: 'csv'
 			});
+			if (typeof results === 'string') {
+				const getNumLines = () => {
+					const matches = results.split('\n');
+					return matches.length - 2;
+				};
 
-			const intoString = () => {
-				const values = results.getSObjects().map(sObject => {
-					return Object.keys(sObject).map(key => {
-						if (key === 'attributes' || key === 'type') {
-							return undefined;
-						}
+				await this.getIde().showTempFileWith(outputDir, results, {
+					viewColumn: ViewColumn.besides,
+					extension: 'csv'
+				});
 
-						if (typeof sObject[key] === 'object') {
-							return JSON.stringify(sObject[key]);
-						} else {
-							return sObject[key];
-						}
-					}
-					).filter(value => value).join(', ');
-				}).join('\n');
-				return `${fields(query)}\n${values}`;
-			};
-
-			await this.getIde().showTempFileWith(outputDir, intoString(), {
-				viewColumn: ViewColumn.besides
-			});
-			this.getIde().showInformationMessage(`Returned ${results.getSObjects().length} records.`);
+				this.getIde().showInformationMessage(`Returned ${getNumLines()} records.`);
+			}
 		} catch (e) {
 			if (e instanceof Error) {
 				this.getIde().showErrorMessage(e.message);

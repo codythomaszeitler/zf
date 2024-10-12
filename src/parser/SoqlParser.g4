@@ -121,6 +121,7 @@ fromNameFieldName
 
 fromNameSoqlId
     : Identifier
+    | USER
     | NAME
     | ZF_INTELLISENSE
     ;

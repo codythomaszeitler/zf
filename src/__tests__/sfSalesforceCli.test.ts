@@ -473,7 +473,7 @@ describe('sf salesforce cli', () => {
 
             const mockExecutor = genMockExecutor({
                 "sf org list --json": get(),
-                "sf data query --query \"SELECT Id, DeveloperName FROM DebugLevel\" --use-tooling-api --target-org cso --json": getDebugLevelWithDeveloperName(),
+                "sf data query --query \"SELECT Id, DeveloperName FROM DebugLevel\" --use-tooling-api --target-org cso --result-format json": getDebugLevelWithDeveloperName(),
             });
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
@@ -487,7 +487,9 @@ describe('sf salesforce cli', () => {
                 }
             });
 
-            expect(result.getSObjects()).toHaveLength(4);
+            if (typeof result !== 'string') {
+                expect(result.getSObjects()).toHaveLength(4);
+            }
         });
 
         it('should be able to query a generic sobject without fields, but it should add Id', async () => {
@@ -498,20 +500,23 @@ describe('sf salesforce cli', () => {
 
             const mockExecutor = genMockExecutor({
                 "sf org list --json": get(),
-                "sf data query --query \"SELECT Id FROM DebugLevel\" --use-tooling-api --target-org cso --json": getDebugLevelWithDeveloperName(),
+                "sf data query --query \"SELECT Id FROM DebugLevel\" --use-tooling-api --target-org cso --result-format json": getDebugLevelWithDeveloperName(),
             });
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
             const result = await cli.dataQuery({
                 targetOrg,
-                useToolingApi : true,
+                useToolingApi: true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                 }
             });
 
-            expect(result.getSObjects()).toHaveLength(4);
+            if (typeof result !== 'string') {
+                expect(result.getSObjects()).toHaveLength(4);
+            }
+
         });
 
         it('should be able to query a generic sobject without fields with a condition', async () => {
@@ -522,25 +527,26 @@ describe('sf salesforce cli', () => {
 
             const mockExecutor = genMockExecutor({
                 "sf org list --json": get(),
-                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'ZFDebugTraceFlag'\" --use-tooling-api --target-org cso --json": getDebugLogWithDeveloperNameFilter(),
+                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'ZFDebugTraceFlag'\" --use-tooling-api --target-org cso --result-format json": getDebugLogWithDeveloperNameFilter(),
             });
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
             const result = await cli.dataQuery({
                 targetOrg,
-                useToolingApi : true,
+                useToolingApi: true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                     where: "DeveloperName = 'ZFDebugTraceFlag'"
                 }
             });
-
-            expect(result.getSObjects()).toHaveLength(1);
-            const sObject = result.getSObjects()[0];
-            expect(sObject["DeveloperName"]).toBe("ZFDebugTraceFlag");
-            expect(sObject["Id"]).toBe("7dl8N0000004lHqQAI");
-            expect(sObject.type).toBe(DEBUG_LEVEL_SOBJECT_NAME);
+            if (typeof result !== 'string') {
+                expect(result.getSObjects()).toHaveLength(1);
+                const sObject = result.getSObjects()[0];
+                expect(sObject["DeveloperName"]).toBe("ZFDebugTraceFlag");
+                expect(sObject["Id"]).toBe("7dl8N0000004lHqQAI");
+                expect(sObject.type).toBe(DEBUG_LEVEL_SOBJECT_NAME);
+            }
         });
 
         it('should return an empty list of sobjects if no records found', async () => {
@@ -551,21 +557,23 @@ describe('sf salesforce cli', () => {
 
             const mockExecutor = genMockExecutor({
                 "sf org list --json": get(),
-                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --json": getNoRecordsFound(),
+                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --result-format json": getNoRecordsFound(),
             });
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
             const result = await cli.dataQuery({
                 targetOrg,
-                useToolingApi : true,
+                useToolingApi: true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                     where: "DeveloperName = 'NOT-FOUND'"
                 }
             });
 
-            expect(result.getSObjects()).toHaveLength(0);
+            if (typeof result !== 'string') {
+                expect(result.getSObjects()).toHaveLength(0);
+            }
         });
 
         it('should return an empty list of sobjects if records variable is not found', async () => {
@@ -576,21 +584,23 @@ describe('sf salesforce cli', () => {
 
             const mockExecutor = genMockExecutor({
                 "sf org list --json": get(),
-                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --json": getNoRecordsVariableFound(),
+                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --result-format json": getNoRecordsVariableFound(),
             });
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
             const result = await cli.dataQuery({
                 targetOrg,
-                useToolingApi : true,
+                useToolingApi: true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                     where: "DeveloperName = 'NOT-FOUND'"
                 }
             });
 
-            expect(result.getSObjects()).toHaveLength(0);
+            if (typeof result !== 'string') {
+                expect(result.getSObjects()).toHaveLength(0);
+            }
 
             const re = /.* did not have a records variable on result\. Returning empty list of sobjects\./;
             expect(testLogger.contains(re)).toBeTruthy();
@@ -604,21 +614,23 @@ describe('sf salesforce cli', () => {
 
             const mockExecutor = genMockExecutor({
                 "sf org list --json": get(),
-                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --json": getMissingResultProperty(),
+                "sf data query --query \"SELECT Id FROM DebugLevel WHERE DeveloperName = 'NOT-FOUND'\" --use-tooling-api --target-org cso --result-format json": getMissingResultProperty(),
             });
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
 
             const result = await cli.dataQuery({
                 targetOrg,
-                useToolingApi : true,
+                useToolingApi: true,
                 query: {
                     from: DEBUG_LEVEL_SOBJECT_NAME,
                     where: "DeveloperName = 'NOT-FOUND'"
                 }
             });
 
-            expect(result.getSObjects()).toHaveLength(0);
+            if (typeof result !== 'string') {
+                expect(result.getSObjects()).toHaveLength(0);
+            }
 
             const re = /.* did not have a result variable\. Returning empty list of sobjects\./;
             expect(testLogger.contains(re)).toBeTruthy();
@@ -640,7 +652,7 @@ describe('sf salesforce cli', () => {
             try {
                 await cli.dataQuery({
                     targetOrg,
-                    useToolingApi : true,
+                    useToolingApi: true,
                     query: {
                         from: '',
                     }

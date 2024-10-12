@@ -36,12 +36,16 @@ export async function getCurrentUser({ cli, targetOrg }: {
 async function getUserIdFor({ username, cli, targetOrg }: { username: string, cli: SalesforceCli, targetOrg: SalesforceOrg }) {
 	const dataQueryResult = await cli.dataQuery({
 		targetOrg: targetOrg,
-		useToolingApi : true,
+		useToolingApi: true,
 		query: {
 			from: USER_SOBJECT_NAME,
 			where: `Username = '${username}'`
 		}
 	});
+
+	if (typeof dataQueryResult === 'string') {
+		throw new Error('Should not have received a string back.');
+	}
 
 	const users = dataQueryResult.getSObjects();
 	const user = users[0];

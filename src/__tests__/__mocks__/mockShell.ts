@@ -49,17 +49,22 @@ export function genCommandToStdOutput(params?: {
 	return commandToStdOutput;
 }
 
-export function genMockExecutor(commandToStdOutput: any) {
+export function genMockExecutor(commandToStdOutput: any, commandToStdError?: any) {
 	return async function (command: ExecutorCommand) {
 		const asString = intoCliCommandString(command);
+
+		if (commandToStdError && commandToStdError[asString]) {
+			throw new Error(commandToStdError[asString]);
+		}
+
 		const stdout = commandToStdOutput[asString];
 
 		if (!stdout) {
 			throw new Error(`Could not find output for command string: [${asString}]`);
-		}		
+		}
 
 		return {
-			stdout: JSON.parse(stdout)
+			stdout: command.shouldParseAsJson ? JSON.parse(stdout) : stdout
 		};
 	};
 }

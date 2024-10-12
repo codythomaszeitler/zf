@@ -9,6 +9,7 @@ export interface ExecutorCommand {
     standardInput?: string;
     prompt?: string;
     env?: Object;
+    shouldParseAsJson?: boolean;
 }
 
 export interface ExecutorResult {
@@ -44,6 +45,11 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
             }
         });
 
+        let stderr = '';
+        cli.stderr.on('data', (data: string) => {
+            stderr += data;
+        });
+
         cli.on('error', (error: string) => {
             const e = new Error(error);
             Logger.get().error(e);
@@ -51,11 +57,25 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
         });
 
         cli.on('close', () => {
-            const output = stdout ? JSON.parse(stdout) : {};
-            Logger.get().info(intoCliCommandString(command) + ' returned successfully. Please check Salesforce CLI Input/Output for output.');
-            resolve({
-                stdout: output
-            });
+            const getOutput = () => {
+                if (command.shouldParseAsJson) {
+                    return stdout ? JSON.parse(stdout) : {};
+                } else {
+                    return stdout;
+                }
+            };
+
+            const output = getOutput();
+            if (!output && stderr) {
+                Logger.get().info(intoCliCommandString(command) + ' did not return successfully. Please check Salesforce CLI Input/Output for output.');
+                reject(new Error(stderr));
+            }
+            else {
+                Logger.get().info(intoCliCommandString(command) + ' returned successfully. Please check Salesforce CLI Input/Output for output.');
+                resolve({
+                    stdout: getOutput()
+                });
+            }
         });
     });
 }

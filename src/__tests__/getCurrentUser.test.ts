@@ -100,7 +100,7 @@ describe('get current user with real cli results', () => {
 		})] = genOrgListUsersWithoutUserId({
 			org
 		});
-		commandToStdOutput[`sf data query --query "SELECT Id FROM User WHERE Username = '${testUsername}'" --use-tooling-api --target-org ${org.getAlias()} --json`] = genUserDataQuery();
+		commandToStdOutput[`sf data query --query "SELECT Id FROM User WHERE Username = '${testUsername}'" --use-tooling-api --target-org ${org.getAlias()} --result-format json`] = genUserDataQuery();
 		const user = await getCurrentUser({
 			targetOrg: org,
 			cli
@@ -118,7 +118,7 @@ describe('get current user with real cli results', () => {
 		})] = genOrgListUsersWithoutUserIdKey({
 			org
 		});
-		commandToStdOutput[`sf data query --query "SELECT Id FROM User WHERE Username = '${testUsername}'" --use-tooling-api --target-org ${org.getAlias()} --json`] = genUserDataQuery();
+		commandToStdOutput[`sf data query --query "SELECT Id FROM User WHERE Username = '${testUsername}'" --use-tooling-api --target-org ${org.getAlias()} --result-format json`] = genUserDataQuery();
 		const user = await getCurrentUser({
 			targetOrg: org,
 			cli

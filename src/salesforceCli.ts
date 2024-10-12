@@ -40,7 +40,7 @@ export abstract class SalesforceCli {
     abstract projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean }): Promise<ProjectDeployResult | undefined>;
     abstract projectDeployReport(params: { jobId: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployResult | undefined>;
     abstract projectDeployResume(params: { jobId: JobId }): Promise<ProjectDeployResult | undefined>;
-    abstract projectDeployCancel(params: { jobId?: JobId; targetOrg : SalesforceOrg }): Promise<ProjectDeployCancelResult | undefined>;
+    abstract projectDeployCancel(params: { jobId?: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployCancelResult | undefined>;
 
     abstract projectDeployPreview(params: { targetOrg: SalesforceOrg }): Promise<ProjectDeployPreviewResult | undefined>;
 
@@ -75,7 +75,7 @@ export abstract class SalesforceCli {
         sObject: UpsertableSObject;
     }): Promise<DataUpsertRecordResult>;
 
-    abstract dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi : boolean }): Promise<DataQueryResult>;
+    abstract dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean; resultFormat?: 'csv' | 'json' }): Promise<DataQueryResult | string>;
 
     abstract orgListUsers(params: {
         targetOrg: SalesforceOrg,
@@ -103,6 +103,9 @@ export abstract class SalesforceCli {
 
     protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
         command.env = this.env;
+        if (command.shouldParseAsJson === undefined) {
+            command.shouldParseAsJson = true;
+        }
 
         const { stdout } = await this.executor(command);
         if (!stdout) {
