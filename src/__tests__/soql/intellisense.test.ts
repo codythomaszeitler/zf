@@ -1,31 +1,9 @@
 import { Position } from "../../position";
-import { DescribeSObject, ListSObjects, SoqlIntellisense } from "../../soql/intellisense";
+import { DescribeSObject, SoqlIntellisense } from "../../soql/intellisense";
 import { describe } from '@jest/globals';
-import { getAccountSObjectDescribeResult } from './data/accountSObjectDescribeResult';
 import { getListSObjectsResult } from './data/listSObjectResult';
 import { SObjectDescribeResult } from "../../sObjectDescribeResult";
-import { getContactSObjectDescribeResult } from "./data/contactSObjectDescribeResult";
-import { getLeadSObjectDescribeResult } from "./data/leadSObjectDescribeResult";
-
-const describeSObject: DescribeSObject = async function ({ sObjectName }) {
-	if (sObjectName === 'Account') {
-		return getAccountSObjectDescribeResult();
-	}
-
-	if (sObjectName === 'Contact') {
-		return getContactSObjectDescribeResult();
-	}
-
-	if (sObjectName === 'Lead') {
-		return getLeadSObjectDescribeResult();
-	}
-
-	throw new Error(`Could not find sobject for [${sObjectName}]`);
-};
-
-const listSObjects: ListSObjects = async function ({ }) {
-	return getListSObjectsResult();
-};
+import { describeSObject, listSObjects } from "./utils";
 
 describe('soql intellisense', () => {
 	const numIntellisenseFields: number = 75;
@@ -40,7 +18,6 @@ describe('soql intellisense', () => {
 	it('should intellisense select fields from existing sobject', async () => {
 		const currentEditorContents = 'SELECT Id,  FROM Account';
 		const position = new Position(1, 11);
-
 
 		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
 		expect(results).toHaveLength(75 - 1);

@@ -29,6 +29,8 @@ import { DescribeSObject, ListSObjects, SoqlIntellisense } from './soql/intellis
 import { SObjectDescribeResult } from './sObjectDescribeResult';
 import { SObject } from './sObject';
 import { SObjectListResult } from './sObjectListResult';
+import { genCachedListSObjects } from './soql/genListSObjects';
+import { genCachedDescribeSObjects } from './soql/genDescribeSObjects';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -424,44 +426,15 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	const cachedDescribeSObjects: DescribeSObject = genCachedDescribeSObjects({
+		cli : salesforceCli,
+		ide
+	});
 
-	const cache = new Map<string, SObjectDescribeResult>();
-	const cachedDescribeSObjects: DescribeSObject = async function ({ sObjectName }) {
-		if (cache.has(sObjectName)) {
-			return cache.get(sObjectName);
-		}
-
-		const defaultOrg = await salesforceCli.getDefaultOrg();
-		const sObjectDescribeResult = await salesforceCli.sobjectDescribe({
-			targetOrg: defaultOrg, sObjectApiName: sObjectName
-		});
-		cache.set(sObjectName, sObjectDescribeResult);
-
-		setTimeout(() => {
-			cache.delete(sObjectName);
-		}, 10000);
-
-		return sObjectDescribeResult;
-	};
-
-
-	let listSObjectsCache : SObjectListResult | undefined = undefined;
-	const cachedListSObjects : ListSObjects = async function({}) {
-		if (listSObjectsCache) {
-			return listSObjectsCache;
-		}
-		const defaultOrg = await salesforceCli.getDefaultOrg();
-		const sObjectListResult = await salesforceCli.sobjectList({
-			targetOrg : defaultOrg
-		});
-		listSObjectsCache = sObjectListResult;
-
-		setTimeout(() => {
-			listSObjectsCache = undefined;
-		}, 10000);
-
-		return sObjectListResult;
-	}
+	const cachedListSObjects: ListSObjects = genCachedListSObjects({
+		cli: salesforceCli,
+		ide
+	});
 
 	vscode.languages.registerCompletionItemProvider({
 		scheme: 'file', language: 'zoql'
@@ -472,8 +445,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 				const zfPosition = new Position(position.line, position.character);
 				const intellisense = new SoqlIntellisense({
-					describeSObject : cachedDescribeSObjects,
-					listSObjects : cachedListSObjects
+					describeSObject: cachedDescribeSObjects,
+					listSObjects: cachedListSObjects
 				});
 
 				const items = await intellisense.autocompleteSuggestionsAt(contents, zfPosition);

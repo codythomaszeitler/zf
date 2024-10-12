@@ -26,6 +26,7 @@ function getCurrentDir(): Uri {
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
 
+
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
 
@@ -110,6 +111,16 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
                 } catch (e) {
                     reject(e);
                 }
+            });
+        });
+    }
+
+    withStatusBarMessage<T>(toMonitor: () => Promise<T>, options: { title: string; }) {
+        return new Promise(resolve => {
+            const promise = toMonitor();
+            vscode.window.setStatusBarMessage(options.title, promise);
+            promise.then(value => {
+                resolve(value);
             });
         });
     }

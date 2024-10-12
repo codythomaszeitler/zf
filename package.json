@@ -187,6 +187,18 @@
           "type": "boolean",
           "description": "If set to true, will use both the ZeitlerForce and salesforce SOQL servers in .soql files.",
           "default": true
+        },
+        "sf.zsi.cachedListSObjectsTimeout": {
+          "type": "number",
+          "description": "How long the cache will hold onto an sobject list for soql.",
+          "default": 10000,
+          "minimum": 0
+        },
+        "sf.zsi.cachedDescribeSObjectTimeout": {
+          "type": "number",
+          "description": "How long the cache will hold onto an sobject describe for soql.",
+          "default": 10000,
+          "minimum": 0
         }
       }
     },

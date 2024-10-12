@@ -1,4 +1,6 @@
-export function getListSObjectsResult() {
+import { SObjectListResult } from "../../../sObjectListResult";
+
+export function getListSObjectsResult() : SObjectListResult {
 	const listSObjectResult = {
 		"status": 0,
 		"result": [
@@ -864,6 +866,6 @@ export function getListSObjectsResult() {
 			"WorkThanksShare"
 		],
 		"warnings": []
-	}
+	};
 	return listSObjectResult;
 }

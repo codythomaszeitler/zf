@@ -1,3 +1,4 @@
+import { title } from "process";
 import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { OnCancellationRequestedListener, ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
@@ -11,6 +12,7 @@ function nonStartedQuickPick(item: string): void {
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
+
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
@@ -104,6 +106,17 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
 
     public didShowWindowLoadingMessageWith(title: string): boolean {
         return this.shownWindowLoadingMessages.includes(title);
+    }
+
+    private statusBarMessage: string = '';
+
+    didShowStatusBarMessage(title: string): boolean {
+        return this.statusBarMessage === title;
+    }
+
+    withStatusBarMessage<T>(toMonitor: () => Promise<T>, options: { title: string; }) {
+        this.statusBarMessage = options.title;
+        return toMonitor();
     }
 
     waitForShowQuickPick() {

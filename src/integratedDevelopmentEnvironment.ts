@@ -103,13 +103,16 @@ export abstract class IntegratedDevelopmentEnvironment {
 
     abstract showQuickPick(items: string[]): Thenable<string>;
     abstract showErrorMessage(message: string): Promise<void>;
-    abstract showTextDocument(uri: Uri, options? : ShowTextDocumentOptions): Promise<void>;
+    abstract showTextDocument(uri: Uri, options?: ShowTextDocumentOptions): Promise<void>;
     abstract deleteTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
     abstract showInformationMessage(message: string, options?: {
         label: string
     }[]): Promise<string>;
     abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string, isCancellable?: boolean }): Promise<T>;
+    abstract withStatusBarMessage<T>(toMonitor: () => Promise<T>, options: {
+        title: string
+    });
     abstract getActiveTextEditor(): Promise<ActiveTextEditor | null>;
     abstract findFile(glob: string, base?: Uri): Promise<Uri | null>;
     abstract findFiles(glob: string, base?: Uri): Promise<Uri[]>;
@@ -140,7 +143,7 @@ export abstract class IntegratedDevelopmentEnvironment {
         return !!file;
     }
 
-    public async showTempFileWith(outputDir: Uri, contents: string, options? : ShowTextDocumentOptions) {
+    public async showTempFileWith(outputDir: Uri, contents: string, options?: ShowTextDocumentOptions) {
         const basename = Date.now() + '.txt';
         const uri = Uri.join(outputDir, basename);
 
@@ -221,6 +224,6 @@ export enum ViewColumn {
     besides, active
 }
 
-export interface ShowTextDocumentOptions  {
-    viewColumn? : ViewColumn;
+export interface ShowTextDocumentOptions {
+    viewColumn?: ViewColumn;
 }
