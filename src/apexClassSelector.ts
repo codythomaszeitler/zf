@@ -7,12 +7,16 @@ export class ApexClassSelector extends Selector {
 	public async queryAllApexClasses({ targetOrg }: { targetOrg: SalesforceOrg; }) {
 		const dataQueryResults = await this.getCli().dataQuery({
 			targetOrg,
-			useToolingApi : true,
+			useToolingApi: true,
 			query: {
 				from: APEX_CLASS_SOBJECT_NAME,
 				fields: ['Name', 'SymbolTable', 'Body']
 			}
 		});
+
+		if (typeof dataQueryResults === 'string') {
+			throw new Error('Should not have received a string back.');
+		}
 
 		return dataQueryResults.getSObjects().map(sObject => {
 			const recordId = SalesforceId.get(sObject["Id"]);

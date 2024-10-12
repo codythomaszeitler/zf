@@ -26,9 +26,6 @@ import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
 import { GenerateFauxSoqlCommand } from './soql/genFauxSoqlCommand';
 import { Position } from './position';
 import { DescribeSObject, ListSObjects, SoqlIntellisense } from './soql/intellisense';
-import { SObjectDescribeResult } from './sObjectDescribeResult';
-import { SObject } from './sObject';
-import { SObjectListResult } from './sObjectListResult';
 import { genCachedListSObjects } from './soql/genListSObjects';
 import { genCachedDescribeSObjects } from './soql/genDescribeSObjects';
 

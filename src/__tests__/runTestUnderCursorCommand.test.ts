@@ -603,7 +603,7 @@ function genApexTestGetResult({ testRunId, testItems }: { testRunId: SalesforceI
 }
 
 function genApexTestLogCommandString({ apexTestRunResultId, targetOrg }: { apexTestRunResultId: SalesforceId; targetOrg: SalesforceOrg }) {
-	return `sf data query --query "SELECT Id, ApexLogId FROM ApexTestResult WHERE ApexTestRunResultId IN (SELECT Id FROM ApexTestRunResult WHERE AsyncApexJobId = '${apexTestRunResultId.toString()}')" --use-tooling-api --target-org ${targetOrg.getAlias()} --json`;
+	return `sf data query --query "SELECT Id, ApexLogId FROM ApexTestResult WHERE ApexTestRunResultId IN (SELECT Id FROM ApexTestRunResult WHERE AsyncApexJobId = '${apexTestRunResultId.toString()}')" --use-tooling-api --target-org ${targetOrg.getAlias()} --result-format json`;
 }
 
 function genApexTestLogResult({ apexTestLogId }: { apexTestLogId: SalesforceId }) {

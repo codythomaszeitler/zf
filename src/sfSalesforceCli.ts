@@ -532,7 +532,7 @@ export class SfSalesforceCli extends SalesforceCli {
         });
     }
 
-    async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean }): Promise<DataQueryResult> {
+    async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean; resultFormat?: 'csv' | 'json' }): Promise<DataQueryResult | string> {
 
         const queryAsString = (query: SoqlQuery) => {
             if (typeof query === 'string') {
@@ -590,11 +590,17 @@ export class SfSalesforceCli extends SalesforceCli {
                 ...toolingApiParams(),
                 '--target-org',
                 params.targetOrg.getAlias(),
-                '--json'
-            ]
+                '--result-format',
+                params.resultFormat ? params.resultFormat : 'json',
+            ],
+            shouldParseAsJson: params.resultFormat !== 'csv'
         };
 
         const { stdout } = await this.exec(command);
+        if (params?.resultFormat === 'csv') {
+            return stdout as string;
+        }
+
         if (stdout.status) {
             throw new Error(stdout.message);
         }

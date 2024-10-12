@@ -15,7 +15,7 @@ import { getSfdxProjectUri } from '../readSfdxProjectCommand';
 
 describe('generate offline symbol table command', () => {
 	function getApexClassQueryString(targetOrg: SalesforceOrg) {
-		return `sf data query --query "SELECT Id, Name, SymbolTable, Body FROM ApexClass" --use-tooling-api --target-org ${targetOrg.getAlias()} --json`;
+		return `sf data query --query "SELECT Id, Name, SymbolTable, Body FROM ApexClass" --use-tooling-api --target-org ${targetOrg.getAlias()} --result-format json`;
 	}
 
 	let testObject: GenerateOfflineSymbolTableCommand;

@@ -14,6 +14,7 @@ describe('execute and show soql command', () => {
 	let cli: SfSalesforceCli;
 	let ide: MockIDE;
 	let inputOutput: any;
+	let inputStdError: any;
 
 	let targetOrg: SalesforceOrg;
 
@@ -28,8 +29,9 @@ describe('execute and show soql command', () => {
 		fs = new MockFileSystem();
 
 		inputOutput = genCommandToStdOutput({ defaultOrg: targetOrg });
+		inputStdError = {};
 
-		const mockExecutor = genMockExecutor(inputOutput);
+		const mockExecutor = genMockExecutor(inputOutput, inputStdError);
 		cli = new SfSalesforceCli(mockExecutor);
 		ide = new MockIDE({
 			filesystem: fs
@@ -54,7 +56,7 @@ describe('execute and show soql command', () => {
 		const numRecords = 50;
 
 		const result = genDataQueryResult(numRecords);
-		inputOutput["sf data query --query \"SELECT Id, Name FROM Account\" --target-org cso --json"] = JSON.stringify(result);
+		inputOutput["sf data query --query \"SELECT Id, Name FROM Account\" --target-org cso --result-format csv"] = result;
 
 		const testObject = new ExecuteAndShowSoqlCommand({
 			cli,
@@ -73,11 +75,7 @@ describe('execute and show soql command', () => {
 			uri: resultsUri
 		});
 
-		const expected = "Id, Name\n" + (result.result.records.map((value, index) => {
-			return `${value['Id']}, ${value['Name']}`;
-		}).join('\n'));
-		expect(contents).toBe(expected);
-
+		expect(contents).toBe(result);
 		expect(ide.didShowInformationMessage('Returned 50 records.')).toBeTruthy();
 	});
 
@@ -97,7 +95,7 @@ describe('execute and show soql command', () => {
 		const numRecords = 0;
 
 		const result = genDataQueryResult(numRecords);
-		inputOutput["sf data query --query \"SELECT Id, Name FROM Account\" --target-org cso --json"] = JSON.stringify(result);
+		inputOutput["sf data query --query \"SELECT Id, Name FROM Account\" --target-org cso --result-format csv"] = result;
 
 		const testObject = new ExecuteAndShowSoqlCommand({
 			cli,
@@ -116,14 +114,11 @@ describe('execute and show soql command', () => {
 			uri: resultsUri
 		});
 
-		const expected = "Id, Name\n" + (result.result.records.map((value, index) => {
-			return `${value['Id']}, ${value['Name']}`;
-		}).join('\n'));
-		expect(contents).toBe(expected);
+		expect(contents).toBe(result);
 	});
 
 	it('should show warning message if something bad happens on the command line', async () => {
-		const anonSoql = 'SELECT Id, Name, BillingPostalCode FROM Account WHERE Id = \'53\'';
+		const anonSoql = 'SELECT Id FROM Accoun';
 
 		const activeEditorUri = Uri.join(anonSoqlScriptUri, 'test.soql');
 		await ide.writeFile({
@@ -135,8 +130,8 @@ describe('execute and show soql command', () => {
 			uri: activeEditorUri
 		});
 
-		const failure = getFailureDataQueryResult();
-		inputOutput["sf data query --query \"SELECT Id, Name, BillingPostalCode FROM Account WHERE Id = '53'\" --target-org cso --json"] = JSON.stringify(failure);
+		const errorMessage = 'This is a failure.';
+		inputStdError[`sf data query --query \"${anonSoql}\" --target-org cso --result-format csv`] = errorMessage;
 
 		const testObject = new ExecuteAndShowSoqlCommand({
 			cli,
@@ -151,7 +146,7 @@ describe('execute and show soql command', () => {
 		const shownDocuments = ide.getShownTextDocuments();
 		expect(shownDocuments).toHaveLength(0);
 
-		expect(ide.didShowErrorMessage(failure.message)).toBeTruthy();
+		expect(ide.didShowErrorMessage(errorMessage)).toBeTruthy();
 	});
 
 	it('should not show a file and show show a warning message if no soql in file', async () => {
@@ -207,42 +202,14 @@ function genDataQueryResult(numRecords: number) {
 		const records = [];
 		for (let i = 0; i < numRecords; i++) {
 			const randomId = genRandomId('Account');
-			const record = {
-				"attributes": {
-					"type": "Account",
-					"url": `/services/data/v61.0/sobjects/Account/${randomId}`
-				},
-				"Id": randomId,
-				"Name": `Name ${i}`
-			};
+			const record = [randomId, `Name ${i}`].join(', ');
 			records.push(record);
 		}
 		return records;
 	};
 
 	const records = genRecords();
-
-	return {
-		status: 0,
-		result: {
-			records,
-			totalSize: records.length,
-			done: true
-		},
-		warnings: []
-	};
-}
-
-function getFailureDataQueryResult() {
-	return {
-		"code": 1,
-		"context": "DataSoqlQueryCommand",
-		"commandName": "DataSoqlQueryCommand",
-		"message": "\nBillingPostalCode FROM Account WHERE Id = '53'\n                                     ^\nERROR at Row:1:Column:70\ninvalid ID field: 53",
-		"name": "INVALID_QUERY_FILTER_OPERATOR",
-		"status": 1,
-		"stack": "INVALID_QUERY_FILTER_OPERATOR: \nBillingPostalCode FROM Account WHERE Id = '53'\n                                     ^\nERROR at Row:1:Column:70\ninvalid ID field: 53\n    at HttpApi.getError (C:\\Users\\Cody\\AppData\\Local\\sf\\client\\2.43.7-085948d\\node_modules\\@jsforce\\jsforce-node\\lib\\http-api.js:278:16)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async C:\\Users\\Cody\\AppData\\Local\\sf\\client\\2.43.7-085948d\\node_modules\\@jsforce\\jsforce-node\\lib\\http-api.js:127:33\n    at async Query._execute (C:\\Users\\Cody\\AppData\\Local\\sf\\client\\2.43.7-085948d\\node_modules\\@jsforce\\jsforce-node\\lib\\query.js:373:22)\n    at async C:\\Users\\Cody\\AppData\\Local\\sf\\client\\2.43.7-085948d\\node_modules\\@jsforce\\jsforce-node\\lib\\query.js:305:17",
-		"exitCode": 1,
-		"warnings": []
-	};
+	const header = 'Id, Name';
+	const result = [header, ...records].join('\n') + '\n';
+	return result;
 }

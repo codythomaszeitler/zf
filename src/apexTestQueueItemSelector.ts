@@ -7,7 +7,7 @@ export class ApexTestQueueItemSelector extends Selector {
 
 	public async queryByParentJobId(params: { targetOrg: SalesforceOrg; parentJobId: SalesforceId; }) {
 		const dataQueryResult = await this.getCli().dataQuery({
-			useToolingApi : true,
+			useToolingApi: true,
 			query: {
 				from: APEX_TEST_QUEUE_ITEM_SOBJECT_NAME,
 				fields: ['Status'],
@@ -15,6 +15,9 @@ export class ApexTestQueueItemSelector extends Selector {
 			},
 			targetOrg: params.targetOrg
 		});
+		if (typeof dataQueryResult === 'string') {
+			throw new Error('Should not have received a string back.');
+		}
 		const sObjects = dataQueryResult.getSObjects();
 		const apexTestQueueItems: ApexTestQueueItem[] = sObjects.map(sObject => {
 			const builder = new ApexTestQueueItemBuilder({

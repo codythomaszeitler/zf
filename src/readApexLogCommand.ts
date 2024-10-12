@@ -47,13 +47,17 @@ export class ReadApexTestLogCommand extends Command {
 	}) {
 		const records = await this.getCli().dataQuery({
 			targetOrg,
-			useToolingApi : true,
+			useToolingApi: true,
 			query: {
 				from: "ApexTestResult",
 				fields: ["ApexLogId"],
 				where: `ApexTestRunResultId IN (SELECT Id FROM ApexTestRunResult WHERE AsyncApexJobId = '${apexTestRunResultId}')`
 			}
 		});
+
+		if (typeof records === 'string') {
+			throw new Error('Should not have received a string back.');
+		}
 
 		const apexTestLogId = SalesforceId.get(records.getSObjects()[0]["ApexLogId"]);
 		if (apexTestLogId === NULL_SF_ID) {
@@ -72,4 +76,4 @@ export class ReadApexTestLogCommand extends Command {
 	}
 }
 
-export const NO_APEX_LOG_FOUND_MESSAGE  = 'No Apex Log Found, please set a debug trace flag to see log output.';
+export const NO_APEX_LOG_FOUND_MESSAGE = 'No Apex Log Found, please set a debug trace flag to see log output.';

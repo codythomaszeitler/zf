@@ -7,7 +7,7 @@ export class DebugLogLevelSelector {
 
 	private readonly cli: SalesforceCli;
 
-	public constructor(params: {
+	public constructor (params: {
 		cli: SalesforceCli
 	}) {
 		this.cli = params.cli;
@@ -18,13 +18,17 @@ export class DebugLogLevelSelector {
 		developerName: string
 	}): Promise<DebugLevel | undefined> {
 		const dataQueryResult = await this.cli.dataQuery({
-			useToolingApi : true,
+			useToolingApi: true,
 			targetOrg: params.targetOrg, query: {
 				fields: ["DeveloperName"],
 				from: DEBUG_LEVEL_SOBJECT_NAME,
 				where: `DeveloperName = '${params.developerName}'`
 			}
 		});
+
+		if (typeof dataQueryResult === 'string') {
+			throw new Error('Should not have received a string back.');
+		}
 
 		const sObjects = dataQueryResult.getSObjects();
 		if (sObjects.length > 1) {
