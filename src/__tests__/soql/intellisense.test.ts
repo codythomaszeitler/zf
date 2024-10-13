@@ -17,7 +17,18 @@ describe('soql intellisense', () => {
 
 	it('should intellisense select fields from existing sobject', async () => {
 		const currentEditorContents = 'SELECT Id,  FROM Account';
-		const position = new Position(1, 11);
+		const position = new Position(0, 11);
+
+		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+		expect(results).toHaveLength(75 - 1);
+		expect(results.some(item => item.item === 'Id')).toBeFalsy();
+	});
+
+	it('should intellisense select fields from existing sobject, when there are multiple lines in the soql query', async () => {
+		const currentEditorContents = `
+            SELECT Id,  FROM Account
+		`;
+		const position = new Position(1, 23);
 
 		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
 		expect(results).toHaveLength(75 - 1);
@@ -27,7 +38,7 @@ describe('soql intellisense', () => {
 
 	it('should be able to intellisense all fields that start with "Na"', async () => {
 		const currentEditorContents = 'SELECT Id, Na FROM Account';
-		const position = new Position(1, 13);
+		const position = new Position(0, 13);
 
 		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
 		const allStartWithNa = results.filter(item => item.item.startsWith('Na'));
@@ -36,7 +47,7 @@ describe('soql intellisense', () => {
 
 	it('should be able to intellisense against an sobject that does not return any fields', async () => {
 		const currentEditorContents = 'SELECT  FROM Account';
-		const position = new Position(1, 7);
+		const position = new Position(0, 7);
 
 		const describeSObject: DescribeSObject = async ({ sObjectName }) => {
 			expect(sObjectName).toBe('Account');

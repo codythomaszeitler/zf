@@ -17,7 +17,7 @@ export function genCachedDescribeSObjects({ ide, cli }: { ide: IntegratedDevelop
 
     const cache = new Map<string, SObjectDescribeResult>();
     const cachedDescribeSObjects: DescribeSObject = async function ({ sObjectName }) {
-        const timeout = ide.getConfig<number>(CACHE_TIMEOUT_CONFIG_KEY, 10000);
+        const timeout = ide.getConfig<number>(CACHE_TIMEOUT_CONFIG_KEY, 60000);
         const targetOrg = await cli.getDefaultOrg();
 
         return ide.withStatusBarMessage(async () => {

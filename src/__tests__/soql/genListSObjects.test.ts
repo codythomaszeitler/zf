@@ -1,6 +1,5 @@
 import { SalesforceCli } from "../../salesforceCli";
 import { SalesforceOrg } from "../../salesforceOrg";
-import { SObjectListResult } from "../../sObjectListResult";
 import { CACHE_TIMEOUT_CONFIG_KEY, genCachedListSObjects } from "../../soql/genListSObjects";
 import { ListSObjects } from "../../soql/intellisense";
 import { MockIDE } from "../__mocks__/mockIntegratedDevelopmentEnvironment";

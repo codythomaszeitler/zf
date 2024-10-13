@@ -191,13 +191,13 @@
         "sf.zsi.cachedListSObjectsTimeout": {
           "type": "number",
           "description": "How long the cache will hold onto an sobject list for soql.",
-          "default": 10000,
+          "default": 60000,
           "minimum": 0
         },
         "sf.zsi.cachedDescribeSObjectTimeout": {
           "type": "number",
           "description": "How long the cache will hold onto an sobject describe for soql.",
-          "default": 10000,
+          "default": 60000,
           "minimum": 0
         }
       }

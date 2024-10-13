@@ -79,6 +79,45 @@ describe('execute and show soql command', () => {
 		expect(ide.didShowInformationMessage('Returned 50 records.')).toBeTruthy();
 	});
 
+	it('should show soql contents as csv when Zf: Execute SOQL is ran (should remove newlines from query string)', async () => {
+		const anonSoql = 'SELECT Id, Name\n FROM\n Account';
+
+		const activeEditorUri = Uri.join(anonSoqlScriptUri, 'test.soql');
+		await ide.writeFile({
+			uri: activeEditorUri,
+			contents: anonSoql
+		});
+
+		ide.setActiveTextEditor({
+			uri: activeEditorUri
+		});
+
+		const numRecords = 50;
+
+		const result = genDataQueryResult(numRecords);
+		inputOutput["sf data query --query \"SELECT Id, Name  FROM  Account\" --target-org cso --result-format csv"] = result;
+
+		const testObject = new ExecuteAndShowSoqlCommand({
+			cli,
+			ide
+		});
+
+		await testObject.execute({
+			outputDir: anonSoqlScriptUri,
+			targetOrg
+		});
+
+		const resultsUri = ide.getShownTextDocuments()[0];
+		expect(resultsUri).toBeTruthy();
+
+		const contents = await ide.readFile({
+			uri: resultsUri
+		});
+
+		expect(contents).toBe(result);
+		expect(ide.didShowInformationMessage('Returned 50 records.')).toBeTruthy();
+	});
+
 	it('should show soql contents as csv when Zf: Execute SOQL is ran (no records returned)', async () => {
 		const anonSoql = 'SELECT Id, Name FROM Account';
 
