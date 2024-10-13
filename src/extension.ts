@@ -28,6 +28,7 @@ import { Position } from './position';
 import { DescribeSObject, ListSObjects, SoqlIntellisense } from './soql/intellisense';
 import { genCachedListSObjects } from './soql/genListSObjects';
 import { genCachedDescribeSObjects } from './soql/genDescribeSObjects';
+import { GetSoqlUnderCursorCommand } from './soql/getSoqlUnderCursor';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -424,7 +425,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	const cachedDescribeSObjects: DescribeSObject = genCachedDescribeSObjects({
-		cli : salesforceCli,
+		cli: salesforceCli,
 		ide
 	});
 
@@ -454,6 +455,38 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	});
+
+	vscode.languages.registerCompletionItemProvider({
+		scheme: 'file', language: 'apex'
+	}, {
+		async provideCompletionItems(document, position, token, context) {
+			if (!ide.getConfig("sf.zsi.enableSoqlIntellisensePrototype", true)) {
+				return [];
+			}
+
+			const zfPosition = new Position(position.line, position.character);
+
+			const getSoqlUnderCursorCommand = new GetSoqlUnderCursorCommand({
+				cli: salesforceCli, ide
+			});
+
+			const result = await getSoqlUnderCursorCommand.execute({
+				apexClass: document.getText(),
+				position: zfPosition
+			});
+
+			if (result.isWithinSoql) {
+				const intellisense = new SoqlIntellisense({
+					describeSObject: cachedDescribeSObjects,
+					listSObjects: cachedListSObjects
+				});
+				const items = await intellisense.autocompleteSuggestionsAt(result.soql, result.embeddedCursorPosition);
+				return items.map(item => (new vscode.CompletionItem(item.item, vscode.CompletionItemKind.Field)));
+			} else {
+				return [];
+			}
+		},
+	}, '.');
 
 	context.subscriptions.push(vscodeMetadataRetrieve);
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.refreshMetadataExplorer", genOnlyRunOnce(runRefreshMetadataExplorer, () => {
