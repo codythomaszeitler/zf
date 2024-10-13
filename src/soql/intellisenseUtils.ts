@@ -1,4 +1,5 @@
 import { Position } from "../position";
+import { Range } from "../range";
 
 export const sfZsiString = '__zf_szi_location__';
 
@@ -32,4 +33,14 @@ function getIndexOfNewLine(contents: string, lineNumber: number) {
         }
     }
     return index;
+}
+
+export function substring(contents: string, range: Range) {
+    const start = range.getStart();
+    const end = range.getEnd();
+
+    const startIndex = getIndexOfNewLine(contents, start.getLineNumber()) + start.getColumnNumber();
+    const endIndex = getIndexOfNewLine(contents, end.getLineNumber()) + end.getColumnNumber();
+
+    return contents.substring(startIndex, endIndex + 1);
 }

@@ -185,7 +185,7 @@
         },
         "sf.zsi.enableSoqlIntellisensePrototype": {
           "type": "boolean",
-          "description": "If set to true, will use both the ZeitlerForce and salesforce SOQL servers in .soql files.",
+          "description": "If set to true, will use both the ZeitlerForce and salesforce SOQL servers in .soql and .cls (apex) files.",
           "default": true
         },
         "sf.zsi.cachedListSObjectsTimeout": {

@@ -2,6 +2,20 @@ import { AbstractParseTreeVisitor } from "antlr4ts/tree/AbstractParseTreeVisitor
 import * as _ApexParser from 'apex-parser';
 import { Position } from "./position";
 import { Range } from "./range";
+import { ParserRuleContext } from "antlr4ts";
+
+export function getRangeOf(parseRuleContext: ParserRuleContext) : Range {
+	let range = undefined;
+	const start = new Position(parseRuleContext.start.line - 1, parseRuleContext.start.charPositionInLine);
+	if (parseRuleContext.stop) {
+		const end = new Position(parseRuleContext.stop.line - 1, parseRuleContext.stop.charPositionInLine);
+		range = new Range(start, end);
+	} else {
+		range = new Range(start);
+	}
+	return range;
+}
+
 
 export class ApexParser {
 	public parse(input: string): ApexClassSymbolTable {
@@ -127,14 +141,7 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 				const methodDecl = memberDecl.methodDeclaration();
 				const fieldDecl = memberDecl.fieldDeclaration();
 				if (methodDecl) {
-					let range = undefined;
-					const start = new Position(methodDecl.start.line - 1, methodDecl.start.charPositionInLine);
-					if (methodDecl.stop) {
-						const end = new Position(methodDecl.stop.line - 1, methodDecl.stop.charPositionInLine);
-						range = new Range(start, end);
-					} else {
-						range = new Range(start);
-					}
+					let range = getRangeOf(methodDecl);
 
 					const result: VisitorResult = {
 						isTestMethod: isTestMethod(),
@@ -143,15 +150,7 @@ class ZfApexParserVisitor extends AbstractParseTreeVisitor<void> implements _Ape
 					};
 					return [result];
 				} else if (fieldDecl) {
-					let range = undefined;
-					const start = new Position(fieldDecl.start.line - 1, fieldDecl.start.charPositionInLine);
-					if (fieldDecl.stop) {
-						const end = new Position(fieldDecl.stop.line - 1, fieldDecl.stop.charPositionInLine);
-						range = new Range(start, end);
-					} else {
-						range = new Range(start);
-					}
-
+					const range = getRangeOf(fieldDecl);
 					const typeRef = fieldDecl.typeRef();
 					const varDecls = fieldDecl.variableDeclarators().variableDeclarator();
 
