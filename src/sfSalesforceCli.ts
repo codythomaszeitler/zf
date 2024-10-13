@@ -534,9 +534,13 @@ export class SfSalesforceCli extends SalesforceCli {
 
     async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean; resultFormat?: 'csv' | 'json' }): Promise<DataQueryResult | string> {
 
+        const removeAllNewLines = (contents: string) => {
+            return contents.replace(new RegExp('\n', 'g'), ' ');
+        };
+
         const queryAsString = (query: SoqlQuery) => {
             if (typeof query === 'string') {
-                return `"${query}"`;
+                return removeAllNewLines(`"${query}"`);
             } else {
                 if (!query.from) {
                     throw new Error('Cannot run data query with empty from table.');

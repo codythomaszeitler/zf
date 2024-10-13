@@ -19,7 +19,7 @@ export function genCachedListSObjects({ cli, ide }: { cli: SalesforceCli; ide: I
     const cachedListSObjects: ListSObjects = async function ({ }) {
         const targetOrg: SalesforceOrg = await cli.getDefaultOrg();
         return ide.withStatusBarMessage(async () => {
-            const timeout = ide.getConfig<number>(CACHE_TIMEOUT_CONFIG_KEY, 10000);
+            const timeout = ide.getConfig<number>(CACHE_TIMEOUT_CONFIG_KEY, 60000);
             if (timeout === 0) {
                 return runSObjectList(targetOrg);
             }

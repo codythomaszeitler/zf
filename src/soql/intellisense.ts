@@ -12,10 +12,10 @@ import { TerminalNode } from "antlr4ts/tree/TerminalNode";
 import { SalesforceOrg } from "../salesforceOrg";
 import { SObjectDescribeResult } from "../sObjectDescribeResult";
 import { SObjectListResult } from "../sObjectListResult";
+import { inlineSfZsiString, sfZsiString } from "./intellisenseUtils";
 
 export const CUSTOM_SOBJECTS_SUBDIR = 'customObjects';
 export const STANDARD_SOBJECTS_SUBDIR = 'standardObjects';
-const sfZsiString = '__zf_szi_location__';
 
 const sortByName = (items: { item: string }[]) => {
 	return items.sort((a, b) => {
@@ -219,10 +219,8 @@ export class SoqlIntellisense {
 	}
 
 	private parseInjectedSoqlString(contents: string, position: Position) {
-		const inlineSfZsiString = () => {
-			return contents.slice(0, position.getColumnNumber()) + sfZsiString + contents.slice(position.getColumnNumber());
-		};
-		const soql = this.parseSoql(inlineSfZsiString());
+		const inlined = inlineSfZsiString(contents, position);
+		const soql = this.parseSoql(inlined);
 
 		if (soql.exception) {
 			return undefined;
@@ -460,7 +458,7 @@ export class SoqlIntellisense {
 			const lastSoqlId = visitor.lastSoqlId;
 			const withoutZfString = lastSoqlId.text.replace(sfZsiString, '');
 
-			const lookupSObjectResult = await this.getDirectParentSObjectClass({fieldName, sObjectDescribeResult : subQueryFauxSObjectClass});
+			const lookupSObjectResult = await this.getDirectParentSObjectClass({ fieldName, sObjectDescribeResult: subQueryFauxSObjectClass });
 			const items = getSortedNonCollectionFields(lookupSObjectResult);
 			return items.filter(item => item.item.startsWith(withoutZfString));
 		} else {
