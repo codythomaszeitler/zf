@@ -1,4 +1,4 @@
-import { IntegratedDevelopmentEnvironment } from "../integratedDevelopmentEnvironment";
+import { IntegratedDevelopmentEnvironment, Uri } from "../integratedDevelopmentEnvironment";
 import { SalesforceCli } from "../salesforceCli";
 import { SalesforceOrg } from "../salesforceOrg";
 import { SObjectDescribeResult } from "../sObjectDescribeResult";
@@ -42,4 +42,11 @@ export function genCachedDescribeSObjects({ ide, cli }: { ide: IntegratedDevelop
         });
     };
     return cachedDescribeSObjects;
+}
+
+export function genSoqlDirDescribeSObjects({ ide, cli, soqlDir }: { ide: IntegratedDevelopmentEnvironment, cli: SalesforceCli; soqlDir: Uri }) {
+    const soqlDirDescribeSObjects: DescribeSObject = async function ({ sObjectName }) {
+
+    };
+    return soqlDirDescribeSObjects;
 }
