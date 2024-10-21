@@ -6,7 +6,7 @@ import { DescribeSObject } from "./intellisense";
 
 export const CACHE_TIMEOUT_CONFIG_KEY = 'sf.zsi.cachedDescribeSObjectTimeout';
 
-export function genCachedDescribeSObjects({ ide, cli }: { ide: IntegratedDevelopmentEnvironment; cli: SalesforceCli }) {
+export function genCachedDescribeSObjects({ ide, cli }: { ide: IntegratedDevelopmentEnvironment; cli: SalesforceCli; }) {
 
     async function runDescribeSObject(targetOrg: SalesforceOrg, sObjectName: string) {
         const sObjectDescribeResult = await cli.sobjectDescribe({
@@ -17,9 +17,9 @@ export function genCachedDescribeSObjects({ ide, cli }: { ide: IntegratedDevelop
 
     const cache = new Map<string, SObjectDescribeResult>();
     const cachedDescribeSObjects: DescribeSObject = async function ({ sObjectName }) {
-        const timeout = ide.getConfig<number>(CACHE_TIMEOUT_CONFIG_KEY, 60000);
         const targetOrg = await cli.getDefaultOrg();
 
+        const timeout = ide.getConfig<number>(CACHE_TIMEOUT_CONFIG_KEY, 60000);
         return ide.withStatusBarMessage(async () => {
             if (timeout === 0) {
                 return runDescribeSObject(targetOrg, sObjectName);
