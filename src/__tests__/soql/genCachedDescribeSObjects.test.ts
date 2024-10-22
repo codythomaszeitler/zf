@@ -4,7 +4,6 @@ import { genCachedDescribeSObjects, CACHE_TIMEOUT_CONFIG_KEY } from "../../soql/
 import { DescribeSObject } from "../../soql/intellisense";
 import { MockIDE } from "../__mocks__/mockIntegratedDevelopmentEnvironment";
 import { MockSalesforceCli } from "../__mocks__/mockSalesforceCli";
-import { getListSObjectsResult } from "./data/listSObjectResult";
 import { describeSObject } from "./utils";
 
 describe('gen list sobjects', () => {

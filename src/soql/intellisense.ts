@@ -1,5 +1,5 @@
 import { Position } from "../position";
-import { ComparisonOperatorContext, EndOfQueryContext, FieldNameContext, FromNameListContext, FromNameSoqlIdContext, FromOrSoqlIdContext, FromSoqlIdContext, OrderByClauseContext, QueryContext, SelectEntryContext, SelectListContext, SelectOrSoqlIdContext, SoqlIdContext, SoqlParser, SubFieldEntryContext, SubFieldEntryFieldNameContext, SubFieldEntrySoqlIdContext, SubFieldListContext, SubQueryContext, SubQueryFromNameFieldNameContext, SubQueryFromNameSoqlIdContext, WhereClauseContext } from '../parser/SoqlParser';
+import { ComparisonOperatorContext, EndOfQueryContext, FieldExpressionContext, FieldNameContext, FromNameListContext, FromNameSoqlIdContext, FromOrSoqlIdContext, FromSoqlIdContext, OrderByClauseContext, QueryContext, SelectEntryContext, SelectListContext, SelectOrSoqlIdContext, SoqlIdContext, SoqlParser, SubFieldEntryContext, SubFieldEntryFieldNameContext, SubFieldEntrySoqlIdContext, SubFieldListContext, SubQueryContext, SubQueryFromNameFieldNameContext, SubQueryFromNameSoqlIdContext, ValueContext, WhereClauseContext } from '../parser/SoqlParser';
 import { SoqlLexer } from '../parser/SoqlLexer';
 import { CommonTokenStream } from 'antlr4ts';
 import { FauxSObjectApexClass, FauxSObjectField } from "../genFauxSObjects";
@@ -13,6 +13,7 @@ import { SalesforceOrg } from "../salesforceOrg";
 import { SObjectDescribeResult } from "../sObjectDescribeResult";
 import { SObjectListResult } from "../sObjectListResult";
 import { inlineSfZsiString, sfZsiString } from "./intellisenseUtils";
+import { dateTimeLiterals } from "./dateTime";
 
 export const CUSTOM_SOBJECTS_SUBDIR = 'customObjects';
 export const STANDARD_SOBJECTS_SUBDIR = 'standardObjects';
@@ -106,7 +107,69 @@ export class SoqlIntellisense {
 			return this.runEndOfQueryAutocomplete({ stamp, soql });
 		}
 
+		if (stamp.intellisenseType === 'Value') {
+			return this.runValueAutocomplete({ stamp, soql });
+		}
+
 		return [];
+	}
+
+	private async runValueAutocomplete({ stamp, soql }: { stamp: ValueMatchedRule; soql: QueryContext }) {
+		const { valueContext: value } = stamp;
+
+		const visitor: SoqlParserVisitor<ValueAutocompleteVisitorResult | undefined> = {
+			visit: function (tree: ParseTree): ValueAutocompleteVisitorResult {
+				return tree.accept(this);
+			},
+			visitChildren: function (node: RuleNode): ValueAutocompleteVisitorResult | undefined {
+				for (let i = 0; i < node.childCount; i++) {
+					const child = node.getChild(i);
+					const result = child.accept(this);
+					if (result) {
+						return result;
+					}
+				}
+				return undefined;
+			},
+			visitTerminal: function (node: TerminalNode): ValueAutocompleteVisitorResult | undefined {
+				return undefined;
+			},
+			visitErrorNode: function (node: ErrorNode): ValueAutocompleteVisitorResult | undefined {
+				return undefined;
+			},
+			visitFieldExpression(ctx) {
+				if (isChildOf(value, ctx)) {
+					return {
+						fieldNameContext: ctx.fieldName()
+					};
+				}
+				return visitor.visitChildren(ctx);
+			}
+		};
+
+		const getEndOfPathSoqlId = (fieldNameContext: FieldNameContext) => {
+			const soqlIds = fieldNameContext.soqlId();
+			if (soqlIds.length === 0) {
+				return undefined;
+			}
+			return soqlIds[soqlIds.length - 1];
+		};
+
+		const { fieldNameContext } = visitor.visit(soql);
+
+		const fromName = this.getCurrentFromName(soql);
+		const sObjectDescribeResult = await this.getSObjectDescribeFor(fromName);
+		const endOfPathSoqlId = getEndOfPathSoqlId(fieldNameContext);
+
+		const result = sObjectDescribeResult.result.fields.find(field => field.name === endOfPathSoqlId.text);
+		if (result.type === 'datetime') {
+			return sortByName(this.asItems(...dateTimeLiterals));
+		}
+		return [];
+	}
+
+	private asItems(...strings: string[]): { item: string }[] {
+		return strings.map(string => ({ item: string }));
 	}
 
 	private async runComparisonOperatorAutocompletion() {
@@ -705,6 +768,12 @@ function genGetInitialMatchVisitor() {
 						intellisenseType: 'SubFieldEntrySoqlId',
 						subFieldEntrySoqlIdContext
 					};
+				} else if (parent.ruleContext.ruleIndex === SoqlParser.RULE_value) {
+					const valueContext = parent.ruleContext as ValueContext;
+					match = {
+						intellisenseType: 'Value',
+						valueContext
+					};
 				}
 			}
 		},
@@ -719,7 +788,7 @@ function genGetInitialMatchVisitor() {
 }
 
 type ZfIntellisenseMatchedRule = NoMatchFound | SoqlIdMatchedRule | EndOfQueryMatchedRule | ComparisonOperatorMatchedRule | SubFieldEntryMatchedRule
-	| FromOrSoqlIdMatchedRule | FromSoqlIdMatchedRule | SelectOrSoqlIdMatchedRule | SelectEntryMatchedRule | FromNameSoqlIdMatchedRule | SubQueryFromNameSoqlIdMatchedRule | SubFieldEntrySoqlIdMatchedRule;
+	| FromOrSoqlIdMatchedRule | FromSoqlIdMatchedRule | SelectOrSoqlIdMatchedRule | SelectEntryMatchedRule | FromNameSoqlIdMatchedRule | SubQueryFromNameSoqlIdMatchedRule | SubFieldEntrySoqlIdMatchedRule | ValueMatchedRule;
 
 interface NoMatchFound { intellisenseType: "NoMatchFound" }
 interface SoqlIdMatchedRule { intellisenseType: "SoqlId", soqlIdContext: SoqlIdContext }
@@ -735,6 +804,7 @@ interface EndOfQueryMatchedRule { intellisenseType: "EndOfQuery", endOfQueryCont
 interface FromOrSoqlIdMatchedRule { intellisenseType: 'FromOrSoqlId', fromOrSoqlIdContext: FromOrSoqlIdContext }
 interface FromSoqlIdMatchedRule { intellisenseType: 'FromSoqlId', fromSoqlIdContext: FromSoqlIdContext }
 interface SelectOrSoqlIdMatchedRule { intellisenseType: 'SelectOrSoqlId', selectOrSoqlIdContext: SelectOrSoqlIdContext }
+interface ValueMatchedRule { intellisenseType: 'Value', valueContext: ValueContext }
 
 function isChildOf(child: ParseTree, parent: ParseTree) {
 	let iterator: ParseTree | undefined = child;
@@ -857,6 +927,6 @@ function getBaseSoqlParserVisitor() {
 	return soqlParserVisitor;
 }
 
-interface SoqlIntellisenseResult {
-	item: string
+interface ValueAutocompleteVisitorResult {
+	fieldNameContext?: FieldNameContext;
 }
