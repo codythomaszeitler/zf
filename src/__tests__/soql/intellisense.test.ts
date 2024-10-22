@@ -4,6 +4,7 @@ import { describe } from '@jest/globals';
 import { getListSObjectsResult } from './data/listSObjectResult';
 import { SObjectDescribeResult } from "../../sObjectDescribeResult";
 import { describeSObject, listSObjects } from "./utils";
+import { dateTimeLiterals } from "../../soql/dateTime";
 
 describe('soql intellisense', () => {
 	const numIntellisenseFields: number = 75;
@@ -377,5 +378,23 @@ describe('soql intellisense', () => {
 		const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
 		expect(results).toHaveLength(65);
 		expect(results.map(item => item.item)).toContain('Contacts');
+	});
+
+	it('should intellisense date formulas when looking at value', async () => {
+		const operators = ['<', '=', '>'];
+		const dateTimeLiteralsAsSet = new Set(dateTimeLiterals);
+		for (const operator of operators) {
+			const currentEditorContents = `SELECT Id FROM Account WHERE CreatedDate ${operator} `;
+			const position = new Position(0, 43);
+
+			const results = await testObject.autocompleteSuggestionsAt(currentEditorContents, position);
+
+			const items = results.map(result => result.item);
+			items.forEach(item => {
+				expect(dateTimeLiteralsAsSet.has(item)).toBe(true);
+			});
+
+			expect(dateTimeLiteralsAsSet.size).not.toBe(0);
+		}
 	});
 });

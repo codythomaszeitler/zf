@@ -596,7 +596,8 @@ comparisonOperator:
 	| ZF_INTELLISENSE;
 
 value:
-	NULL
+    ZF_INTELLISENSE
+	| NULL
 	| BooleanLiteral
 	| signedNumber
 	| StringLiteral
