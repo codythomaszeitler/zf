@@ -460,30 +460,36 @@ export function activate(context: vscode.ExtensionContext) {
 		scheme: 'file', language: 'apex'
 	}, {
 		async provideCompletionItems(document, position, token, context) {
-			if (!ide.getConfig("sf.zsi.enableSoqlIntellisensePrototype", true)) {
-				return [];
-			}
+			try {
+				if (!ide.getConfig("sf.zsi.enableSoqlIntellisensePrototype", true)) {
+					return [];
+				}
 
-			const zfPosition = new Position(position.line, position.character);
+				const zfPosition = new Position(position.line, position.character);
 
-			const getSoqlUnderCursorCommand = new GetSoqlUnderCursorCommand({
-				cli: salesforceCli, ide
-			});
-
-			const result = await getSoqlUnderCursorCommand.execute({
-				apexClass: document.getText(),
-				position: zfPosition
-			});
-
-			if (result.isWithinSoql) {
-				const intellisense = new SoqlIntellisense({
-					describeSObject: cachedDescribeSObjects,
-					listSObjects: cachedListSObjects
+				const getSoqlUnderCursorCommand = new GetSoqlUnderCursorCommand({
+					cli: salesforceCli, ide
 				});
-				const items = await intellisense.autocompleteSuggestionsAt(result.soql, result.embeddedCursorPosition);
-				return items.map(item => (new vscode.CompletionItem(item.item, vscode.CompletionItemKind.Field)));
-			} else {
-				return [];
+
+				const result = await getSoqlUnderCursorCommand.execute({
+					apexClass: document.getText(),
+					position: zfPosition
+				});
+
+				if (result.isWithinSoql) {
+					const intellisense = new SoqlIntellisense({
+						describeSObject: cachedDescribeSObjects,
+						listSObjects: cachedListSObjects
+					});
+					const items = await intellisense.autocompleteSuggestionsAt(result.soql, result.embeddedCursorPosition);
+					return items.map(item => (new vscode.CompletionItem(item.item, vscode.CompletionItemKind.Field)));
+				} else {
+					return [];
+				}
+			} catch (e: unknown) {
+				if (e instanceof Error) {
+					Logger.get().error(e);
+				}
 			}
 		},
 	}, '.');
