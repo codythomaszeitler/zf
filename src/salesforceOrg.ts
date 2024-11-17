@@ -1,11 +1,13 @@
 export class SalesforceOrg {
     private readonly isActive?: boolean;
     private readonly alias: string;
+    private readonly username: string;
     private readonly isScratchOrg: boolean;
     private readonly isDefaultOrg: boolean;
 
-    public constructor(params: { alias?: string; isActive?: boolean; isScratchOrg?: boolean; isDefaultOrg?: boolean }) {
+    public constructor (params: { alias?: string; isActive?: boolean; isScratchOrg?: boolean; isDefaultOrg?: boolean; username?: string }) {
         this.alias = params.alias ? params.alias : '';
+        this.username = params.username ? params.username : '';
         this.isActive = params.isActive;
         this.isScratchOrg = params.isScratchOrg ?? true;
         this.isDefaultOrg = params.isDefaultOrg ?? false;
@@ -13,6 +15,18 @@ export class SalesforceOrg {
 
     public getAlias(): string {
         return this.alias;
+    }
+
+    public getUsername(): string {
+        return this.username;
+    }
+
+    public getTargetOrgName(): string {
+        if (this.alias) {
+            return this.alias;
+        }
+
+        return this.username;
     }
 
     public getIsActive(): boolean | undefined {

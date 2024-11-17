@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { openOrg } from './openOrg';
+import { ImmediateCacheOrgListCommand, SelectAndOpenOrgCommand, SelectOrgCommand } from './openOrg';
 import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, ApexLogTreeNode } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { runCliCommand } from './executor';
@@ -29,6 +29,7 @@ import { DescribeSObject, ListSObjects, SoqlIntellisense } from './soql/intellis
 import { genCachedListSObjects } from './soql/genListSObjects';
 import { genCachedDescribeSObjects } from './soql/genDescribeSObjects';
 import { GetSoqlUnderCursorCommand } from './soql/getSoqlUnderCursor';
+import { SalesforceOrg } from './salesforceOrg';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -64,9 +65,19 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 
+	const orgListCommand = new ImmediateCacheOrgListCommand({
+		cli: salesforceCli,
+		ide
+	});
+
 	async function runSfOrgOpen() {
 		try {
-			await openOrg(ide, salesforceCli);
+			const openOrgCommand = new SelectAndOpenOrgCommand({
+				ide,
+				cli: salesforceCli,
+				orgListCommand
+			});
+			await openOrgCommand.execute();
 		} catch (e: any) {
 			if (e) {
 				ide.showWarningMessage(e.message);
@@ -125,7 +136,6 @@ export function activate(context: vscode.ExtensionContext) {
 					targetOrg: defaultOrg,
 					destDir: ide.generateUri('.sfdx', 'tools', 'sobjects', 'customObjects')
 				});
-				// ana
 			} catch (e: any) {
 				ide.showErrorMessage(e.message);
 			}
@@ -295,7 +305,7 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
-	async function runSoqlScriptExecute() {
+	async function runSoqlScriptExecute(targetOrg?: SalesforceOrg) {
 		const executeSoqlCommand = new ExecuteAndShowSoqlCommand({
 			cli: salesforceCli,
 			ide
@@ -304,7 +314,8 @@ export function activate(context: vscode.ExtensionContext) {
 		await ide.withProgress(async progressToken => {
 			const outputDir = ide.generateUri('zf', 'soqlResults');
 			await executeSoqlCommand.execute({
-				outputDir
+				outputDir,
+				targetOrg
 			});
 		}, {
 			title: 'Executing SOQL',
@@ -539,6 +550,16 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", runSoqlScriptExecute));
+
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runSoqlScriptAgainstTargetOrg', async () => {
+		const selectOrgCommand = new SelectOrgCommand({
+			cli: salesforceCli,
+			ide
+		});
+
+		const userSelectedOrg = await selectOrgCommand.execute();
+		await runSoqlScriptExecute(userSelectedOrg);
+	}));
 }
 
 
