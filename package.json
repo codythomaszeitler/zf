@@ -83,6 +83,11 @@
         "command": "sf.zsi.runSoqlScript",
         "title": "ZF: Run SOQL Script",
         "when": "editorLangId == soql"
+      },
+      {
+        "command": "sf.zsi.runSoqlScriptAgainstTargetOrg",
+        "title": "ZF: Run SOQL Script Against Target Org",
+        "when": "editorLangId == soql"
       }
     ],
     "views": {
@@ -124,7 +129,8 @@
         {
           "command": "sf.zsi.runSoqlScript",
           "group": "navigation@0",
-          "when": "editorLangId == soql || editorLangId == zoql"
+          "when": "editorLangId == soql || editorLangId == zoql",
+          "alt": "sf.zsi.runSoqlScriptAgainstTargetOrg"
         }
       ],
       "view/item/context": [

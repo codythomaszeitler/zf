@@ -16,43 +16,19 @@ import { intoSObjectListResult, SObjectListResult, SObjectListResultDeprecated }
 import { ProjectRetrieveResult, SalesforceCli } from "./salesforceCli";
 import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
-import { SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
+import { intoOrgListResult, intoOrgOpenResult, OrgListResult, OrgOpenResult, SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
 import { SoqlQuery } from "./soqlQuery";
 import { Uri } from "./uri";
 import { ProjectDeployCancelResult, ProjectDeployPreviewResult, ProjectDeployResult, intoProjectDeployCancelResult, intoProjectDeployPreviewResult, intoProjectDeployResult } from "./projectDeploy/projectDeployResult";
 import { ApexRunResult, intoApexRunResult } from "./runAnonApex/runAnonApex";
+import { intoSalesforceOrgs } from "./openOrg";
 
 export class SfSalesforceCli extends SalesforceCli {
-
-    private cached: SalesforceOrg[];
-    private previousGetOrgListPromise: Promise<SalesforceOrg[]>;
-
     constructor (executor: Executor, proxy?: {}) {
         super(executor, proxy);
-
-        this.cached = [];
-        this.previousGetOrgListPromise = this.noCacheGetOrgList({
-            skipConnectionStatus: false
-        });
-        this.previousGetOrgListPromise.then((orgs) => {
-            this.cached = orgs;
-        });
     }
 
-    async getOrgList(): Promise<SalesforceOrg[]> {
-        await this.previousGetOrgListPromise;
-        this.previousGetOrgListPromise = this.noCacheGetOrgList({
-            skipConnectionStatus: false
-        });
-        this.previousGetOrgListPromise.then((orgs) => {
-            this.cached = orgs;
-        });
-        return this.cached;
-    }
-
-    private async noCacheGetOrgList({ skipConnectionStatus }: {
-        skipConnectionStatus: boolean
-    }): Promise<SalesforceOrg[]> {
+    async orgList({ skipConnectionStatus }: { skipConnectionStatus: boolean }): Promise<OrgListResult> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -62,66 +38,24 @@ export class SfSalesforceCli extends SalesforceCli {
                 '--json'
             ]
         };
+        const { stdout } = await this.exec(command);
+        return intoOrgListResult(stdout);
+    }
+
+    async orgOpen({ targetOrg }: { targetOrg: SalesforceOrg; }): Promise<OrgOpenResult> {
+        const command: ExecutorCommand = {
+            command: 'sf',
+            args: [
+                'org',
+                'open',
+                '--target-org',
+                targetOrg.getTargetOrgName(),
+                '--json'
+            ]
+        };
 
         const { stdout } = await this.exec(command);
-        const orgListResult = stdout as SfOrgListResult;
-
-        if (!orgListResult.result) {
-            return [];
-        }
-
-        const sandboxes: SalesforceOrg[] = this.parseOrgsFromSandboxes(orgListResult);
-        const scratches: SalesforceOrg[] = this.parseOrgsFromScratches(orgListResult);
-
-        const orgs: SalesforceOrg[] = [...sandboxes, ...scratches];
-        return orgs;
-    }
-
-    private parseOrgsFromSandboxes(orgListResult: SfOrgListResult): SalesforceOrg[] {
-        const isSandboxConnected = (sandbox: SandboxOrgListResult) => {
-            if (!sandbox.connectedStatus) {
-                return false;
-            }
-            return sandbox.connectedStatus === 'Connected';
-        };
-
-        if (!orgListResult.result.nonScratchOrgs) {
-            return [];
-        }
-
-        const sandboxes: SalesforceOrg[] = orgListResult.result.nonScratchOrgs.
-            map((sandbox) => (new SalesforceOrg({
-                isActive: isSandboxConnected(sandbox),
-                isScratchOrg: false,
-                isDefaultOrg: sandbox.isDefaultUsername,
-                alias: sandbox.username ? sandbox.username : ''
-            })));
-        return sandboxes;
-    }
-
-    private parseOrgsFromScratches(orgListResult: SfOrgListResult): SalesforceOrg[] {
-        const isScratchOrgConnected = (scratchOrg: ScratchOrgListResult) => {
-            if (scratchOrg.isExpired === undefined) {
-                return false;
-            }
-
-            return !scratchOrg.isExpired;
-        };
-
-        if (!orgListResult.result.scratchOrgs) {
-            return [];
-        }
-
-        const scratches: SalesforceOrg[] = orgListResult.result.scratchOrgs.
-            map((scratchOrg) => (
-                new SalesforceOrg({
-                    isActive: isScratchOrgConnected(scratchOrg),
-                    isScratchOrg: true,
-                    isDefaultOrg: scratchOrg.isDefaultUsername,
-                    alias: scratchOrg.alias ? scratchOrg.alias : ''
-                })
-            ));
-        return scratches;
+        return intoOrgOpenResult(stdout);
     }
 
     async openOrg(alias: string): Promise<void> {
@@ -139,13 +73,11 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async getDefaultOrg(): Promise<SalesforceOrg | null> {
-        const orgList = await this.noCacheGetOrgList({
+        const orgListResult = await this.orgList({
             skipConnectionStatus: true
         });
-        const defaultOrg = orgList.find(org =>
-            org.getIsDefaultOrg()
-        );
-        return defaultOrg ?? null;
+        const orgs = intoSalesforceOrgs(orgListResult);
+        return orgs.find(org => org.getIsDefaultOrg()) ?? null;
     }
 
     async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean }): Promise<ProjectDeployResult | undefined> {

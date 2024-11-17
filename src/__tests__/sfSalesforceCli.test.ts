@@ -34,87 +34,6 @@ describe('sf salesforce cli', () => {
         Logger.setGlobalLogger(new TestLogger());
     });
 
-    describe('sf salesforce cli - get org list', () => {
-        it('should convert nominal response to in memory representation', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": get()
-            });
-
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-            const orgs: SalesforceOrg[] = await cli.getOrgList();
-            expect(orgs).toHaveLength(5);
-        });
-
-        it('should not get any orgs when response contains no scratches and no sandboxes', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": getNoSandboxesAndNoScratches()
-            });
-
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-            const orgs: SalesforceOrg[] = await cli.getOrgList();
-            expect(orgs).toHaveLength(0);
-        });
-
-        it('should show org as not-active if isExpired flag is missing on ScratchOrgListResult', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": getScratchOrgMissingIsExpiredProperty()
-            });
-
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-            const orgs: SalesforceOrg[] = await cli.getOrgList();
-            expect(orgs).toHaveLength(1);
-            expect(orgs[0].getIsActive()).toBe(false);
-        });
-
-        it('should show org with \'\' alias if alias flag is missing on ScratchOrgListResult', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": getScratchOrgMissingAliasProperty()
-            });
-
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-            const orgs: SalesforceOrg[] = await cli.getOrgList();
-            expect(orgs).toHaveLength(1);
-            expect(orgs[0].getAlias()).toBe('');
-        });
-
-        it('should parse an empty list of orgs when scratchOrgs property is missing on SfOrgListResult', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": getMissingScratchOrgsProperty()
-            });
-
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-            const orgs: SalesforceOrg[] = await cli.getOrgList();
-            expect(orgs).toHaveLength(0);
-        });
-
-        it('should parse an empty list of orgs when nonScratchOrgs property is missing on SfOrgListResult', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": getMissingSandboxesProperty()
-            });
-
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-            const orgs: SalesforceOrg[] = await cli.getOrgList();
-            expect(orgs).toHaveLength(0);
-        });
-
-        it('should parse an empty list of orgs when result is missing on the SfOrgListResult', async () => {
-            const mockExecutor = genMockExecutor({
-                "sf org list --json": getMissingResultProperty()
-            });
-
-            const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
-
-            const orgs: SalesforceOrg[] = await cli.getOrgList();
-            expect(orgs).toHaveLength(0);
-        });
-    });
-
     describe('salesforce cli - get default org', () => {
         it('should be able to get the default org when one exists', async () => {
             const targetOrg = new SalesforceOrg({
@@ -700,16 +619,13 @@ describe('sf salesforce cli', () => {
             expect(log.getStatus()).toBe("Success");
 
             const history: SalesforceCliHistory = cli.getHistory();
-            expect(history.length).toBe(2);
+            expect(history.length).toBe(1);
             expect(history.maxHistoryLength).toBe(25);
 
             const sfApexLogListInputOutput = history.get(0);
-            const sfOrgListInputOutput = history.get(1);
 
             expect(sfApexLogListInputOutput.getViewableCliInput()).toMatch(/sf apex list log --target-org cso --json - .*/);
             expect(sfApexLogListInputOutput.getViewableOutput(false)).toBe(getApexListLogNominalResponse());
-            expect(sfOrgListInputOutput.getViewableCliInput()).toMatch(/sf org list --json - .*/);
-            expect(sfOrgListInputOutput.getViewableOutput(false)).toBe(get());
 
             for (let i = 0; i < 100; i++) {
                 await cli.apexListLog({

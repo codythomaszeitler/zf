@@ -24,8 +24,16 @@ import { ApexTestRunResult, ApexTestGetResult } from "../../apexTestRunResult";
 import { Uri } from "../../uri";
 import { ProjectDeployCancelResult, ProjectDeployResult } from "../../projectDeploy/projectDeployResult";
 import { ApexRunResult } from "../../runAnonApex/runAnonApex";
+import { OrgListResult, OrgOpenResult } from "../../sfOrgListResult";
 
 export class MockSalesforceCli extends SalesforceCli {
+    orgOpen({ targetOrg }: { targetOrg: SalesforceOrg; }): Promise<OrgOpenResult> {
+        throw new Error("Method not implemented.");
+    }
+    orgList({ skipConnectionStatus }: { skipConnectionStatus: boolean; }): Promise<OrgListResult> {
+        throw new Error("Method not implemented.");
+    }
+
     sobjectList(params: { targetOrg: SalesforceOrg; }): Promise<SObjectListResult> {
         throw new Error("Method not implemented.");
     }
@@ -46,7 +54,6 @@ export class MockSalesforceCli extends SalesforceCli {
     private readonly openedOrgs: SalesforceOrg[];
 
     public toThrowOnProjectDeployCancel: Error | undefined;
-    public toThrowOnGetOrgList: Error | undefined;
 
     public toThrowOnApexGetLog: Error | undefined;
 
@@ -105,13 +112,6 @@ export class MockSalesforceCli extends SalesforceCli {
 
     add(org: SalesforceOrg) {
         this.orgs.push(org);
-    }
-
-    async getOrgList(): Promise<SalesforceOrg[]> {
-        if (this.toThrowOnGetOrgList) {
-            throw this.toThrowOnGetOrgList;
-        }
-        return [...this.orgs];
     }
 
     async openOrg(alias: string): Promise<void> {

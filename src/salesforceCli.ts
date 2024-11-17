@@ -16,6 +16,7 @@ import { ApexTestGetResult, ApexTestRunResult } from "./apexTestRunResult";
 import { Uri } from "./uri";
 import { ProjectDeployCancelResult, ProjectDeployPreviewResult, ProjectDeployResult } from "./projectDeploy/projectDeployResult";
 import { ApexRunResult } from "./runAnonApex/runAnonApex";
+import { OrgListResult, OrgOpenResult } from "./sfOrgListResult";
 
 export abstract class SalesforceCli {
     private readonly executor: Executor;
@@ -33,9 +34,10 @@ export abstract class SalesforceCli {
         this.history = new SalesforceCliHistory();
     }
 
-    abstract getOrgList(): Promise<SalesforceOrg[]>;
     abstract getDefaultOrg(): Promise<SalesforceOrg | null>;
     abstract openOrg(alias: string): Promise<void>;
+    abstract orgList({ skipConnectionStatus }: { skipConnectionStatus: boolean }): Promise<OrgListResult>;
+    abstract orgOpen({ targetOrg }: { targetOrg: SalesforceOrg }) : Promise<OrgOpenResult>;
 
     abstract projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean }): Promise<ProjectDeployResult | undefined>;
     abstract projectDeployReport(params: { jobId: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployResult | undefined>;
