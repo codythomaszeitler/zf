@@ -34,7 +34,6 @@ export abstract class Command {
 		} else {
 			return await this.cli.getDefaultOrg() ?? undefined;
 		}
-
 	}
 }
 
