@@ -556,7 +556,8 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runSoqlScriptAgainstTargetOrg', async () => {
 		const selectOrgCommand = new SelectOrgCommand({
 			cli: salesforceCli,
-			ide
+			ide,
+			orgListCommand
 		});
 
 		const userSelectedOrg = await selectOrgCommand.execute();
