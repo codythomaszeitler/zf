@@ -549,7 +549,9 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", runSoqlScriptExecute));
+	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", async () => {
+		await runSoqlScriptExecute();
+	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.runSoqlScriptAgainstTargetOrg', async () => {
 		const selectOrgCommand = new SelectOrgCommand({
