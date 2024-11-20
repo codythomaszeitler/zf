@@ -3,7 +3,7 @@
   "displayName": "ZeitlerForce",
   "repository": "https://github.com/codythomaszeitler/sf-zsi.git",
   "description": "vscode extensions for salesforce.",
-  "version": "1.56.0",
+  "version": "1.57.0",
   "engines": {
     "vscode": "^1.82.0"
   },
