@@ -3,7 +3,6 @@ import { Command, CommandParams } from '../command';
 import { SalesforceOrg } from '../salesforceOrg';
 import { Logger } from '../logger';
 import { Uri } from '../integratedDevelopmentEnvironment';
-import { info } from 'console';
 import { filterUserDebugs } from '../apexLog';
 
 const apexRunSuccessSchema = z.object({

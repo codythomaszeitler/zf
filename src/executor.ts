@@ -18,8 +18,8 @@ export interface ExecutorResult {
 
 export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorResult> {
     return new Promise((resolve, reject) => {
-
-        Logger.get().info(intoCliCommandString(command));
+        const cliCommandString = intoCliCommandString(command);
+        Logger.get().info(cliCommandString);
 
         const cli = spawn(command.command, command.args, {
             shell: true,
@@ -28,6 +28,7 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
 
         cli.on('spawn', () => {
             if (command.standardInput) {
+                Logger.get().info(`Wrote the following standard input to shell command: ${command.standardInput}.`);
                 cli.stdin.write(command.standardInput);
                 cli.stdin.end();
             }
@@ -35,12 +36,18 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
 
         let stdout = '';
         cli.stdout.on('data', (data: string) => {
+            const addToStdout = () => {
+                Logger.get().fine(`Stdout piped the following contents: ${data}`);
+                stdout += data;
+            };
+
             if (command.prompt) {
                 const asString = data + '';
                 if (asString !== command.prompt) {
-                    stdout += data;
+                    addToStdout();
                 }
             } else {
+                addToStdout();
                 stdout += data;
             }
         });
@@ -57,6 +64,7 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
         });
 
         cli.on('close', () => {
+            Logger.get().info(`Closing the following stream: ${cliCommandString}.`);
             const getOutput = () => {
                 if (command.shouldParseAsJson) {
                     return stdout ? JSON.parse(stdout) : {};
@@ -67,11 +75,11 @@ export async function runCliCommand(command: ExecutorCommand): Promise<ExecutorR
 
             const output = getOutput();
             if (!output && stderr) {
-                Logger.get().info(intoCliCommandString(command) + ' did not return successfully. Please check Salesforce CLI Input/Output for output.');
+                Logger.get().info(cliCommandString + ' did not return successfully. Please check Salesforce CLI Input/Output for output.');
                 reject(new Error(stderr));
             }
             else {
-                Logger.get().info(intoCliCommandString(command) + ' returned successfully. Please check Salesforce CLI Input/Output for output.');
+                Logger.get().info(cliCommandString + ' returned successfully. Please check Salesforce CLI Input/Output for output.');
                 resolve({
                     stdout: getOutput()
                 });

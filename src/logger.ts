@@ -16,7 +16,7 @@ export abstract class Logger {
 
 	private level: LogLevel;
 
-	public constructor() {
+	public constructor () {
 		this.level = LogLevel.warn;
 	}
 
@@ -30,6 +30,10 @@ export abstract class Logger {
 
 	public info(message: string): void {
 		this.writeWithLogLevelCheck(LogLevel.info, message);
+	}
+
+	public fine(message: string): void {
+		this.writeWithLogLevelCheck(LogLevel.fine, message);
 	}
 
 	public error(exception: Error): void {
@@ -68,7 +72,7 @@ export class LogLevel {
 	private readonly ordering: number;
 	private readonly raw: string;
 
-	private constructor(ordering: number, raw: string) {
+	private constructor (ordering: number, raw: string) {
 		this.ordering = ordering;
 		this.raw = raw;
 	}
