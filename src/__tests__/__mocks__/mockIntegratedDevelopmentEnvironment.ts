@@ -1,5 +1,5 @@
 import { title } from "process";
-import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, ShowInputBoxOptions, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { OnCancellationRequestedListener, ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
 import { SfdxProject, getSfdxProjectUri } from "../../readSfdxProjectCommand";
@@ -9,6 +9,10 @@ import { MockFileSystem } from "./mockFileSystem";
 
 function nonStartedQuickPick(item: string): void {
     throw new Error('Show Quick is not being shown.');
+}
+
+function nonStartedShowInputBox(item: string): void {
+    throw new Error('Show Input Box is not being shown.');
 }
 
 export class MockIDE extends IntegratedDevelopmentEnvironment {
@@ -21,8 +25,10 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         throw new Error("Method not implemented.");
     }
     selectQuickPickItem: (item: string) => void;
+    writeAndEnterIntoShowInputBox: (item: string) => void;
 
     private _waitForShowQuickPickResolve: (value: unknown) => void;
+    private _waitForShowInputBoxResolve: (value: unknown) => void;
     private shownErrorMessages: string[];
     private shownWarningMessages: string[];
     private shownInformationMessages: string[];
@@ -49,7 +55,9 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
             })
         });
         this.selectQuickPickItem = nonStartedQuickPick;
+        this.writeAndEnterIntoShowInputBox = nonStartedShowInputBox;
         this._waitForShowQuickPickResolve = () => { };
+        this._waitForShowInputBoxResolve = () => { };
         this.shownErrorMessages = [];
         this.shownWarningMessages = [];
         this.shownInformationMessages = [];
@@ -131,6 +139,41 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
             this.selectQuickPickItem = (item: string): void => {
                 resolve(item);
                 this.selectQuickPickItem = nonStartedQuickPick;
+            };
+        });
+    }
+
+    private isShowingInputBox: boolean = false;
+
+    waitForShowInputBox() {
+        if (this.isShowingInputBox) {
+            return;
+        }
+
+        return new Promise(resolve => {
+            this._waitForShowQuickPickResolve = resolve;
+        });
+    }
+
+    showInputBox(options?: ShowInputBoxOptions): Promise<string> {
+        const runInputCheckIfExists = (item: string) => {
+            if (options?.validateInput) {
+                return !options.validateInput(item);
+            }
+            return true;
+        };
+
+        return new Promise(resolve => {
+            this.isShowingInputBox = true;
+            this._waitForShowInputBoxResolve(null);
+            this.writeAndEnterIntoShowInputBox = (item: string): void => {
+                if (!runInputCheckIfExists(item)) {
+                    throw new Error(`${item} did not pass validate input check.`);
+                }
+
+                resolve(item);
+                this.writeAndEnterIntoShowInputBox = nonStartedShowInputBox;
+                this.isShowingInputBox = false;
             };
         });
     }

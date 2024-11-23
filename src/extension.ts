@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ImmediateCacheOrgListCommand, SelectAndOpenOrgCommand, SelectOrgCommand } from './openOrg';
-import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, ApexLogTreeNode } from "./vscode";
+import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, ApexLogTreeNode, VscodeZfSoqlScriptsTreeView, VscodeZoqlScriptTreeNode } from "./vscode";
 import { ApexLogTreeView } from "./apexLogTreeView";
 import { runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand, PickAndGenerateFauxSObjectCommand } from './genFauxSObjects';
@@ -30,6 +30,8 @@ import { genCachedListSObjects } from './soql/genListSObjects';
 import { genCachedDescribeSObjects } from './soql/genDescribeSObjects';
 import { GetSoqlUnderCursorCommand } from './soql/getSoqlUnderCursor';
 import { SalesforceOrg } from './salesforceOrg';
+import { CreatedNameContext } from 'apex-parser';
+import { CreateAndShowZoqlScriptCommand } from './soql/zoqlScriptDirectory';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -41,6 +43,10 @@ function getZfLogDir(ide: IntegratedDevelopmentEnvironment) {
 
 function getZfMetadataDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'metadata');
+}
+
+function getZfZoqlDir(ide: IntegratedDevelopmentEnvironment) {
+	return ide.generateUri('zf', 'zoqlScripts');
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -64,6 +70,13 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
+	const provider = new VscodeZfSoqlScriptsTreeView({
+		zoqlScriptsDir: getZfZoqlDir(ide)
+	});
+	vscode.window.createTreeView("zoql-scripts", {
+		treeDataProvider: provider
+	});
+	provider.refresh(ide, salesforceCli);
 
 	const orgListCommand = new ImmediateCacheOrgListCommand({
 		cli: salesforceCli,
@@ -549,6 +562,18 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.createZoqlScript', async () => {
+		const command = new CreateAndShowZoqlScriptCommand({
+			ide, cli: salesforceCli
+		});
+
+		await command.execute({
+			zoqlScriptsDir: getZfZoqlDir(ide)
+		});
+
+		await provider.refresh(ide, salesforceCli);
+	}));
+
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", async () => {
 		await runSoqlScriptExecute();
 	}));
@@ -562,6 +587,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const userSelectedOrg = await selectOrgCommand.execute();
 		await runSoqlScriptExecute(userSelectedOrg);
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.openZoqlScript", async (e: VscodeZoqlScriptTreeNode) => {
+		const toOpen = e.treeNode.value.uri;
+		await ide.showTextDocument(toOpen, {});
 	}));
 }
 

@@ -1,4 +1,4 @@
-import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, ShowTextDocumentOptions, TextLine, Uri, ViewColumn } from "./integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, DiagnosticSeverity, IntegratedDevelopmentEnvironment, ShowInputBoxOptions, ShowTextDocumentOptions, TextLine, Uri, ViewColumn } from "./integratedDevelopmentEnvironment";
 import { ApexTestResult } from './apexTestRunResult';
 import * as vscode from 'vscode';
 import { Range } from "./range";
@@ -11,9 +11,10 @@ import { TreeNode } from "./treeNode";
 import { RefreshListener, TreeView } from "./treeView";
 import { SalesforceOrg } from "./salesforceOrg";
 import { TextDecoder, TextEncoder } from "util";
-import { OnSalesforceCliRunEvent, SalesforceCliHistory, SalesforceCliInputOutput } from "./salesforceCli";
+import { OnSalesforceCliRunEvent, SalesforceCli, SalesforceCliHistory, SalesforceCliInputOutput } from "./salesforceCli";
 import { TestItem as ZfTestItem } from './runTestUnderCursorCommand';
 import { MetadataTreeNode } from "./metadataExplorerTreeView";
+import { ReadZoqlScriptDirectory, ZoqlScript } from "./soql/zoqlScriptDirectory";
 
 function getCurrentDir(): Uri {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -25,7 +26,13 @@ function getCurrentDir(): Uri {
 }
 
 export class VsCode extends IntegratedDevelopmentEnvironment {
-
+    async showInputBox(options?: ShowInputBoxOptions): Promise<string> {
+        const input = await vscode.window.showInputBox({
+            title: options?.title ?? "Did not put in title",
+            validateInput: options.validateInput
+        });
+        return input;
+    }
 
     private readonly diagnosticCollection: vscode.DiagnosticCollection;
     private readonly outputChannel: vscode.LogOutputChannel;
@@ -727,4 +734,75 @@ export class VscodeMetadataTreeNode extends vscode.TreeItem {
         light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
         dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
     };
+}
+
+export class VscodeZoqlScriptTreeNode extends vscode.TreeItem {
+    public readonly treeNode: TreeNode<ZoqlScript>;
+
+    public constructor ({ treeNode }: {
+        treeNode: TreeNode<ZoqlScript>
+    }) {
+        super(treeNode.label, vscode.TreeItemCollapsibleState.None);
+        this.treeNode = treeNode;
+    }
+
+    iconPath = {
+        light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
+        dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
+    };
+}
+
+export class VscodeZfSoqlScriptsTreeView implements vscode.TreeDataProvider<VscodeZoqlScriptTreeNode> {
+
+    private elements: TreeNode<ZoqlScript>[];
+    private readonly eventEmitter: vscode.EventEmitter<VscodeZoqlScriptTreeNode | undefined>;
+    private readonly zoqlScriptsDir: Uri;
+
+    public constructor ({ zoqlScriptsDir }: { zoqlScriptsDir: Uri }) {
+        this.elements = [];
+        this.eventEmitter = new vscode.EventEmitter<VscodeZoqlScriptTreeNode | undefined>();
+        this.onDidChangeTreeData = this.eventEmitter.event;
+        this.zoqlScriptsDir = zoqlScriptsDir;
+    }
+
+    async refresh(ide: IntegratedDevelopmentEnvironment, cli: SalesforceCli) {
+        const readZoqlScriptDirCommand = new ReadZoqlScriptDirectory({
+            ide,
+            cli
+        });
+        try {
+            this.elements = await readZoqlScriptDirCommand.execute({
+                zoqlScriptsDir: this.zoqlScriptsDir
+            });
+            this.eventEmitter.fire(undefined);
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                ide.showErrorMessage(`Could not init zoql script directory view because of ${e.message}`);
+            }
+        }
+
+    }
+
+    onDidChangeTreeData?: vscode.Event<void | VscodeZoqlScriptTreeNode | VscodeZoqlScriptTreeNode[]>;
+    getTreeItem(element: VscodeZoqlScriptTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
+        return element;
+    }
+    getChildren(element?: VscodeZoqlScriptTreeNode): vscode.ProviderResult<VscodeZoqlScriptTreeNode[]> {
+        if (element) {
+            return [];
+        } else {
+            return this.elements.map(treeNode => {
+                const vscodeZfScriptTreeNode = new VscodeZoqlScriptTreeNode({
+                    treeNode: treeNode
+                });
+                return vscodeZfScriptTreeNode;
+            });
+        }
+    }
+    getParent?(element: VscodeZoqlScriptTreeNode): vscode.ProviderResult<VscodeZoqlScriptTreeNode> {
+        return null;
+    }
+    resolveTreeItem?(item: vscode.TreeItem, element: VscodeZoqlScriptTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
+        return item;
+    }
 }
