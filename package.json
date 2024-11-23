@@ -88,6 +88,15 @@
         "command": "sf.zsi.runSoqlScriptAgainstTargetOrg",
         "title": "ZF: Run SOQL Script Against Target Org",
         "when": "editorLangId == soql"
+      },
+      {
+        "command": "sf.zsi.createZoqlScript",
+        "title": "ZF: Create Zoql Script"
+      },
+      {
+        "command": "sf.zsi.openZoqlScript",
+        "title": "ZF: Open Zoql Script",
+        "enablement": "view == zoql-scripts"
       }
     ],
     "views": {
@@ -110,6 +119,21 @@
           "id": "zeitlerforce-metadata-explorer",
           "name": "ZeitlerForce Metadata Explorer"
         }
+      ],
+      "zoql-scripts": [
+        {
+          "id": "zoql-scripts",
+          "name": "Zeitlerforce Zoql Scripts"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "zoql-scripts",
+          "title": "ZF: Zoql Scripts",
+          "icon": "media/dep.svg"
+        }
       ]
     },
     "menus": {
@@ -123,6 +147,11 @@
           "command": "sf.zsi.refreshMetadataExplorer",
           "group": "navigation@0",
           "when": "view == zeitlerforce-metadata-explorer"
+        },
+        {
+          "command": "sf.zsi.createZoqlScript",
+          "when": "view == zoql-scripts",
+          "group": "navigation"
         }
       ],
       "editor/title/run": [
@@ -152,6 +181,11 @@
         {
           "command": "sf.zsi.showLogDebugsOnly",
           "when": "view == server-side-apex-logs && viewItem == LOG_ENTRY",
+          "group": "inline"
+        },
+        {
+          "command": "sf.zsi.openZoqlScript",
+          "when": "view == zoql-scripts",
           "group": "inline"
         }
       ]

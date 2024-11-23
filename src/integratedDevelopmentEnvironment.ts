@@ -104,6 +104,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract showQuickPick(items: string[]): Thenable<string>;
     abstract showErrorMessage(message: string): Promise<void>;
     abstract showTextDocument(uri: Uri, options?: ShowTextDocumentOptions): Promise<void>;
+    abstract showInputBox(options?: ShowInputBoxOptions): Promise<string>;
     abstract deleteTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
     abstract showInformationMessage(message: string, options?: {
@@ -227,4 +228,10 @@ export enum ViewColumn {
 export interface ShowTextDocumentOptions {
     viewColumn?: ViewColumn;
     extension?: string;
+}
+
+
+export interface ShowInputBoxOptions {
+    title: string;
+    validateInput?(value: string) : string;
 }
