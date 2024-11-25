@@ -32,7 +32,7 @@ export class ReadZoqlScriptDirectory extends Command {
 export class CreateAndShowZoqlScriptCommand extends Command {
     async execute({ zoqlScriptsDir, title, defaultEditorSoql }: { zoqlScriptsDir: Uri; title?: string; defaultEditorSoql?: string }) {
         const input = await this.waitForShowInputBox({
-            title
+            title, zoqlScriptsDir
         });
 
         if (!input) {
@@ -55,20 +55,35 @@ export class CreateAndShowZoqlScriptCommand extends Command {
         };
     }
 
-    private async waitForShowInputBox({ title }: { title?: string }) {
+    private async waitForShowInputBox({ title, zoqlScriptsDir }: { title?: string; zoqlScriptsDir: Uri }) {
+        const readZoqlScriptDirCommand = new ReadZoqlScriptDirectory({
+            ide: this.getIde(), cli: this.getCli()
+        });
+        const zoqlScripts = await readZoqlScriptDirCommand.execute({
+            zoqlScriptsDir
+        });
+        const alreadyUsedNames = zoqlScripts.map(zoqlScript => zoqlScript.value.uri.getBaseNameWithoutExtension());
+
+        const onValidateInput = CreateAndShowZoqlScriptCommand.genOnValidateInput(alreadyUsedNames);
         const input = await this.getIde().showInputBox({
             title: title ?? 'Please enter ZOQL Script name',
-            validateInput: CreateAndShowZoqlScriptCommand.onValidateInput
+            validateInput: onValidateInput
         });
         return input?.trim();
     }
 
-    static onValidateInput(value: string) {
-        if (value?.includes('.')) {
-            return 'A .zoql extension will be added to the file for you on creation.';
-        }
+    static genOnValidateInput(existingNames: string[]) {
+        return function (value: string) {
+            if (existingNames.includes(value)) {
+                return 'Script name already in use';
+            }
 
-        return '';
+            if (value?.includes('.')) {
+                return 'A .zoql extension will be added to the file for you on creation.';
+            }
+
+            return '';
+        };
     }
 }
 

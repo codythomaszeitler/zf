@@ -114,14 +114,20 @@ describe('create zoql script command', () => {
         expect(files).toHaveLength(0);
     });
 
+    it('should not allow user to reuse name already in use', async () => {
+        const testZoqlScriptName = 'testZoqlScriptName';
+        const testFunction = CreateAndShowZoqlScriptCommand.genOnValidateInput([testZoqlScriptName]);
+        expect(testFunction(testZoqlScriptName)).toBe('Script name already in use');
+    });
+
     it('show not pass validation input if .zoql is in title', () => {
-        const result = CreateAndShowZoqlScriptCommand.onValidateInput('test.zoql');
-        expect(result).toBe('A .zoql extension will be added to the file for you on creation.');
+        const testFunction = CreateAndShowZoqlScriptCommand.genOnValidateInput([]);
+        expect(testFunction('test.zoql')).toBe('A .zoql extension will be added to the file for you on creation.');
     });
 
     it('should pass validation input if undefined value is given', () => {
-        const result = CreateAndShowZoqlScriptCommand.onValidateInput(undefined);
-        expect(result).toBe('');
+        const testFunction = CreateAndShowZoqlScriptCommand.genOnValidateInput([]);
+        expect(testFunction(undefined)).toBe('');
     });
 });
 

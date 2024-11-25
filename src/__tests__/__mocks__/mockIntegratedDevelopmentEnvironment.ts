@@ -151,7 +151,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         }
 
         return new Promise(resolve => {
-            this._waitForShowQuickPickResolve = resolve;
+            this._waitForShowInputBoxResolve = resolve;
         });
     }
 
