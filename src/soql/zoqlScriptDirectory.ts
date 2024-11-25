@@ -71,3 +71,15 @@ export class CreateAndShowZoqlScriptCommand extends Command {
         return '';
     }
 }
+
+export class OpenZoqlScriptCommand extends Command {
+    async execute({ treeNode }: { treeNode: TreeNode<ZoqlScript> }) {
+        const hasFile = await this.getIde().hasFile(treeNode.value.uri);
+        if (!hasFile) {
+            this.getIde().showWarningMessage(`Could not find file at ${treeNode.value.uri.getFileSystemPath()}`);
+            return;
+        }
+
+        await this.getIde().showTextDocument(treeNode.value.uri);
+    }
+}
