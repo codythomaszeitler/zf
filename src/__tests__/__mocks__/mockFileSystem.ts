@@ -11,7 +11,7 @@ export class MockFileSystem {
 
 	private files: File[];
 
-	constructor() {
+	constructor () {
 		this.files = [];
 	}
 
@@ -97,5 +97,9 @@ export class MockFileSystem {
 		} else {
 			found.contents = contents;
 		}
+	}
+
+	public async deleteFile(uri: Uri) {
+		this.files = this.files.filter(file => file.uri.getFileSystemPath() !== uri.getFileSystemPath());
 	}
 }

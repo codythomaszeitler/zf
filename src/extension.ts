@@ -30,8 +30,7 @@ import { genCachedListSObjects } from './soql/genListSObjects';
 import { genCachedDescribeSObjects } from './soql/genDescribeSObjects';
 import { GetSoqlUnderCursorCommand } from './soql/getSoqlUnderCursor';
 import { SalesforceOrg } from './salesforceOrg';
-import { CreatedNameContext } from 'apex-parser';
-import { CreateAndShowZoqlScriptCommand } from './soql/zoqlScriptDirectory';
+import { CreateAndShowZoqlScriptCommand, OpenZoqlScriptCommand } from './soql/zoqlScriptDirectory';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -590,8 +589,18 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.openZoqlScript", async (e: VscodeZoqlScriptTreeNode) => {
-		const toOpen = e.treeNode.value.uri;
-		await ide.showTextDocument(toOpen, {});
+		try {
+			const openZoqlScriptCommand = new OpenZoqlScriptCommand({
+				ide, cli: salesforceCli
+			});
+			await openZoqlScriptCommand.execute({
+				treeNode: e.treeNode
+			});
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				ide.showErrorMessage(e.message);
+			}
+		}
 	}));
 }
 
