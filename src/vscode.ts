@@ -368,9 +368,10 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         if (activeTextEditor) {
             const uriMapper = new UriMapper();
             const vscodeUri = activeTextEditor.document.uri;
-
+            const contents = activeTextEditor.document.getText();
             return {
-                uri: uriMapper.intoDomainRepresentation(vscodeUri)
+                uri: uriMapper.intoDomainRepresentation(vscodeUri),
+                contents
             };
         } else {
             return null;

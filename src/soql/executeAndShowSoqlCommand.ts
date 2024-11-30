@@ -23,9 +23,7 @@ export class ExecuteAndShowSoqlCommand extends Command {
 			return;
 		}
 
-		const query = await this.getIde().readFile({
-			uri: active.uri
-		});
+		const query = active.contents;
 
 		if (!isValidSoql(query)) {
 			this.getIde().showErrorMessage(`[${query}] was not valid SOQL.`);
