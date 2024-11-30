@@ -542,12 +542,19 @@ export class ApexLogTreeNode extends vscode.TreeItem {
             }
         };
         this.contextValue = contextValue();
-    }
 
-    iconPath = {
-        light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-        dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
-    };
+        if (this.contextValue === 'LOG_ENTRY') {
+            this.iconPath = {
+                light: path.join(__filename, '..', '..', 'resources', 'logfile.svg'),
+                dark: path.join(__filename, '..', '..', 'resources', 'logfile.svg')
+            };
+        } else {
+            this.iconPath = {
+                light: path.join(__filename, '..', '..', 'resources', 'light', 'folder.svg'),
+                dark: path.join(__filename, '..', '..', 'resources', 'dark', 'folder.svg')
+            };
+        }
+    }
 }
 
 class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, RefreshListener<TreeNode<ApexLog>> {
