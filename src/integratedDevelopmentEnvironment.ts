@@ -168,6 +168,7 @@ export interface TextDocument {
 
 export interface ActiveTextEditor {
     uri: Uri;
+    contents: string;
 }
 
 export interface Command {

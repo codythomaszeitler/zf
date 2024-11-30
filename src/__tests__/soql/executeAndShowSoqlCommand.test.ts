@@ -42,15 +42,10 @@ describe('execute and show soql command', () => {
 
 	it('should show soql contents as csv when Zf: Execute SOQL is ran', async () => {
 		const anonSoql = 'SELECT Id, Name FROM Account';
-
 		const activeEditorUri = Uri.join(anonSoqlScriptUri, 'test.soql');
-		await ide.writeFile({
+		ide.setActiveTextEditor({
 			uri: activeEditorUri,
 			contents: anonSoql
-		});
-
-		ide.setActiveTextEditor({
-			uri: activeEditorUri
 		});
 
 		const numRecords = 50;
@@ -83,13 +78,9 @@ describe('execute and show soql command', () => {
 		const anonSoql = 'SELECT Id, Name\n FROM\n Account';
 
 		const activeEditorUri = Uri.join(anonSoqlScriptUri, 'test.soql');
-		await ide.writeFile({
+		ide.setActiveTextEditor({
 			uri: activeEditorUri,
 			contents: anonSoql
-		});
-
-		ide.setActiveTextEditor({
-			uri: activeEditorUri
 		});
 
 		const numRecords = 50;
@@ -122,13 +113,9 @@ describe('execute and show soql command', () => {
 		const anonSoql = 'SELECT Id, Name FROM Account';
 
 		const activeEditorUri = Uri.join(anonSoqlScriptUri, 'test.soql');
-		await ide.writeFile({
+		ide.setActiveTextEditor({
 			uri: activeEditorUri,
 			contents: anonSoql
-		});
-
-		ide.setActiveTextEditor({
-			uri: activeEditorUri
 		});
 
 		const numRecords = 0;
@@ -160,13 +147,9 @@ describe('execute and show soql command', () => {
 		const anonSoql = 'SELECT Id FROM Accoun';
 
 		const activeEditorUri = Uri.join(anonSoqlScriptUri, 'test.soql');
-		await ide.writeFile({
-			uri: activeEditorUri,
-			contents: anonSoql
-		});
-
 		ide.setActiveTextEditor({
-			uri: activeEditorUri
+			uri: activeEditorUri,
+			contents : anonSoql
 		});
 
 		const errorMessage = 'This is a failure.';
@@ -192,13 +175,9 @@ describe('execute and show soql command', () => {
 		const anonSoql = '';
 
 		const activeEditorUri = Uri.join(anonSoqlScriptUri, 'test.soql');
-		await ide.writeFile({
+		ide.setActiveTextEditor({
 			uri: activeEditorUri,
 			contents: anonSoql
-		});
-
-		ide.setActiveTextEditor({
-			uri: activeEditorUri
 		});
 
 		const testObject = new ExecuteAndShowSoqlCommand({

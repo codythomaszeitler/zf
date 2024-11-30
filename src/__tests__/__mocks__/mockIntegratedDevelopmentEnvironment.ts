@@ -92,7 +92,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this.activeTextEditor = activeTextEditor;
     }
 
-    public async getActiveTextEditor(): Promise<{ uri: Uri; } | null> {
+    public async getActiveTextEditor(): Promise<ActiveTextEditor | null> {
         return this.activeTextEditor;
     }
 
