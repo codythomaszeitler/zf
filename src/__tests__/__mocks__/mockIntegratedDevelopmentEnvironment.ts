@@ -1,10 +1,7 @@
-import { title } from "process";
 import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, ShowInputBoxOptions, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { OnCancellationRequestedListener, ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
 import { SfdxProject, getSfdxProjectUri } from "../../readSfdxProjectCommand";
-import { SalesforceOrg } from "../../salesforceOrg";
-import { TreeView } from "../../treeView";
 import { MockFileSystem } from "./mockFileSystem";
 
 function nonStartedQuickPick(item: string): void {
@@ -20,10 +17,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
-
-    registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg; }): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
+    
     selectQuickPickItem: (item: string) => void;
     writeAndEnterIntoShowInputBox: (item: string) => void;
 

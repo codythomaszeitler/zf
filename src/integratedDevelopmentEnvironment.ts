@@ -1,12 +1,10 @@
 import { ProgressToken } from "./progressToken";
 import { Range } from "./range";
-import { TreeView } from "./treeView";
-import { SalesforceOrg } from "./salesforceOrg";
 import { BulkDocumentSaveListener } from "./bulkDocumentSaveListener";
-export { Uri } from './uri';
 import { Uri } from './uri';
 import { SfdxProject } from "./readSfdxProjectCommand";
 import { Logger } from "./logger";
+export { Uri } from './uri';
 
 export const APEX_LANGUAGE_ID = 'apex';
 
@@ -136,7 +134,6 @@ export abstract class IntegratedDevelopmentEnvironment {
         show: true;
     }): Promise<void>;
     abstract getHighlightedText(): Promise<string>;
-    abstract registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg: SalesforceOrg }): Promise<void>;
 
     public async hasFile(uri: Uri): Promise<boolean> {
         const basename = uri.getBaseName();

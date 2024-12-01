@@ -1,3 +1,5 @@
+import { ApexListLogResult } from "../../apexLogTreeView/apexListLogResult";
+
 /* eslint-disable @typescript-eslint/naming-convention */
 export function getApexListLogNominalResponse() {
 	return JSON.stringify(
@@ -74,4 +76,47 @@ export function getApexListLogNominalResponse() {
 			"warnings": []
 		}
 	);
+}
+
+export function getApexListLogResult(): ApexListLogResult {
+	return {
+		"result": [
+			{
+				"Id": "07L7i00000MYv6qEAD",
+				"Application": "Unknown",
+				"DurationMilliseconds": 89,
+				"LogLength": 2680,
+				"LogUser": {
+					"Name": "User User"
+				},
+				"Operation": "Api",
+				"StartTime": "2023-12-20T07:04:17+0000",
+				"Status": "Success"
+			},
+			{
+				"Id": "07L7i00000MYv54EAD",
+				"Application": "Unknown",
+				"DurationMilliseconds": 139,
+				"LogLength": 3493,
+				"LogUser": {
+					"Name": "User User"
+				},
+				"Operation": "ApexTestHandler",
+				"StartTime": "2023-12-20T06:08:27+0000",
+				"Status": "Success"
+			},
+			{
+				"Id": "07L7i00000MYv2PEAT",
+				"Application": "Unknown",
+				"DurationMilliseconds": 240,
+				"LogLength": 3539,
+				"LogUser": {
+					"Name": "User User"
+				},
+				"Operation": "ApexTestHandler",
+				"StartTime": "2023-12-20T04:36:08+0000",
+				"Status": "Success"
+			}
+		]
+	};
 }

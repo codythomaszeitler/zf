@@ -16,7 +16,6 @@ import { DataQueryResult } from "../../dataQueryResult";
 import { genRandomId } from "../salesforceId.test";
 import { DEBUG_LEVEL_SOBJECT_NAME } from "../../debugLevelSObject";
 import { ApexGetLogResult } from "../../apexGetLogResult";
-import { ApexListLogResult } from "../../apexListLogResult";
 import { ApexLog } from "../../apexLog";
 import { MockFileSystem } from "./mockFileSystem";
 import { getLogFileUri } from "../../showApexLogCommand";
@@ -25,8 +24,12 @@ import { Uri } from "../../uri";
 import { ProjectDeployCancelResult, ProjectDeployResult } from "../../projectDeploy/projectDeployResult";
 import { ApexRunResult } from "../../runAnonApex/runAnonApex";
 import { OrgListResult, OrgOpenResult } from "../../sfOrgListResult";
+import { ApexListLogResult } from "../../apexLogTreeView/apexListLogResult";
 
 export class MockSalesforceCli extends SalesforceCli {
+    apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
+        throw new Error("Method not implemented.");
+    }
     orgOpen({ targetOrg }: { targetOrg: SalesforceOrg; }): Promise<OrgOpenResult> {
         throw new Error("Method not implemented.");
     }
@@ -323,19 +326,6 @@ export class MockSalesforceCli extends SalesforceCli {
             status: 0,
             result: []
         };
-    }
-
-    async apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
-        const orgWithApexLogs = this.orgsWithApexLogs.find(orgWithApexLogs => orgWithApexLogs.org.getAlias() === params.targetOrg.getAlias());
-        if (!orgWithApexLogs) {
-            return new ApexListLogResult({
-                logs: []
-            });
-        }
-
-        return new ApexListLogResult({
-            logs: orgWithApexLogs.logs
-        });
     }
 }
 

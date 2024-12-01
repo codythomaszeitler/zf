@@ -14,12 +14,15 @@ import { Logger } from '../logger';
 import { TestLogger } from './logger.test';
 import { getDebugLevelWithDeveloperName, getDebugLogWithDeveloperNameFilter, getNoRecordsFound, getNoRecordsVariableFound } from './data/dataQueryOutput';
 import { DEBUG_LEVEL_SOBJECT_NAME } from '../debugLevelSObject';
-import { getApexListLogNominalResponse } from './data/apexListLogOutput';
+import { getApexListLogNominalResponse, getApexListLogResult } from './data/apexListLogOutput';
 import { SalesforceId } from '../salesforceId';
 import { genCommandToStdOutput, genMockExecutor, getSfOrgListCommandString, getSfOrgListUsersCommandString } from './__mocks__/mockShell';
 import { SalesforceCliHistory } from '../salesforceCli';
 import { genProjectDeployStartCommandString } from './projectDeploy/data/projectDeployStartOutput';
 import { Uri } from '../uri';
+import { MockSalesforceCli } from './__mocks__/mockSalesforceCli';
+import { ApexListLogCommand } from '../apexLog';
+import { MockIDE } from './__mocks__/mockIntegratedDevelopmentEnvironment';
 
 describe('sf salesforce cli', () => {
 
@@ -597,12 +600,14 @@ describe('sf salesforce cli', () => {
             });
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+            const ide: MockIDE = new MockIDE();
 
-            const apexListLogResult = await cli.apexListLog({
-                targetOrg
+            const apexListLogCommand = new ApexListLogCommand({
+                ide,
+                cli
             });
 
-            const logs = apexListLogResult.getLogs();
+            const logs = await apexListLogCommand.execute({ targetOrg });
             expect(logs.length).not.toBe(0);
             expect(logs.length).toBe(3);
 
@@ -625,12 +630,14 @@ describe('sf salesforce cli', () => {
             const sfApexLogListInputOutput = history.get(0);
 
             expect(sfApexLogListInputOutput.getViewableCliInput()).toMatch(/sf apex list log --target-org cso --json - .*/);
-            expect(sfApexLogListInputOutput.getViewableOutput(false)).toBe(getApexListLogNominalResponse());
 
+            expect(sfApexLogListInputOutput.getViewableOutput(false)).toBe(getApexListLogNominalResponse());
             for (let i = 0; i < 100; i++) {
-                await cli.apexListLog({
-                    targetOrg
+                const apexListLogCommand = new ApexListLogCommand({
+                    ide,
+                    cli
                 });
+                await apexListLogCommand.execute({ targetOrg });
             }
 
             expect(history.length).toBe(25);
@@ -648,16 +655,15 @@ describe('sf salesforce cli', () => {
             });
 
             const cli: SfSalesforceCli = new SfSalesforceCli(mockExecutor);
+            const ide: MockIDE = new MockIDE();
 
-            const apexListLogResult = await cli.apexListLog({
-                targetOrg
+            const apexListLogCommand = new ApexListLogCommand({
+                ide,
+                cli
             });
 
-            const logs = apexListLogResult.getLogs();
+            const logs = await apexListLogCommand.execute({ targetOrg });
             expect(logs.length).toBe(0);
-
-            const re = /.*Missing result in apex list logs\. Returning empty log list\..*/;
-            expect(testLogger.contains(re)).toBeTruthy();
         });
     });
 });

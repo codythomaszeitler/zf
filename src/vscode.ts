@@ -6,10 +6,7 @@ import { Position } from "./position";
 import { OnCancellationRequestedListener, ProgressToken } from "./progressToken";
 import { Logger } from "./logger";
 import * as path from 'path';
-import { ApexLog } from "./apexLog";
 import { TreeNode } from "./treeNode";
-import { RefreshListener, TreeView } from "./treeView";
-import { SalesforceOrg } from "./salesforceOrg";
 import { TextDecoder, TextEncoder } from "util";
 import { OnSalesforceCliRunEvent, SalesforceCli, SalesforceCliHistory, SalesforceCliInputOutput } from "./salesforceCli";
 import { TestItem as ZfTestItem } from './runTestUnderCursorCommand';
@@ -308,52 +305,6 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         });
     }
 
-    public async registerTreeView<T>(params: { treeView: TreeView<T>; targetOrg?: SalesforceOrg; }): Promise<void> {
-        if (params.treeView.uniqueName === 'server-side-apex-logs') {
-            await this.registerServerSideApexLogProvider<T>(params);
-        }
-    }
-
-    private async registerServerSideApexLogProvider<T>(params: { treeView: TreeView<T>; targetOrg?: SalesforceOrg; }) {
-        const getRootNode = async () => {
-            if (!params.targetOrg) {
-                return undefined;
-            }
-
-            const rootNode = await params.treeView.getRootNode({
-                targetOrg: params.targetOrg
-            });
-
-            const root: TreeNode<ApexLog> = rootNode as TreeNode<ApexLog>;
-            return root;
-        };
-
-        const apexServerSideLogTreeProvider = new ApexLogTreeProvider({
-            root: await getRootNode()
-        });
-
-        params.treeView.registerOnRefreshListener(apexServerSideLogTreeProvider as RefreshListener<TreeNode<T>>);
-
-        const treeView = vscode.window.createTreeView(params.treeView.uniqueName, {
-            treeDataProvider: apexServerSideLogTreeProvider
-        });
-
-        treeView.onDidChangeSelection(async (e) => {
-            if (e.selection.length === 0) {
-                return;
-            }
-            const selection = e.selection[0];
-            if (!selection.treeNode.value) {
-                return;
-            }
-
-            const apexLog = selection.treeNode.value as T;
-            params.treeView.onSelect({
-                value: apexLog
-            });
-        });
-    }
-
     public async deleteTextDocument(uri: Uri): Promise<void> {
         const uriMapper = new UriMapper();
         const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
@@ -520,93 +471,6 @@ class DiagnosticSeverityMapper {
                 throw new Error(`Severity ${severity} is not a known enum value.`);
         }
 
-    }
-}
-
-export class ApexLogTreeNode extends vscode.TreeItem {
-
-    public readonly treeNode: TreeNode<ApexLog>;
-
-    public constructor (params: {
-        treeNode: TreeNode<ApexLog>,
-        isRootNode?: boolean
-    }) {
-        super(params.treeNode.label, params.treeNode.value ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded);
-        this.treeNode = params.treeNode;
-
-        const contextValue = () => {
-            if (params.isRootNode) {
-                return 'LOG_ORG';
-            } else {
-                return 'LOG_ENTRY';
-            }
-        };
-        this.contextValue = contextValue();
-
-        if (this.contextValue === 'LOG_ENTRY') {
-            this.iconPath = {
-                light: path.join(__filename, '..', '..', 'resources', 'logfile.svg'),
-                dark: path.join(__filename, '..', '..', 'resources', 'logfile.svg')
-            };
-        } else {
-            this.iconPath = {
-                light: path.join(__filename, '..', '..', 'resources', 'light', 'folder.svg'),
-                dark: path.join(__filename, '..', '..', 'resources', 'dark', 'folder.svg')
-            };
-        }
-    }
-}
-
-class ApexLogTreeProvider implements vscode.TreeDataProvider<ApexLogTreeNode>, RefreshListener<TreeNode<ApexLog>> {
-
-    private root?: TreeNode<ApexLog>;
-
-    private readonly eventEmitter: vscode.EventEmitter<ApexLogTreeNode | undefined>;
-
-    public constructor (params: {
-        root?: TreeNode<ApexLog>
-    }) {
-        this.root = params.root;
-        this.eventEmitter = new vscode.EventEmitter<ApexLogTreeNode | undefined>();
-        this.onDidChangeTreeData = this.eventEmitter.event;
-    }
-
-    onDidChangeTreeData?: vscode.Event<void | ApexLogTreeNode | ApexLogTreeNode[] | null | undefined> | undefined;
-
-    getTreeItem(element: ApexLogTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        return element;
-    }
-
-    getChildren(element?: ApexLogTreeNode | undefined): vscode.ProviderResult<ApexLogTreeNode[]> {
-        if (element) {
-            return element.treeNode.children.map(treeNode => new ApexLogTreeNode({
-                treeNode,
-                isRootNode: false
-            }));
-        } else {
-            if (!this.root) {
-                return [];
-            }
-            return [
-                new ApexLogTreeNode({
-                    treeNode: this.root,
-                    isRootNode: true
-                })
-            ];
-        }
-    }
-
-    getParent?(element: ApexLogTreeNode): vscode.ProviderResult<ApexLogTreeNode> {
-        return null;
-    }
-
-    resolveTreeItem?(item: vscode.TreeItem, element: ApexLogTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
-        return item;
-    }
-
-    async onTreeViewRefresh(e: { root: TreeNode<ApexLog>; }): Promise<void> {
-        this.root = e.root;
-        this.eventEmitter.fire(undefined);
     }
 }
 
