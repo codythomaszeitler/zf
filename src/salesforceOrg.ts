@@ -1,3 +1,6 @@
+import { Command } from "./command";
+import { intoSalesforceOrgs } from "./openOrg";
+
 export class SalesforceOrg {
     private readonly isActive?: boolean;
     private readonly alias: string;
@@ -46,3 +49,13 @@ export const NO_SF_ORG_FOUND = new SalesforceOrg({
     alias: 'SF-ZSI-NOT-FOUND',
     isActive: false
 });
+
+export class GetDefaultOrg extends Command {
+    async execute({ }: {}) {
+        const orgListResult = await this.getCli().orgList({
+            skipConnectionStatus: true
+        });
+        const orgs = intoSalesforceOrgs(orgListResult);
+        return orgs.find(org => org.getIsDefaultOrg()) ?? null;
+    }
+}

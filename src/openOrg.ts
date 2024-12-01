@@ -37,7 +37,7 @@ export class SelectOrgCommand extends Command {
     }
 
     async execute() {
-        const activeOrgs = await this.getActiveOrgs();
+        const activeOrgs = await this.getOrgs();
         if (activeOrgs.length === 0) {
             const errorMessage = 'Could not find any active orgs.';
             await this.getIde().showErrorMessage(errorMessage);
@@ -53,11 +53,11 @@ export class SelectOrgCommand extends Command {
         return activeOrgs.find(activeOrg => activeOrg.getTargetOrgName() === selectedOrgAlias);
     }
 
-    private async getActiveOrgs() {
+    private async getOrgs() {
         const orgs = await this.orgListCommand.execute({
             skipConnectionStatus: false
         });
-        return orgs.filter(org => org.getIsActive());
+        return orgs;
     }
 }
 
@@ -74,6 +74,13 @@ export class OrgListCommand extends Command {
         return await this.getCli().orgList({
             skipConnectionStatus
         });
+    }
+}
+
+export class GetActiveOrgListCommand extends OrgListCommand {
+    async execute({ skipConnectionStatus }: { skipConnectionStatus: boolean }) {
+        const orgs = await super.execute({ skipConnectionStatus });
+        return orgs.filter(org => org.getIsActive());
     }
 }
 
@@ -129,7 +136,7 @@ export function intoSalesforceOrgs(orgListResult: OrgListResult) {
     }
 }
 
-export class ImmediateCacheOrgListCommand extends OrgListCommand {
+export class ImmediateCacheOrgListCommand extends GetActiveOrgListCommand {
 
     private orgListPromise: Promise<OrgListResult>;
 

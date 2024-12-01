@@ -1,6 +1,4 @@
 import { ApexGetLogResult, intoApexGetLogResult } from "./apexGetLogResult";
-import { ApexListLogResult } from "./apexListLogResult";
-import { ApexLog } from "./apexLog";
 import { ApexTestGetResult, ApexTestResult, ApexTestRunResult, parseStackTrace } from "./apexTestRunResult";
 import { UpsertableSObject } from "./upsertableSObject";
 import { DataCreateRecordResult } from "./dataCreateRecordResult";
@@ -16,14 +14,16 @@ import { intoSObjectListResult, SObjectListResult, SObjectListResultDeprecated }
 import { ProjectRetrieveResult, SalesforceCli } from "./salesforceCli";
 import { NULL_SF_ID, SalesforceId } from "./salesforceId";
 import { NO_SF_ORG_FOUND, SalesforceOrg } from "./salesforceOrg";
-import { intoOrgListResult, intoOrgOpenResult, OrgListResult, OrgOpenResult, SandboxOrgListResult, ScratchOrgListResult, SfOrgListResult } from "./sfOrgListResult";
+import { intoOrgListResult, intoOrgOpenResult, OrgListResult, OrgOpenResult } from "./sfOrgListResult";
 import { SoqlQuery } from "./soqlQuery";
 import { Uri } from "./uri";
 import { ProjectDeployCancelResult, ProjectDeployPreviewResult, ProjectDeployResult, intoProjectDeployCancelResult, intoProjectDeployPreviewResult, intoProjectDeployResult } from "./projectDeploy/projectDeployResult";
 import { ApexRunResult, intoApexRunResult } from "./runAnonApex/runAnonApex";
 import { intoSalesforceOrgs } from "./openOrg";
+import { ApexListLogResult, intoApexListLogResult } from "./apexLogTreeView/apexListLogResult";
 
 export class SfSalesforceCli extends SalesforceCli {
+
     constructor (executor: Executor, proxy?: {}) {
         super(executor, proxy);
     }
@@ -611,7 +611,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return intoApexGetLogResult(stdout);
     }
 
-    async apexListLog(params: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
+    async apexListLog({ targetOrg }: { targetOrg: SalesforceOrg; }): Promise<ApexListLogResult> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -619,38 +619,13 @@ export class SfSalesforceCli extends SalesforceCli {
                 'list',
                 'log',
                 '--target-org',
-                params.targetOrg.getAlias(),
+                targetOrg.getTargetOrgName(),
                 '--json'
             ]
         };
 
         const { stdout } = await this.exec(command);
-        if (stdout.status) {
-            throw new Error(stdout.message);
-        }
-
-        if (!stdout.result) {
-            Logger.get().warn('Missing result in apex list logs. Returning empty log list.');
-            return new ApexListLogResult({
-                logs: []
-            });
-        }
-
-        const apexLogs: ApexLog[] = stdout.result.map((apexLog: any) => {
-            return new ApexLog({
-                id: SalesforceId.get(apexLog.Id),
-                application: apexLog.Application,
-                duration: apexLog.DurationMilliseconds,
-                logLength: apexLog.LogLength,
-                operation: apexLog.Operation,
-                status: apexLog.Status,
-                startTime: new Date(Date.parse(apexLog.StartTime))
-            });
-        });
-
-        return new ApexListLogResult({
-            logs: apexLogs
-        });
+        return intoApexListLogResult(stdout);
     }
 
     async apexTestRun(params: { targetOrg: SalesforceOrg; tests: string[] }): Promise<ApexTestRunResult> {

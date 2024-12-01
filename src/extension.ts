@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { ImmediateCacheOrgListCommand, SelectAndOpenOrgCommand, SelectOrgCommand } from './openOrg';
-import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, ApexLogTreeNode, VscodeZfSoqlScriptsTreeView, VscodeZoqlScriptTreeNode } from "./vscode";
-import { ApexLogTreeView } from "./apexLogTreeView";
+import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, VscodeZfSoqlScriptsTreeView, VscodeZoqlScriptTreeNode } from "./vscode";
 import { runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand, PickAndGenerateFauxSObjectCommand } from './genFauxSObjects';
 import { LogLevel, Logger } from './logger';
@@ -21,7 +20,6 @@ import { genOnDidSaveTextDocuments } from './projectDeploy/queueableProjectDeplo
 import { QuickDefaultOrgSfSalesforceCli } from './quickDefaultOrgSalesforceCli';
 import { ProjectDeployCommand } from './projectDeploy/projectDeployCommand';
 import { RunHighlightedAnonApex } from './runAnonApex/runAnonApex';
-import { ShowApexLogDebugsOnlyCommand } from './showApexLogCommand';
 import { ExecuteAndShowSoqlCommand } from './soql/executeAndShowSoqlCommand';
 import { GenerateFauxSoqlCommand } from './soql/genFauxSoqlCommand';
 import { Position } from './position';
@@ -31,6 +29,8 @@ import { genCachedDescribeSObjects } from './soql/genDescribeSObjects';
 import { GetSoqlUnderCursorCommand } from './soql/getSoqlUnderCursor';
 import { SalesforceOrg } from './salesforceOrg';
 import { CreateAndShowZoqlScriptCommand, OpenZoqlScriptCommand } from './soql/zoqlScriptDirectory';
+import { APEX_LOG_TREE_API_NAME } from './apexLogTreeView/apexLogTreeView';
+import { VscodeApexLogTreeItem, VscodeApexLogTreeView, VscodeOrgTreeItem } from './apexLogTreeView/vscode/apexLogTreeView';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -232,37 +232,47 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
-	const apexLogTreeView = new ApexLogTreeView({
+	const apexServerSideLogTreeProvider = new VscodeApexLogTreeView({
 		cli: salesforceCli,
 		ide: ide,
-		logDir: zfLogDir
+		logDir: getZfLogDir(ide)
 	});
+	const apexLogsTreeView = vscode.window.createTreeView(APEX_LOG_TREE_API_NAME, {
+		treeDataProvider: apexServerSideLogTreeProvider
+	});
+	apexLogsTreeView.message = 'Getting org list...';
 
-	salesforceCli.getDefaultOrg().then((defaultOrg) => {
-		ide.registerTreeView({
-			treeView: apexLogTreeView,
-			targetOrg: defaultOrg ?? undefined
+	apexServerSideLogTreeProvider.onDidChangeNumberOfLogs = function ({ numLogs, numUnreadLogs }) {
+		apexLogsTreeView.badge = {
+			tooltip: 'Number of Unread Logs',
+			value: numUnreadLogs
+		};
+	};
+
+	apexServerSideLogTreeProvider.refresh().then(() => {
+		apexLogsTreeView.message = '';
+		apexLogsTreeView.onDidChangeSelection(async (e) => {
+			await apexServerSideLogTreeProvider.onDidChangeSelection(e);
+		});
+
+		apexLogsTreeView.onDidChangeCheckboxState(async e => {
+			await apexServerSideLogTreeProvider.onDidChangeCheckboxState(e);
 		});
 	});
 
-
-	async function runRefreshApexLogs() {
-		await ide.withProgress(async (progress) => {
-			try {
-				const defaultOrg = await salesforceCli.getDefaultOrg();
-				if (defaultOrg) {
-					await apexLogTreeView.refresh({
-						targetOrg: defaultOrg
-					});
-				} else {
-					ide.showWarningMessage('No default org set. Cannot refresh apex logs.');
-				}
-			} catch (e: any) {
+	async function runRefreshApexLogs(treeItem: VscodeOrgTreeItem) {
+		try {
+			const { targetOrg } = treeItem;
+			await ide.withProgress(async (progresToken) => {
+				await apexServerSideLogTreeProvider.refresh(treeItem.targetOrg);
+			}, {
+				title: `Refreshing Apex Debug Logs for ${targetOrg.getTargetOrgName()}`
+			});
+		} catch (e: unknown) {
+			if (e instanceof Error) {
 				ide.showErrorMessage(e.message);
 			}
-		}, {
-			title: 'Refresh Apex Logs'
-		});
+		}
 	}
 
 	const zfOfflineSymbolTableDir = getZfOfflineSymbolTableDir(ide);
@@ -544,21 +554,29 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.showLogDebugsOnly', (logNode: ApexLogTreeNode) => {
-		const apexLog = logNode.treeNode.value;
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.showLogDebugsOnly', async (treeItem) => {
+		try {
+			await apexServerSideLogTreeProvider.onShowDebugsOnly(treeItem);
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				ide.showErrorMessage(e.message);
+			}
+		}
+	}));
 
-		const showApexLogDebugsOnlyCommand = new ShowApexLogDebugsOnlyCommand({
-			cli: salesforceCli,
-			ide
-		});
-
-		salesforceCli.getDefaultOrg().then(async defaultOrg => {
-			await showApexLogDebugsOnlyCommand.execute({
-				logDir: getZfLogDir(ide),
-				logId: apexLog.getId(),
-				targetOrg: defaultOrg
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.logs.refreshOrgList', async () => {
+		try {
+			await ide.withProgress(async (progressToken) => {
+				await apexServerSideLogTreeProvider.refresh();
+			}, {
+				title: 'Refreshing Org List',
+				isCancellable : false
 			});
-		});
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				ide.showErrorMessage(e.message);
+			}
+		}
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.createZoqlScript', async () => {
@@ -602,7 +620,17 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	}));
-}
 
+	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.refreshDefaultOrgApexLogs", async (e) => {
+		try {
+			const defaultOrg = await salesforceCli.getDefaultOrg();
+			await apexServerSideLogTreeProvider.refresh(defaultOrg);
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				ide.showErrorMessage(e.message);
+			}
+		}
+	}));
+}
 
 export function deactivate() { }

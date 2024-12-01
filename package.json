@@ -51,7 +51,12 @@
       },
       {
         "command": "sf.zsi.refreshApexLogs",
-        "title": "ZF: Refresh Apex Logs"
+        "title": "ZF: Refresh Apex Logs",
+        "enablement": "view == server-side-apex-logs"
+      },
+      {
+        "command": "sf.zsi.refreshDefaultOrgApexLogs",
+        "title": "ZF: Refresh Default Org Apex Logs"
       },
       {
         "command": "sf.zsi.generateOfflineSymbolTable",
@@ -74,6 +79,14 @@
       {
         "command": "sf.zsi.showLogDebugsOnly",
         "title": "ZF: Show Debugs"
+      },
+      {
+        "command": "sf.zsi.logs.refreshOrgList",
+        "title": "ZF: Refresh Org List",
+        "icon": {
+          "dark": "resources/dark/refresh.svg",
+          "light": "resources/light/refresh.svg"
+        }
       },
       {
         "command": "sf.zsi.generateFauxSoql",
@@ -102,12 +115,6 @@
     "views": {
       "test": [
         {
-          "title": "Apex Logs",
-          "id": "server-side-apex-logs",
-          "name": "Apex Logs",
-          "icon": "media/dep.svg"
-        },
-        {
           "title": "Salesforce Cli Input/Output",
           "id": "salesforce-cli-input-output",
           "name": "Salesforce Cli Input/Output",
@@ -125,24 +132,30 @@
           "id": "zoql-scripts",
           "name": "Zeitlerforce Zoql Scripts"
         }
+      ],
+      "server-side-apex-logs": [
+        {
+          "id": "server-side-apex-logs",
+          "name": "Zeitlerforce Apex Logs"
+        }
       ]
     },
     "viewsContainers": {
       "panel": [
         {
           "id": "zoql-scripts",
-          "title": "ZF: Zoql Scripts",
+          "title": "Zoql Scripts",
           "icon": "media/dep.svg"
+        },
+        {
+          "title": "Apex Logs",
+          "id": "server-side-apex-logs",
+          "icon": "resources/logfile.svg"
         }
       ]
     },
     "menus": {
       "view/title": [
-        {
-          "command": "sf.zsi.refreshApexLogs",
-          "group": "navigation@0",
-          "when": "view == server-side-apex-logs"
-        },
         {
           "command": "sf.zsi.refreshMetadataExplorer",
           "group": "navigation@0",
@@ -151,6 +164,16 @@
         {
           "command": "sf.zsi.createZoqlScript",
           "when": "view == zoql-scripts",
+          "group": "navigation"
+        },
+        {
+          "command": "sf.zsi.enableDebugLogForCurrentUser",
+          "when": "view == server-side-apex-logs",
+          "group": "navigation"
+        },
+        {
+          "command": "sf.zsi.logs.refreshOrgList",
+          "when": "view == server-side-apex-logs",
           "group": "navigation"
         }
       ],
@@ -182,6 +205,11 @@
           "command": "sf.zsi.showLogDebugsOnly",
           "when": "view == server-side-apex-logs && viewItem == LOG_ENTRY",
           "group": "inline"
+        },
+        {
+          "command": "sf.zsi.refreshApexLogs",
+          "group": "inline",
+          "when": "view == server-side-apex-logs && viewItem == LOG_ORG"
         },
         {
           "command": "sf.zsi.openZoqlScript",
