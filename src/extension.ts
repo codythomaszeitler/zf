@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ImmediateCacheOrgListCommand, SelectAndOpenOrgCommand, SelectOrgCommand } from './openOrg';
-import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, VscodeZfSoqlScriptsTreeView, VscodeZoqlScriptTreeNode } from "./vscode";
+import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, VscodeZoqlScriptsTreeView, VscodeZoqlScriptTreeNode } from "./vscode";
 import { runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand, PickAndGenerateFauxSObjectCommand } from './genFauxSObjects';
 import { LogLevel, Logger } from './logger';
@@ -28,9 +28,8 @@ import { genCachedListSObjects } from './soql/genListSObjects';
 import { genCachedDescribeSObjects } from './soql/genDescribeSObjects';
 import { GetSoqlUnderCursorCommand } from './soql/getSoqlUnderCursor';
 import { SalesforceOrg } from './salesforceOrg';
-import { CreateAndShowZoqlScriptCommand, OpenZoqlScriptCommand } from './soql/zoqlScriptDirectory';
 import { APEX_LOG_TREE_API_NAME } from './apexLogTreeView/apexLogTreeView';
-import { VscodeApexLogTreeItem, VscodeApexLogTreeView, VscodeOrgTreeItem } from './apexLogTreeView/vscode/apexLogTreeView';
+import { VscodeApexLogTreeView, VscodeOrgTreeItem } from './apexLogTreeView/vscode/apexLogTreeView';
 
 function getZfOfflineSymbolTableDir(ide: IntegratedDevelopmentEnvironment) {
 	return ide.generateUri('zf', 'offlineSymbolTable');
@@ -69,13 +68,15 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
-	const provider = new VscodeZfSoqlScriptsTreeView({
-		zoqlScriptsDir: getZfZoqlDir(ide)
+	const provider = new VscodeZoqlScriptsTreeView({
+		zoqlScriptsDir: getZfZoqlDir(ide),
+		cli: salesforceCli,
+		ide
 	});
 	vscode.window.createTreeView("zoql-scripts", {
 		treeDataProvider: provider
 	});
-	provider.refresh(ide, salesforceCli);
+	provider.refresh();
 
 	const orgListCommand = new ImmediateCacheOrgListCommand({
 		cli: salesforceCli,
@@ -570,25 +571,13 @@ export function activate(context: vscode.ExtensionContext) {
 				await apexServerSideLogTreeProvider.refresh();
 			}, {
 				title: 'Refreshing Org List',
-				isCancellable : false
+				isCancellable: false
 			});
 		} catch (e: unknown) {
 			if (e instanceof Error) {
 				ide.showErrorMessage(e.message);
 			}
 		}
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.createZoqlScript', async () => {
-		const command = new CreateAndShowZoqlScriptCommand({
-			ide, cli: salesforceCli
-		});
-
-		await command.execute({
-			zoqlScriptsDir: getZfZoqlDir(ide)
-		});
-
-		await provider.refresh(ide, salesforceCli);
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.runSoqlScript", async () => {
@@ -608,12 +597,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand("sf.zsi.openZoqlScript", async (e: VscodeZoqlScriptTreeNode) => {
 		try {
-			const openZoqlScriptCommand = new OpenZoqlScriptCommand({
-				ide, cli: salesforceCli
-			});
-			await openZoqlScriptCommand.execute({
-				treeNode: e.treeNode
-			});
+			await provider.open(e);
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				ide.showErrorMessage(e.message);
+			}
+		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('sf.zsi.createZoqlScript', async () => {
+		try {
+			await provider.create();
 		} catch (e: unknown) {
 			if (e instanceof Error) {
 				ide.showErrorMessage(e.message);

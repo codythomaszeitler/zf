@@ -1,31 +1,11 @@
 import { Command } from "../command";
-import { TreeNode } from "../treeNode";
 import { Uri } from "../uri";
-
-export interface ZoqlScript {
-    name: string;
-    uri: Uri;
-}
+import { ZoqlScriptTreeNode } from "./zoqlTreeView";
 
 export class ReadZoqlScriptDirectory extends Command {
-    async execute({ zoqlScriptsDir }: { zoqlScriptsDir: Uri }): Promise<TreeNode<ZoqlScript>[]> {
+    async execute({ zoqlScriptsDir }: { zoqlScriptsDir: Uri }): Promise<Uri[]> {
         const uris = await this.getIde().findFiles('*.zoql', zoqlScriptsDir);
-        const zoqlScripts = uris.map(async uri => {
-            const contents = await this.getIde().readFile({
-                uri
-            });
-            const zoqlScript: TreeNode<ZoqlScript> =
-            {
-                children: [],
-                label: `${uri.getBaseNameWithoutExtension()} [${contents.trim()}]`,
-                value: {
-                    name: uri.getBaseNameWithoutExtension(),
-                    uri
-                }
-            };
-            return zoqlScript;
-        });
-        return Promise.all(zoqlScripts);
+        return uris;
     }
 }
 
@@ -59,10 +39,10 @@ export class CreateAndShowZoqlScriptCommand extends Command {
         const readZoqlScriptDirCommand = new ReadZoqlScriptDirectory({
             ide: this.getIde(), cli: this.getCli()
         });
-        const zoqlScripts = await readZoqlScriptDirCommand.execute({
+        const uris = await readZoqlScriptDirCommand.execute({
             zoqlScriptsDir
         });
-        const alreadyUsedNames = zoqlScripts.map(zoqlScript => zoqlScript.value.uri.getBaseNameWithoutExtension());
+        const alreadyUsedNames = uris.map(uri => uri.getBaseNameWithoutExtension());
 
         const onValidateInput = CreateAndShowZoqlScriptCommand.genOnValidateInput(alreadyUsedNames);
         const input = await this.getIde().showInputBox({
@@ -88,13 +68,13 @@ export class CreateAndShowZoqlScriptCommand extends Command {
 }
 
 export class OpenZoqlScriptCommand extends Command {
-    async execute({ treeNode }: { treeNode: TreeNode<ZoqlScript> }) {
-        const hasFile = await this.getIde().hasFile(treeNode.value.uri);
+    async execute({ treeNode }: { treeNode: ZoqlScriptTreeNode }) {
+        const hasFile = await this.getIde().hasFile(treeNode.uri);
         if (!hasFile) {
-            this.getIde().showWarningMessage(`Could not find file at ${treeNode.value.uri.getFileSystemPath()}`);
+            this.getIde().showWarningMessage(`Could not find file at ${treeNode.uri.getFileSystemPath()}`);
             return;
         }
 
-        await this.getIde().showTextDocument(treeNode.value.uri);
+        await this.getIde().showTextDocument(treeNode.uri);
     }
 }
