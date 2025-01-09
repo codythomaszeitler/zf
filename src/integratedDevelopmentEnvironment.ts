@@ -14,9 +14,12 @@ export abstract class IntegratedDevelopmentEnvironment {
     private readonly currentDir: Uri;
     private sfdxProject: SfdxProject | undefined;
 
+    private uriToTextDocumentChangedListeners: Map<string, OnDidChangeTextDocumentListener[]>;
+
     constructor ({ currentDir }: { currentDir: Uri; }) {
         this.bulkDocumentSaveListener = new BulkDocumentSaveListener();
         this.currentDir = currentDir;
+        this.uriToTextDocumentChangedListeners = new Map<string, OnDidChangeTextDocumentListener[]>();
     }
 
     public getCurrentDir(): Uri {
@@ -36,6 +39,42 @@ export abstract class IntegratedDevelopmentEnvironment {
 
     public onDidSaveTextDocuments(listener: OnSaveTextDocumentsListener): void {
         this.bulkDocumentSaveListener.onBulkSaveListener(listener);
+    }
+
+    public onDidChangeTextDocument(uri: Uri, listener: OnDidChangeTextDocumentListener) {
+        if (!this.uriToTextDocumentChangedListeners.has(this.getKeyOf(uri))) {
+            this.uriToTextDocumentChangedListeners.set(this.getKeyOf(uri), []);
+        }
+
+        const listeners = this.uriToTextDocumentChangedListeners.get(this.getKeyOf(uri));
+        listeners.push(listener);
+    }
+
+    public unregisterOnDidChangeTextDocument(uri: Uri, listener: OnDidChangeTextDocumentListener) {
+        const listeners = this.uriToTextDocumentChangedListeners.get(this.getKeyOf(uri));
+        if (listeners) {
+            const withListenerRemoved = listeners.filter(_listener => listener !== listener);
+            this.uriToTextDocumentChangedListeners.set(this.getKeyOf(uri), withListenerRemoved);
+        }
+    }
+
+    protected async textDocumentChanged(textDocument: TextDocument) {
+        const listeners = this.uriToTextDocumentChangedListeners.get(this.getKeyOf(textDocument));
+
+        const promises = listeners.map(listener => {
+            return listener({
+                textDocument
+            });
+        });
+        await Promise.all(promises);
+    }
+
+    private getKeyOf(uriOrTextDocument: TextDocument | Uri) {
+        if (uriOrTextDocument instanceof Uri) {
+            return uriOrTextDocument.getFileSystemPath();
+        } else {
+            return uriOrTextDocument.uri.getFileSystemPath();
+        }
     }
 
     public setCachedSfdxProject(sfdxProject: SfdxProject) {
@@ -106,11 +145,11 @@ export abstract class IntegratedDevelopmentEnvironment {
     abstract deleteTextDocument(uri: Uri): Promise<void>;
     abstract showWarningMessage(message: string): Promise<void>;
     abstract showInformationMessage(message: string, options?: {
-        label: string
+        label: string;
     }[]): Promise<string>;
-    abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string, isCancellable?: boolean }): Promise<T>;
+    abstract withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string, isCancellable?: boolean; }): Promise<T>;
     abstract withStatusBarMessage<T>(toMonitor: () => Promise<T>, options: {
-        title: string
+        title: string;
     });
     abstract getActiveTextEditor(): Promise<ActiveTextEditor | null>;
     abstract findFile(glob: string, base?: Uri): Promise<Uri | null>;
@@ -120,10 +159,10 @@ export abstract class IntegratedDevelopmentEnvironment {
         const uri = await this.findFile(`**/${glob}`, this.getCurrentDir());
         return uri;
     }
-    abstract readLineAt(params: { uri: Uri, line: number }): Promise<TextLine>;
-    abstract readFile(params: { uri: Uri }): Promise<string>;
-    abstract writeFile(params: { uri: Uri, contents: string }): Promise<void>;
-    abstract getText(params: { uri: Uri, range: Range }): Promise<TextLine>;
+    abstract readLineAt(params: { uri: Uri, line: number; }): Promise<TextLine>;
+    abstract readFile(params: { uri: Uri; }): Promise<string>;
+    abstract writeFile(params: { uri: Uri, contents: string; }): Promise<void>;
+    abstract getText(params: { uri: Uri, range: Range; }): Promise<TextLine>;
     abstract getConfig<T>(property: string, defaultValue: T): T;
     abstract execute(command: Command): Promise<CommandExecuteResult>;
     abstract setDiagnostics(uri: Uri, diagnostics: Diagnostic[]): void;
@@ -153,14 +192,21 @@ export abstract class IntegratedDevelopmentEnvironment {
 }
 
 export interface OnSaveTextDocumentsEvent {
-    textDocuments: TextDocument[]
+    textDocuments: TextDocument[];
 }
 export type OnSaveTextDocumentsListener = (e: OnSaveTextDocumentsEvent) => Promise<void>;
-export type OnSaveTextDocumentListener = (e: { textDocument: TextDocument }) => void;
+export type OnSaveTextDocumentListener = (e: { textDocument: TextDocument; }) => void;
+
+export interface OnChangeTextDocumentEvent {
+    textDocument: TextDocument;
+}
+
+export type OnDidChangeTextDocumentListener = (event: OnChangeTextDocumentEvent) => Promise<void>;
 
 export interface TextDocument {
     languageId: string;
     uri: Uri;
+    contents: string;
 }
 
 export interface ActiveTextEditor {
@@ -180,7 +226,7 @@ export class TextLine {
     private readonly text: string;
 
     public constructor (params: {
-        text: string
+        text: string;
     }) {
         this.text = params.text;
     }
@@ -231,5 +277,5 @@ export interface ShowTextDocumentOptions {
 
 export interface ShowInputBoxOptions {
     title: string;
-    validateInput?(value: string) : string;
+    validateInput?(value: string): string;
 }

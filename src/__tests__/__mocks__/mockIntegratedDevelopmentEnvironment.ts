@@ -1,4 +1,4 @@
-import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, ShowInputBoxOptions, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
+import { ActiveTextEditor, Command, CommandExecuteResult, Diagnostic, IntegratedDevelopmentEnvironment, ShowInputBoxOptions, TextDocument, TextLine, Uri } from "../../integratedDevelopmentEnvironment";
 import { OnCancellationRequestedListener, ProgressToken } from "../../progressToken";
 import { Range } from "../../range";
 import { SfdxProject, getSfdxProjectUri } from "../../readSfdxProjectCommand";
@@ -17,7 +17,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     deleteTextDocument(uri: Uri): Promise<void> {
         throw new Error("Method not implemented.");
     }
-    
+
     selectQuickPickItem: (item: string) => void;
     writeAndEnterIntoShowInputBox: (item: string) => void;
 
@@ -40,7 +40,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
     private history: ProgressHistory[] = [];
 
     constructor (params?: {
-        filesystem?: MockFileSystem
+        filesystem?: MockFileSystem;
     }) {
         super({
             currentDir: Uri.from({
@@ -71,7 +71,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         this.activeTextEditor = null;
     }
 
-    public static genDefaultForceAppSfdxProject(): SfdxProject {
+    static genDefaultForceAppSfdxProject(): SfdxProject {
         return {
             packageDirectories: [
                 {
@@ -82,15 +82,15 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         };
     }
 
-    public setActiveTextEditor(activeTextEditor: ActiveTextEditor | null): void {
+    setActiveTextEditor(activeTextEditor: ActiveTextEditor | null): void {
         this.activeTextEditor = activeTextEditor;
     }
 
-    public async getActiveTextEditor(): Promise<ActiveTextEditor | null> {
+    async getActiveTextEditor(): Promise<ActiveTextEditor | null> {
         return this.activeTextEditor;
     }
 
-    async withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; isCancellable?: boolean }): Promise<T> {
+    async withProgress<T>(toMonitor: (progressToken: ProgressToken) => Promise<T>, options: { title: string; isCancellable?: boolean; }): Promise<T> {
         this.shownWindowLoadingMessages.push(options.title);
 
         this.currentProgressToken = generateProgressToken();
@@ -106,7 +106,7 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return this.currentProgressToken;
     }
 
-    public didShowWindowLoadingMessageWith(title: string): boolean {
+    didShowWindowLoadingMessageWith(title: string): boolean {
         return this.shownWindowLoadingMessages.includes(title);
     }
 
@@ -188,9 +188,9 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return this.shownWarningMessages.includes(message);
     }
 
-    public showInformationMessageSelection: string | undefined;
+    showInformationMessageSelection: string | undefined;
     async showInformationMessage(message: string, options?: {
-        label: string
+        label: string;
     }[]): Promise<string> {
         if (options && this.showInformationMessageSelection) {
             const labels = options.map(opt => opt.label);
@@ -299,6 +299,10 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         throw new Error("Method not implemented.");
     }
 
+    async textDocumentChanged(textDocument: TextDocument) {
+        return super.textDocumentChanged(textDocument);
+    }
+
     async showTextDocument(uri: Uri): Promise<void> {
         const hasFile = await this.hasFile(uri);
         if (!hasFile) {
@@ -315,15 +319,15 @@ export class MockIDE extends IntegratedDevelopmentEnvironment {
         return [...this.shownTextDocuments];
     }
 
-    public async writeFile(params: { uri: Uri; contents: string; }): Promise<void> {
+    async writeFile(params: { uri: Uri; contents: string; }): Promise<void> {
         await this.filesystem.writeFile(params.uri, params.contents);
     }
 
-    public async readFile(params: { uri: Uri; }): Promise<string> {
+    async readFile(params: { uri: Uri; }): Promise<string> {
         return this.filesystem.readFile(params.uri);
     }
 
-    public genSfdxProjectUri() {
+    genSfdxProjectUri() {
         const sfdxProjectUri = getSfdxProjectUri({
             currentDir: this.getCurrentDir()
         });
@@ -338,7 +342,7 @@ export function generateProgressToken() {
 
     const currentProgressToken: MockProgressToken = {
         isCancellationRequested: false,
-        report: function (params: { progress: number; title?: string }): void {
+        report: function (params: { progress: number; title?: string; }): void {
             history.push({
                 progress: params.progress,
                 title: params.title
