@@ -629,8 +629,8 @@ export class VscodeZoqlScriptTreeNode extends vscode.TreeItem {
     }
 
     iconPath = {
-        light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-        dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
+        light: path.join(__filename, '..', '..', 'resources', 'db.svg'),
+        dark: path.join(__filename, '..', '..', 'resources', 'db.svg')
     };
 }
 
