@@ -4,7 +4,7 @@ import { SalesforceOrg } from "../salesforceOrg";
 import { SoqlParser } from "./parser";
 
 export class ExecuteAndShowSoqlCommand extends Command {
-	public async execute({ targetOrg, outputDir }: { targetOrg?: SalesforceOrg; outputDir: Uri }) {
+	public async execute({ targetOrg, outputDir }: { targetOrg?: SalesforceOrg; outputDir: Uri; }) {
 		const isValidSoql = (query: string) => {
 			try {
 				const parser = new SoqlParser();
@@ -43,10 +43,13 @@ export class ExecuteAndShowSoqlCommand extends Command {
 					return matches.length - 2;
 				};
 
-				await this.getIde().showTempFileWith(outputDir, results, {
-					viewColumn: ViewColumn.besides,
-					extension: 'csv'
+				const uri = Uri.from({
+					scheme: 'zeitlerforce',
+					fileSystemPath: 'zoql-results.csv'
 				});
+
+				await this.getIde().writeFile({ contents: results, uri });
+				await this.getIde().showTextDocument(uri)	;
 
 				this.getIde().showInformationMessage(`Returned ${getNumLines()} records.`);
 			}

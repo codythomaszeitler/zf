@@ -4,6 +4,7 @@ import { BulkDocumentSaveListener } from "./bulkDocumentSaveListener";
 import { Uri } from './uri';
 import { SfdxProject } from "./readSfdxProjectCommand";
 import { Logger } from "./logger";
+import { InMemoryFileSystem } from "./inMemoryFileSystem";
 export { Uri } from './uri';
 
 export const APEX_LANGUAGE_ID = 'apex';
@@ -13,6 +14,7 @@ export abstract class IntegratedDevelopmentEnvironment {
     private bulkDocumentSaveListener: BulkDocumentSaveListener;
     private readonly currentDir: Uri;
     private sfdxProject: SfdxProject | undefined;
+    private inMemoryFileSystem: InMemoryFileSystem;
 
     private uriToTextDocumentChangedListeners: Map<string, OnDidChangeTextDocumentListener[]>;
 
@@ -20,6 +22,11 @@ export abstract class IntegratedDevelopmentEnvironment {
         this.bulkDocumentSaveListener = new BulkDocumentSaveListener();
         this.currentDir = currentDir;
         this.uriToTextDocumentChangedListeners = new Map<string, OnDidChangeTextDocumentListener[]>();
+        this.inMemoryFileSystem = new InMemoryFileSystem();
+    }
+
+    public getInMemoryFileSystem() {
+        return this.inMemoryFileSystem;
     }
 
     public getCurrentDir(): Uri {

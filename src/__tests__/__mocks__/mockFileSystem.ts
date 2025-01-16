@@ -1,6 +1,5 @@
 import * as globToRegExp from 'glob-to-regexp';
 import { Uri } from "../../integratedDevelopmentEnvironment";
-import G = require('glob');
 
 interface File {
 	readonly uri: Uri;

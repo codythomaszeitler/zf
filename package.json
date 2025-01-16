@@ -110,6 +110,10 @@
         "command": "sf.zsi.openZoqlScript",
         "title": "ZF: Open Zoql Script",
         "enablement": "view == zoql-scripts"
+      },
+      {
+        "command": "sf.zsi.showVirtualDocument",
+        "title": "Show Virtual Document"
       }
     ],
     "views": {

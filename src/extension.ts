@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ImmediateCacheOrgListCommand, SelectAndOpenOrgCommand, SelectOrgCommand } from './openOrg';
-import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, VscodeZoqlScriptsTreeView, VscodeZoqlScriptTreeNode } from "./vscode";
+import { VsCode, VscodeCliInputOutputTreeView, UriMapper, RangeMapper, VscodeMetadataTreeNode, VscodeMetadataTreeView, VscodeZoqlScriptsTreeView, VscodeZoqlScriptTreeNode, VscodeTextDocumentContentProvider } from "./vscode";
 import { runCliCommand } from './executor';
 import { GenerateFauxSObjectsCommand, PickAndGenerateFauxSObjectCommand } from './genFauxSObjects';
 import { LogLevel, Logger } from './logger';
@@ -625,6 +625,19 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	}));
+
+	const myScheme = 'zeitlerforce';
+	const vscodeTextDocumentContentProvider = new VscodeTextDocumentContentProvider({
+		ide
+	});
+
+	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(myScheme, vscodeTextDocumentContentProvider));
+	vscode.commands.registerCommand('sf.zsi.showVirtualDocument', async () => {
+		const uri = vscode.Uri.parse(`${myScheme}:zoql-results`);
+		const doc = await vscode.workspace.openTextDocument(uri);
+		vscode.window.showTextDocument(doc);
+	});
+
 }
 
 export function deactivate() { }

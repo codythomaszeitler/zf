@@ -11,6 +11,7 @@ import { OnSalesforceCliRunEvent, SalesforceCli, SalesforceCliHistory, Salesforc
 import { TestItem as ZfTestItem } from './runTestUnderCursorCommand';
 import { MetadataTreeNode } from "./metadataExplorerTreeView";
 import { ZoqlScriptsTreeView, ZoqlScriptTreeNode } from "./soql/zoqlTreeView";
+import { inflate } from "zlib";
 
 function getCurrentDir(): Uri {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -339,22 +340,32 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
         }
     }
 
-    public async writeFile(params: { uri: Uri; contents: string; }): Promise<void> {
+    public async writeFile({ uri, contents }: { uri: Uri; contents: string; }): Promise<void> {
         const uriMapper = new UriMapper();
-        const vscodeUri = uriMapper.intoVsCodeRepresentation(params.uri);
+        const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
 
-        const textEncoding = new TextEncoder();
-        await vscode.workspace.fs.writeFile(vscodeUri, textEncoding.encode(params.contents));
+        if (vscodeUri.scheme === 'file') {
+            const textEncoding = new TextEncoder();
+            await vscode.workspace.fs.writeFile(vscodeUri, textEncoding.encode(contents));
+        } else {
+            const inMemoryFileSystem = this.getInMemoryFileSystem();
+            inMemoryFileSystem.write(uri, contents);
+        }
     }
 
-    public async readFile(params: { uri: Uri; }): Promise<string> {
+    public async readFile({ uri }: { uri: Uri; }): Promise<string> {
         const uriMapper = new UriMapper();
-        const vscodeUri = uriMapper.intoVsCodeRepresentation(params.uri);
+        const vscodeUri = uriMapper.intoVsCodeRepresentation(uri);
 
-        const file = await vscode.workspace.fs.readFile(vscodeUri);
+        if (vscodeUri.scheme === 'file') {
+            const file = await vscode.workspace.fs.readFile(vscodeUri);
 
-        const textDecoding = new TextDecoder();
-        return textDecoding.decode(file.buffer);
+            const textDecoding = new TextDecoder();
+            return textDecoding.decode(file.buffer);
+        } else {
+            const inMemoryFileSystem = this.getInMemoryFileSystem();
+            return inMemoryFileSystem.read(uri);
+        }
     }
 
     public generateTestItem(child: vscode.TestItem, testRun: vscode.TestRun) {
@@ -692,5 +703,24 @@ export class VscodeZoqlScriptsTreeView implements vscode.TreeDataProvider<Vscode
     }
     resolveTreeItem?(item: vscode.TreeItem, element: VscodeZoqlScriptTreeNode, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
         return item;
+    }
+}
+
+export class VscodeTextDocumentContentProvider implements vscode.TextDocumentContentProvider {
+
+    private readonly ide: IntegratedDevelopmentEnvironment;
+
+    constructor ({ ide }: { ide: IntegratedDevelopmentEnvironment; }) {
+        this.ide = ide;
+    }
+
+    onDidChange?: vscode.Event<vscode.Uri>;
+    provideTextDocumentContent(vscodeUri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
+        const uriMapper = new UriMapper();
+
+        const uri = uriMapper.intoDomainRepresentation(vscodeUri);
+        const inMemoryFileSystem = this.ide.getInMemoryFileSystem();
+
+        return inMemoryFileSystem.read(uri);
     }
 }
