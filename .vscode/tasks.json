@@ -22,6 +22,11 @@
 			"problemMatcher": [],
 			"label": "npm: antlr4ts",
 			"detail": ".\\node_modules\\.bin\\antlr4ts -visitor .\\src\\parser\\ApexLexer.g4 .\\src\\parser\\ApexParser.g4"
+		},
+		{
+			"type": "shell",
+			"label": "Get Current Git Hash",
+			"command" :"git rev-parse HEAD"
 		}
 	]
 }
