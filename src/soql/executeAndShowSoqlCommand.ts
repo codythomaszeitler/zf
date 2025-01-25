@@ -49,7 +49,8 @@ export class ExecuteAndShowSoqlCommand extends Command {
 				});
 
 				await this.getIde().writeFile({ contents: results, uri });
-				await this.getIde().showTextDocument(uri)	;
+				await this.getIde().showTextDocument(uri);
+				await this.getIde().deleteTextDocument(uri);
 
 				this.getIde().showInformationMessage(`Returned ${getNumLines()} records.`);
 			}

@@ -468,6 +468,14 @@ export function activate(context: vscode.ExtensionContext) {
 		ide
 	});
 
+	vscode.languages.registerDocumentSymbolProvider({
+		language: 'apex'
+	}, {
+		provideDocumentSymbols(document, token) {
+			return [];
+		},
+	});
+
 	vscode.languages.registerCompletionItemProvider({
 		scheme: 'file', language: 'zoql'
 	}, {
@@ -637,7 +645,6 @@ export function activate(context: vscode.ExtensionContext) {
 		const doc = await vscode.workspace.openTextDocument(uri);
 		vscode.window.showTextDocument(doc);
 	});
-
 }
 
 export function deactivate() { }
