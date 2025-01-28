@@ -1,11 +1,11 @@
 import { APEX_TEST_QUEUE_ITEM_SOBJECT_NAME } from "../../../apexTestQueueItem";
-import { ProjectDeployFile } from "../../../projectDeploy/projectDeployResult";
+import { ProjectDeployFile, ProjectDeployResult } from "../../../projectDeploy/projectDeployResult";
 import { SalesforceId } from "../../../salesforceId";
 import { SalesforceOrg } from "../../../salesforceOrg";
 import { Uri } from "../../../uri";
 import { genRandomId } from "../../salesforceId.test";
 
-export function genProjectDeployStartCommandString({ targetOrg, uris, async }: { targetOrg: SalesforceOrg, uris?: Uri[], async: boolean }) {
+export function genProjectDeployStartCommandString({ targetOrg, uris, async }: { targetOrg: SalesforceOrg, uris?: Uri[], async: boolean; }) {
   const getSourceDirsArgsIfExist = () => {
     if (!uris || uris.length === 0) {
       return [];
@@ -20,31 +20,27 @@ export function genProjectDeployStartCommandString({ targetOrg, uris, async }: {
   }
 }
 
-export function genProjectDeployStartResult(files: ProjectDeployFile[], async: boolean = false) {
-
+export function genProjectDeployStartResult(files: ProjectDeployFile[], async: boolean = false): ProjectDeployResult {
   const randomId = genRandomId(APEX_TEST_QUEUE_ITEM_SOBJECT_NAME);
+  // So there is the queued scenario.
   if (async) {
     return {
-      "status": 0,
       "result": {
         "id": randomId.toString(),
-        "done": false,
-        "status": "Queued",
-        "files": []
-      },
-      "warnings": []
+        "status": "Queued"
+      }
     };
   }
   return genProjectDeployReportResult(files, randomId);
 }
 
-export type ProjectDeployFileReport = ProjectDeployFile & { deployed?: boolean | undefined };
+export type ProjectDeployFileReport = ProjectDeployFile & { deployed?: boolean | undefined; };
 
-export function genProjectDeployReportCommandString({ jobId, targetOrg }: { jobId: SalesforceId, targetOrg: SalesforceOrg }) {
+export function genProjectDeployReportCommandString({ jobId, targetOrg }: { jobId: SalesforceId, targetOrg: SalesforceOrg; }) {
   return `sf project deploy report --job-id ${jobId.toString()} --target-org ${targetOrg.getAlias()} --json`;
 }
 
-export function genProjectDeployResumeCommandString({ jobId }: { jobId: SalesforceId }) {
+export function genProjectDeployResumeCommandString({ jobId }: { jobId: SalesforceId; }) {
   return `sf project deploy resume --job-id ${jobId.toString()} --json`;
 }
 
@@ -62,7 +58,7 @@ export function genProjectDeployReportResult(files: ProjectDeployFileReport[], j
   const isSuccess = () => files.every(file => file.state !== 'Failed') && done();
   const getStatusCode = () => isSuccess() ? 0 : 1;
 
-  const getStatus = () => {
+  const getStatus: () => 'InProgress' | 'Succeeded' | 'Failed' = () => {
     if (!done()) {
       return 'InProgress';
     }

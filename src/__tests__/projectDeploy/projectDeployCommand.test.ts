@@ -9,7 +9,7 @@ import { genProjectDeployStartCommandString, genProjectDeployStartResult, genPro
 import { SalesforceId } from '../../salesforceId';
 import { Uri } from '../../uri';
 import { IntegratedDevelopmentEnvironment } from '../../integratedDevelopmentEnvironment';
-import { ProjectDeployFile, ProjectDeployPreviewResult } from '../../projectDeploy/projectDeployResult';
+import { ProjectDeployFile, ProjectDeployPreviewResult, ProjectDeployResult } from '../../projectDeploy/projectDeployResult';
 
 const aClassRelativePath = ['classes', 'AClass.cls'];
 const bClassRelativePath = ['classes', 'BClass.cls'];
@@ -599,12 +599,9 @@ describe('quick project deploy against - scratch org', () => {
 		});
 	});
 
-	// So... what we need to do is a preview 
-	// You need to resume and  you need to preview.
-
 	it('should be able to do a deployment against a scratch org using a synchronous deployment', async () => {
 		const files = genFailureFiles(ide);
-		const projectDeployResumeResult: ProjectDeployPreviewResult = {
+		const projectDeployPreviewResult: ProjectDeployPreviewResult = {
 			status: 0,
 			result: {
 				toDeploy: files.map(file => ({ path: file.filePath })),
@@ -616,13 +613,18 @@ describe('quick project deploy against - scratch org', () => {
 		fs.create({ uri: ide.generateUri('classes', 'DClass.cls') });
 
 		const uris = files.map(file => (Uri.from({ scheme: 'file', fileSystemPath: file.filePath })));
+		cli.projectDeployPreview = async function ({ targetOrg }) {
+			expect(targetOrg.getTargetOrgName()).toBe(sandbox.getTargetOrgName());
+			return projectDeployPreviewResult;
+		};
 
-		inputOutput[`sf project deploy preview --target-org ${sandbox.getAlias()} --json`] = JSON.stringify(projectDeployResumeResult);
+		const projectDeployStartResult: ProjectDeployResult = genProjectDeployStartResult(files, false);
 
-		const projectDeployStartResult = genProjectDeployStartResult(files, false);
-		inputOutput[genProjectDeployStartCommandString({
-			targetOrg: sandbox, async: false
-		})] = JSON.stringify(projectDeployStartResult);
+		cli.projectDeployStart = async ({ async, targetOrg, sourceDir }) => {
+			expect(targetOrg.getTargetOrgName()).toBe(sandbox.getTargetOrgName());
+			expect(async).toBe(false);
+			return projectDeployStartResult;
+		};
 
 		const jobId = SalesforceId.get(projectDeployStartResult.result.id);
 		inputOutput[genProjectDeployReportCommandString({
@@ -652,8 +654,6 @@ describe('quick project deploy against - scratch org', () => {
 	});
 
 	it('should be able to do a deployment against a scratch org using an asynchronous deployment because file limit reached', async () => {
-
-		// So we are doing something wrong here.
 		const files = genFailureFiles(ide);
 		const projectDeployResumeResult: ProjectDeployPreviewResult = {
 			status: 0,
