@@ -28,7 +28,7 @@ export class SfSalesforceCli extends SalesforceCli {
         super(executor, proxy);
     }
 
-    async orgList({ skipConnectionStatus }: { skipConnectionStatus: boolean }): Promise<OrgListResult> {
+    async orgList({ skipConnectionStatus }: { skipConnectionStatus: boolean; }): Promise<OrgListResult> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -80,7 +80,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return orgs.find(org => org.getIsDefaultOrg()) ?? null;
     }
 
-    async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean }): Promise<ProjectDeployResult | undefined> {
+    async projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean; }): Promise<ProjectDeployResult | undefined> {
         const getSourceDirArgsIfExist = () => {
             if (!params.sourceDir) {
                 return [];
@@ -111,7 +111,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return intoProjectDeployResult(stdout);
     }
 
-    async projectDeployReport({ jobId, targetOrg }: { jobId: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployResult | undefined> {
+    async projectDeployReport({ jobId }: { jobId: JobId; }): Promise<ProjectDeployResult | undefined> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -120,8 +120,6 @@ export class SfSalesforceCli extends SalesforceCli {
                 'report',
                 '--job-id',
                 jobId.toString(),
-                '--target-org',
-                targetOrg.getAlias(),
                 '--json'
             ]
         };
@@ -130,7 +128,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return intoProjectDeployResult(stdout);
     }
 
-    async projectDeployResume({ jobId }: { jobId: JobId }): Promise<ProjectDeployResult | undefined> {
+    async projectDeployResume({ jobId }: { jobId: JobId; }): Promise<ProjectDeployResult | undefined> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -147,7 +145,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return intoProjectDeployResult(stdout);
     }
 
-    async projectDeployCancel(params: { jobId?: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployCancelResult | undefined> {
+    async projectDeployCancel(params: { jobId?: JobId; targetOrg: SalesforceOrg; }): Promise<ProjectDeployCancelResult | undefined> {
         if (params.jobId) {
             const command: ExecutorCommand = {
                 command: 'sf',
@@ -199,7 +197,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return intoProjectDeployPreviewResult(stdout);
     }
 
-    async projectManifestGenerate(params: { targetOrg: SalesforceOrg; outputDir: Uri; fileName: string }): Promise<{}> {
+    async projectManifestGenerate(params: { targetOrg: SalesforceOrg; outputDir: Uri; fileName: string; }): Promise<{}> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [
@@ -217,7 +215,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return {};
     }
 
-    async projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg; outputDir?: Uri; metadata: string }): Promise<ProjectRetrieveResult> {
+    async projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg; outputDir?: Uri; metadata: string; }): Promise<ProjectRetrieveResult> {
         const outputDirArgs: string[] = [];
         if (outputDir) {
             outputDirArgs.push('--output-dir', outputDir.getFileSystemPath());
@@ -242,7 +240,7 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async sobjectList(params: {
-        targetOrg: SalesforceOrg
+        targetOrg: SalesforceOrg;
     }): Promise<SObjectListResult> {
         const command: ExecutorCommand = {
             command: 'sf',
@@ -260,7 +258,7 @@ export class SfSalesforceCli extends SalesforceCli {
 
     async sobjectDescribe(params: {
         targetOrg: SalesforceOrg,
-        sObjectApiName: string
+        sObjectApiName: string;
     }): Promise<SObjectDescribeResult> {
         const command: ExecutorCommand = {
             command: 'sf',
@@ -280,7 +278,7 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
     async sobjectListDeprecated(params: {
-        targetOrg: SalesforceOrg
+        targetOrg: SalesforceOrg;
     }): Promise<SObjectListResultDeprecated> {
         const command: ExecutorCommand = {
             command: 'sf',
@@ -464,7 +462,7 @@ export class SfSalesforceCli extends SalesforceCli {
         });
     }
 
-    async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean; resultFormat?: 'csv' | 'json' }): Promise<DataQueryResult | string> {
+    async dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean; resultFormat?: 'csv' | 'json'; }): Promise<DataQueryResult | string> {
 
         const removeAllNewLines = (contents: string) => {
             return contents.replace(new RegExp('\n', 'g'), ' ');
@@ -568,7 +566,7 @@ export class SfSalesforceCli extends SalesforceCli {
         });
     }
 
-    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: Uri; logId: SalesforceId | undefined }): Promise<ApexGetLogResult> {
+    async apexGetLog(params: { targetOrg: SalesforceOrg; numLogs: number | undefined; logDir: Uri; logId: SalesforceId | undefined; }): Promise<ApexGetLogResult> {
         const logDir = Uri.join(params.logDir, params.targetOrg.getAlias());
         let command: ExecutorCommand;
         if (params.numLogs) {
@@ -628,7 +626,7 @@ export class SfSalesforceCli extends SalesforceCli {
         return intoApexListLogResult(stdout);
     }
 
-    async apexTestRun(params: { targetOrg: SalesforceOrg; tests: string[] }): Promise<ApexTestRunResult> {
+    async apexTestRun(params: { targetOrg: SalesforceOrg; tests: string[]; }): Promise<ApexTestRunResult> {
         const asTests = () => {
             const tests: string[] = [];
 
@@ -673,7 +671,7 @@ export class SfSalesforceCli extends SalesforceCli {
     }
 
 
-    async apexTestGet(params: { targetOrg: SalesforceOrg; testRunId: SalesforceId }): Promise<ApexTestGetResult> {
+    async apexTestGet(params: { targetOrg: SalesforceOrg; testRunId: SalesforceId; }): Promise<ApexTestGetResult> {
         const command: ExecutorCommand = {
             command: 'sf',
             args: [

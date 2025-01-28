@@ -15,7 +15,7 @@ export const SHOULD_FOCUS_PROBLEMS_WHEN_DEPLOYED_FAILS_KEY = 'sf.zsi.vscode.shou
 
 export class ProjectDeployCommand extends Command {
 
-	public async execute({ targetOrg, uris }: { targetOrg?: SalesforceOrg; uris?: Uri[] }) {
+	public async execute({ targetOrg, uris }: { targetOrg?: SalesforceOrg; uris?: Uri[]; }) {
 		this.getIde().clearDiagnostics();
 
 		const defaultOrTargetOrg = await this.getTargetOrDefaultOrg(targetOrg);
@@ -65,7 +65,7 @@ export class ProjectDeployCommand extends Command {
 		}
 	}
 
-	private async executeSyncDeployment({ targetOrg, uris }: { targetOrg: SalesforceOrg; uris?: Uri[] }) {
+	private async executeSyncDeployment({ targetOrg, uris }: { targetOrg: SalesforceOrg; uris?: Uri[]; }) {
 		if (this.getProgressToken()?.isCancellationRequested) {
 			return;
 		}
@@ -85,7 +85,7 @@ export class ProjectDeployCommand extends Command {
 		await this.processProjectDeployResult(projectDeployResult);
 	}
 
-	private async executeAsyncDeployment({ targetOrg, uris }: { targetOrg: SalesforceOrg; uris?: Uri[] }) {
+	private async executeAsyncDeployment({ targetOrg, uris }: { targetOrg: SalesforceOrg; uris?: Uri[]; }) {
 		if (this.getProgressToken()?.isCancellationRequested) {
 			return;
 		}
@@ -98,7 +98,7 @@ export class ProjectDeployCommand extends Command {
 		const jobId = SalesforceId.get(projectDeployStartResult.result.id);
 		while (true) {
 			const projectDeployReportResult = await this.getCli().projectDeployReport({
-				jobId, targetOrg
+				jobId
 			});
 
 			if (this.getProgressToken()?.isCancellationRequested) {
@@ -127,7 +127,7 @@ export class ProjectDeployCommand extends Command {
 		}
 	}
 
-	private async projectDeployStart({ targetOrg, async, uris }: { targetOrg: SalesforceOrg; async: boolean; uris?: Uri[] }) {
+	private async projectDeployStart({ targetOrg, async, uris }: { targetOrg: SalesforceOrg; async: boolean; uris?: Uri[]; }) {
 		if (!uris || targetOrg.getIsScratchOrg()) {
 			return this.getCli().projectDeployStart({ targetOrg, async });
 		} else {

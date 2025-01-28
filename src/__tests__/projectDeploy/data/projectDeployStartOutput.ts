@@ -5,7 +5,7 @@ import { SalesforceOrg } from "../../../salesforceOrg";
 import { Uri } from "../../../uri";
 import { genRandomId } from "../../salesforceId.test";
 
-export function genProjectDeployStartCommandString({ targetOrg, uris, async }: { targetOrg: SalesforceOrg, uris?: Uri[], async: boolean }) {
+export function genProjectDeployStartCommandString({ targetOrg, uris, async }: { targetOrg: SalesforceOrg, uris?: Uri[], async: boolean; }) {
   const getSourceDirsArgsIfExist = () => {
     if (!uris || uris.length === 0) {
       return [];
@@ -38,13 +38,13 @@ export function genProjectDeployStartResult(files: ProjectDeployFile[], async: b
   return genProjectDeployReportResult(files, randomId);
 }
 
-export type ProjectDeployFileReport = ProjectDeployFile & { deployed?: boolean | undefined };
+export type ProjectDeployFileReport = ProjectDeployFile & { deployed?: boolean | undefined; };
 
-export function genProjectDeployReportCommandString({ jobId, targetOrg }: { jobId: SalesforceId, targetOrg: SalesforceOrg }) {
-  return `sf project deploy report --job-id ${jobId.toString()} --target-org ${targetOrg.getAlias()} --json`;
+export function genProjectDeployReportCommandString({ jobId }: { jobId: SalesforceId; }) {
+  return `sf project deploy report --job-id ${jobId.toString()} --json`;
 }
 
-export function genProjectDeployResumeCommandString({ jobId }: { jobId: SalesforceId }) {
+export function genProjectDeployResumeCommandString({ jobId }: { jobId: SalesforceId; }) {
   return `sf project deploy resume --job-id ${jobId.toString()} --json`;
 }
 

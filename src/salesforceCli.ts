@@ -36,35 +36,35 @@ export abstract class SalesforceCli {
 
     abstract getDefaultOrg(): Promise<SalesforceOrg | null>;
     abstract openOrg(alias: string): Promise<void>;
-    abstract orgList({ skipConnectionStatus }: { skipConnectionStatus: boolean }): Promise<OrgListResult>;
-    abstract orgOpen({ targetOrg }: { targetOrg: SalesforceOrg }): Promise<OrgOpenResult>;
+    abstract orgList({ skipConnectionStatus }: { skipConnectionStatus: boolean; }): Promise<OrgListResult>;
+    abstract orgOpen({ targetOrg }: { targetOrg: SalesforceOrg; }): Promise<OrgOpenResult>;
 
-    abstract projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean }): Promise<ProjectDeployResult | undefined>;
-    abstract projectDeployReport(params: { jobId: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployResult | undefined>;
-    abstract projectDeployResume(params: { jobId: JobId }): Promise<ProjectDeployResult | undefined>;
-    abstract projectDeployCancel(params: { jobId?: JobId; targetOrg: SalesforceOrg }): Promise<ProjectDeployCancelResult | undefined>;
+    abstract projectDeployStart(params: { targetOrg: SalesforceOrg; sourceDir?: Uri[], async: boolean; }): Promise<ProjectDeployResult | undefined>;
+    abstract projectDeployReport(params: { jobId: JobId; }): Promise<ProjectDeployResult | undefined>;
+    abstract projectDeployResume(params: { jobId: JobId; }): Promise<ProjectDeployResult | undefined>;
+    abstract projectDeployCancel(params: { jobId?: JobId; targetOrg: SalesforceOrg; }): Promise<ProjectDeployCancelResult | undefined>;
 
-    abstract projectDeployPreview(params: { targetOrg: SalesforceOrg }): Promise<ProjectDeployPreviewResult | undefined>;
+    abstract projectDeployPreview(params: { targetOrg: SalesforceOrg; }): Promise<ProjectDeployPreviewResult | undefined>;
 
-    abstract projectManifestGenerate(params: { targetOrg: SalesforceOrg, outputDir: Uri, fileName: string }): Promise<{}>;
+    abstract projectManifestGenerate(params: { targetOrg: SalesforceOrg, outputDir: Uri, fileName: string; }): Promise<{}>;
 
-    abstract projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg, outputDir?: Uri, metadata: string }): Promise<ProjectRetrieveResult>;
+    abstract projectRetrieveStart({ targetOrg, outputDir, metadata }: { targetOrg: SalesforceOrg, outputDir?: Uri, metadata: string; }): Promise<ProjectRetrieveResult>;
 
     abstract sobjectListDeprecated(params: {
-        targetOrg: SalesforceOrg
+        targetOrg: SalesforceOrg;
     }): Promise<SObjectListResultDeprecated>;
     abstract sobjectDescribeDeprecated(params: {
         targetOrg: SalesforceOrg,
-        sObjectApiName: SObjectApiName
+        sObjectApiName: SObjectApiName;
     }): Promise<SObjectDescribeResultDeprecated>;
 
     abstract sobjectList(params: {
-        targetOrg: SalesforceOrg
+        targetOrg: SalesforceOrg;
     }): Promise<SObjectListResult>;
 
     abstract sobjectDescribe(params: {
         targetOrg: SalesforceOrg,
-        sObjectApiName: string
+        sObjectApiName: string;
     }): Promise<SObjectDescribeResult>;
 
     abstract apexRun(params: {
@@ -77,7 +77,7 @@ export abstract class SalesforceCli {
         sObject: UpsertableSObject;
     }): Promise<DataUpsertRecordResult>;
 
-    abstract dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean; resultFormat?: 'csv' | 'json' }): Promise<DataQueryResult | string>;
+    abstract dataQuery(params: { targetOrg: SalesforceOrg; query: SoqlQuery; useToolingApi: boolean; resultFormat?: 'csv' | 'json'; }): Promise<DataQueryResult | string>;
 
     abstract orgListUsers(params: {
         targetOrg: SalesforceOrg,
@@ -87,23 +87,23 @@ export abstract class SalesforceCli {
         targetOrg: SalesforceOrg,
         numLogs?: number,
         logId?: SalesforceId,
-        logDir: Uri
+        logDir: Uri;
     }): Promise<ApexGetLogResult>;
 
     abstract apexListLog(params: {
-        targetOrg: SalesforceOrg
+        targetOrg: SalesforceOrg;
     }): Promise<ApexListLogResult>;
 
     abstract apexTestRun(params: {
         targetOrg: SalesforceOrg;
-        tests: string[]
+        tests: string[];
     }): Promise<ApexTestRunResult>;
 
     abstract apexTestGet(params: {
-        targetOrg: SalesforceOrg; testRunId: SalesforceId
+        targetOrg: SalesforceOrg; testRunId: SalesforceId;
     }): Promise<ApexTestGetResult>;
 
-    protected async exec(command: ExecutorCommand): Promise<{ stdout: any }> {
+    protected async exec(command: ExecutorCommand): Promise<{ stdout: any; }> {
         command.env = this.env;
         if (command.shouldParseAsJson === undefined) {
             command.shouldParseAsJson = true;
@@ -195,7 +195,7 @@ export class SalesforceCliInputOutput {
 
     public constructor ({
         input, output
-    }: { input: ExecutorCommand, output: ExecutorResult }) {
+    }: { input: ExecutorCommand, output: ExecutorResult; }) {
         this.input = input;
         this.output = output;
         this.date = new Date();
@@ -224,10 +224,10 @@ export interface ProjectRetrieveResult {
         fileProperties: {
             type: string,
             fullName: string,
-            fileName: string
+            fileName: string;
         }[],
         files: {
-            filePath: string
-        }[]
-    }
+            filePath: string;
+        }[];
+    };
 }
