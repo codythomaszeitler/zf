@@ -277,7 +277,7 @@ export class VsCode extends IntegratedDevelopmentEnvironment {
 
     async focusProblemsTab(): Promise<void> {
         await this.execute({
-            commandName: 'workbench.panel.markers.view.focus'
+            commandName: 'workbench.actions.view.problems'
         });
     }
 
