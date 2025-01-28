@@ -317,7 +317,7 @@ describe('quick project deploy against sandbox', () => {
 
 		const jobId = SalesforceId.get(projectDeployStartResult.result.id);
 		inputOutput[genProjectDeployReportCommandString({
-			jobId, targetOrg: sandbox
+			jobId
 		})] = JSON.stringify(genProjectDeployReportResult(files, projectDeployStartResult.result.id));
 
 		inputOutput[genProjectDeployResumeCommandString({
@@ -397,7 +397,7 @@ describe('quick project deploy against sandbox', () => {
 
 		const jobId = SalesforceId.get(projectDeployStartResult.result.id);
 		inputOutput[genProjectDeployReportCommandString({
-			jobId, targetOrg: sandbox
+			jobId
 		})] = JSON.stringify(genProjectDeployReportResult(files, projectDeployStartResult.result.id));
 
 		inputOutput[genProjectDeployResumeCommandString({
@@ -446,18 +446,18 @@ describe('quick project deploy against sandbox', () => {
 		let counter = 0;
 
 		const savedProjectDeployReport = cli.projectDeployReport;
-		cli.projectDeployReport = async function ({ jobId, targetOrg }) {
+		cli.projectDeployReport = async function ({ jobId }) {
 			if (counter === 0) {
 				inputOutput[genProjectDeployReportCommandString({
-					jobId, targetOrg: sandbox
+					jobId
 				})] = JSON.stringify(genProjectDeployReportResult(files, projectDeployStartResult.result.id));
 				counter++;
-				const result = await savedProjectDeployReport.call(cli, { jobId, targetOrg });
+				const result = await savedProjectDeployReport.call(cli, { jobId });
 				return result;
 			} else {
 				const files = genFailureFiles(ide);
 				inputOutput[genProjectDeployReportCommandString({
-					jobId, targetOrg: sandbox
+					jobId
 				})] = JSON.stringify(genProjectDeployReportResult(files, projectDeployStartResult.result.id));
 
 				inputOutput[genProjectDeployResumeCommandString({
@@ -466,7 +466,7 @@ describe('quick project deploy against sandbox', () => {
 					files, jobId
 				));
 
-				const result = await savedProjectDeployReport.call(cli, { jobId, targetOrg });
+				const result = await savedProjectDeployReport.call(cli, { jobId });
 				return result;
 			}
 		};
@@ -626,7 +626,7 @@ describe('quick project deploy against - scratch org', () => {
 
 		const jobId = SalesforceId.get(projectDeployStartResult.result.id);
 		inputOutput[genProjectDeployReportCommandString({
-			jobId, targetOrg: sandbox
+			jobId
 		})] = JSON.stringify(genProjectDeployReportResult(files, projectDeployStartResult.result.id));
 
 		const testObject = new ProjectDeployCommand({
@@ -679,7 +679,7 @@ describe('quick project deploy against - scratch org', () => {
 
 		const jobId = SalesforceId.get(projectDeployStartResult.result.id);
 		inputOutput[genProjectDeployReportCommandString({
-			jobId, targetOrg: sandbox
+			jobId
 		})] = JSON.stringify(genProjectDeployReportResult(files, projectDeployStartResult.result.id));
 
 		inputOutput[genProjectDeployResumeCommandString({
