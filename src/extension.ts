@@ -16,7 +16,7 @@ import { showCliOutput } from './showSalesforceCliInputOutput';
 import { ApexParser } from './apexParser';
 import { MetadataTreeView, genOnMetadataRetrieveAndShow } from './metadataExplorerTreeView';
 import { genOnlyRunOnce } from './onlyOneCommandRun';
-import { genOnDidSaveTextDocuments } from './projectDeploy/queueableProjectDeployCommand';
+import { genOnDidSaveTextDocuments, genQueueableDeployment, QueueableProjectDeployCommand } from './projectDeploy/queueableProjectDeployCommand';
 import { QuickDefaultOrgSfSalesforceCli } from './quickDefaultOrgSalesforceCli';
 import { ProjectDeployCommand } from './projectDeploy/projectDeployCommand';
 import { RunHighlightedAnonApex } from './runAnonApex/runAnonApex';
@@ -98,20 +98,17 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
-	async function withDiagsProjectDeployStart() {
+	const runQueueableDeployment = genQueueableDeployment({
+		cli: salesforceCli, ide
+	});
+	async function withDiagsProjectDeployStart(uri: vscode.Uri) {
 		try {
-			await ide.withProgress(async (progressToken) => {
-				const projectDeployCommand = new ProjectDeployCommand({
-					cli: salesforceCli,
-					ide: ide,
-					progressToken
-				});
-				await projectDeployCommand.execute({});
-			}, {
-				title: 'Project Deploy Start',
-				isCancellable: true
-			});
-
+			const uris = [];
+			if (uri) {
+				const uriMapper = new UriMapper();
+				uris.push(uriMapper.intoDomainRepresentation(uri));
+			}
+			await runQueueableDeployment({ uris });
 		} catch (e: any) {
 			if (e) {
 				ide.showErrorMessage(e.message);

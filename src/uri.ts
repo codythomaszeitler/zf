@@ -54,4 +54,8 @@ export class Uri {
 	public equals(uri: Uri) {
 		return this.fileSystemPath === uri.fileSystemPath;
 	}
+
+	public isDirectory() {
+		return !this.getBaseNameWithoutExtension().includes('.');
+	}
 }
