@@ -123,13 +123,17 @@ export abstract class IntegratedDevelopmentEnvironment {
                 if (uri.getFileSystemPath().endsWith('-meta.xml')) {
                     resolve(uri);
                 } else {
-                    isNonMetaXmlFileDeployable(uri).then(hasXmlFile => {
-                        if (hasXmlFile) {
-                            resolve(uri);
-                        } else {
-                            resolve(undefined);
-                        }
-                    });
+                    if (uri.isDirectory()) {
+                        resolve(uri);
+                    } else {
+                        isNonMetaXmlFileDeployable(uri).then(hasXmlFile => {
+                            if (hasXmlFile) {
+                                resolve(uri);
+                            } else {
+                                resolve(undefined);
+                            }
+                        });
+                    }
                 }
             });
         });

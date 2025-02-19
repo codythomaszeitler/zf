@@ -155,6 +155,12 @@
       ]
     },
     "menus": {
+      "explorer/context": [
+        {
+        "command": "sf.zsi.projectDeploy",
+        "title": "ZF: Project Deploy"
+        }
+      ],
       "view/title": [
         {
           "command": "sf.zsi.refreshMetadataExplorer",

@@ -79,7 +79,6 @@ export class QueueableProjectDeployCommand extends Command {
 		if (!this.targetOrg) {
 			this.targetOrg = await this.getCli().getDefaultOrg();
 		}
-
 		const sfMetadataUris = await this.getIde().getSalesforceMetadataUris(uris);
 
 		sfMetadataUris.forEach(sfMetadataUri => {
@@ -92,10 +91,7 @@ export class QueueableProjectDeployCommand extends Command {
 	}
 }
 
-export function genOnDidSaveTextDocuments({ cli, ide }: {
-	cli: SalesforceCli,
-	ide: IntegratedDevelopmentEnvironment
-}) {
+export function genQueueableDeployment({ cli, ide }: CommandParams) {
 	let projectDeployCommand: QueueableProjectDeployCommand | undefined = undefined;
 
 	const getTitle = (uris: Uri[]) => {
@@ -107,13 +103,12 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
 
 	};
 
-	return async function onDidSaveTextDocuments({ textDocuments }: {
-		textDocuments: TextDocument[]
+	return async function onDidSaveTextDocuments({ uris }: {
+		uris: Uri[]
 	}): Promise<void> {
 
 		const shouldDeployOnSave = ide.getConfig("sf.zsi.vscode.deployOnSave", true);
 		if (shouldDeployOnSave) {
-			const uris = textDocuments.map(textDocument => textDocument.uri);
 			await ide.withProgress(async progressToken => {
 				if (!projectDeployCommand) {
 					projectDeployCommand = new QueueableProjectDeployCommand({
@@ -136,6 +131,22 @@ export function genOnDidSaveTextDocuments({ cli, ide }: {
 				isCancellable: false
 			});
 		}
+	};
+}
+
+export function genOnDidSaveTextDocuments({ cli, ide }: {
+	cli: SalesforceCli,
+	ide: IntegratedDevelopmentEnvironment
+}) {
+	const queueableDeployment = genQueueableDeployment({
+		cli, ide
+	});
+
+	return async function onDidSaveTextDocuments({ textDocuments }: {
+		textDocuments: TextDocument[]
+	}): Promise<void> {
+		const uris = textDocuments.map(textDocument => textDocument.uri);
+		return queueableDeployment({ uris });
 	};
 }
 
