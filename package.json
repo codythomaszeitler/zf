@@ -138,6 +138,12 @@
           "id": "server-side-apex-logs",
           "name": "Zeitlerforce Apex Logs"
         }
+      ],
+      "anon-apex-scripts" : [
+        {
+          "id": "anon-apex-scripts",
+          "name": "Anon Apex Scripts"
+        }
       ]
     },
     "viewsContainers": {
